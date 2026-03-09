@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Compile as a Windows Forms application targeting .NET 8.0 -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Require elevation at runtime so we can manage the Windows service -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Explicit root namespace so classes are generated in the correct namespace -->
+    <RootNamespace>CloudflaredMonitor</RootNamespace>
+  </PropertyGroup>
+
+</Project>
