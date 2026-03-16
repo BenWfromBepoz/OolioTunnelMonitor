@@ -1,0 +1,5 @@
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.AssemblyInfoInputs.cache
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.AssemblyInfo.cs
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.csproj.CoreCompileInputs.cache
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.sourcelink.json

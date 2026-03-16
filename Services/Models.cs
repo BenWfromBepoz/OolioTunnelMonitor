@@ -22,21 +22,18 @@ namespace CloudflaredMonitor.Services
         ///  installation token.  Null if the tunnel could not be decoded.
         /// </summary>
         public string? TunnelId { get; set; }
-;
 
         /// <summary>
         ///  Human friendly name of the tunnel, returned from the Cloudflare
         ///  API.  May be null if the API call fails.
         /// </summary>
         public string? TunnelName { get; set; }
-;
 
         /// <summary>
         ///  Status of the tunnel as reported by Cloudflare.  Typical values
         ///  include "connected", "inactive" and "degraded".
         /// </summary>
         public string? RemoteStatus { get; set; }
-;
 
         /// <summary>
         ///  Collection of ingress rules associated with this tunnel.  Each
@@ -50,7 +47,6 @@ namespace CloudflaredMonitor.Services
         ///  and the log.
         /// </summary>
         public string? DiagnosticsNote { get; set; }
-;
     }
 
     /// <summary>
