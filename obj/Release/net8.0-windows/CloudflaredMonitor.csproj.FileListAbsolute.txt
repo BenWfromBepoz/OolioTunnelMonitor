@@ -3,3 +3,17 @@ C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMon
 C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.AssemblyInfo.cs
 C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.csproj.CoreCompileInputs.cache
 C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.sourcelink.json
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\CloudflaredMonitor.exe
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\CloudflaredMonitor.deps.json
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\CloudflaredMonitor.runtimeconfig.json
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\CloudflaredMonitor.dll
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\CloudflaredMonitor.pdb
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\System.ServiceProcess.ServiceController.dll
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\bin\Release\net8.0-windows\runtimes\win\lib\net8.0\System.ServiceProcess.ServiceController.dll
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.csproj.AssemblyReference.cache
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\Cloudfla.2675BD5E.Up2Date
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.dll
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\refint\CloudflaredMonitor.dll
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.pdb
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\CloudflaredMonitor.genruntimeconfig.cache
+C:\Users\BenWighton\OneDrive - Bepoz Global PTY LIMITED\Documents\CloudflaredMonitor\obj\Release\net8.0-windows\ref\CloudflaredMonitor.dll

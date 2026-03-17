@@ -5,7 +5,7 @@
   },
   "projects": {
     "C:\\Users\\BenWighton\\OneDrive - Bepoz Global PTY LIMITED\\Documents\\CloudflaredMonitor\\CloudflaredMonitor.csproj": {
-      "version": "1.0.0",
+      "version": "1.0.0.8",
       "restore": {
         "projectUniqueName": "C:\\Users\\BenWighton\\OneDrive - Bepoz Global PTY LIMITED\\Documents\\CloudflaredMonitor\\CloudflaredMonitor.csproj",
         "projectName": "CloudflaredMonitor",
@@ -50,6 +50,12 @@
       "frameworks": {
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
+          "dependencies": {
+            "System.ServiceProcess.ServiceController": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
