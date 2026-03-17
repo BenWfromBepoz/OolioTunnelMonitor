@@ -1,66 +1,37 @@
 namespace CloudflaredMonitor.Services
 {
     /// <summary>
-    ///  Centralized configuration for the application.  These values define the
-    ///  Cloudflare account details, token encryption and MSI sources.  If you
-    ///  need to change the Cloudflare account, API token or service name,
-    ///  update this file only.
+    ///  Centralised configuration for the application.
+    ///  The API token is NO LONGER stored here.  It is provisioned once per
+    ///  machine by running the bundled Provision-Token.ps1 script (or the
+    ///  ProvisionToken helper in this assembly) which encrypts the token with
+    ///  Windows DPAPI (LocalMachine scope) and writes it to a protected file
+    ///  under ProgramData.  Only accounts with local-machine-level access can
+    ///  decrypt it, so the plaintext never appears in source control.
     /// </summary>
     internal static class AppConfig
     {
-        /// <summary>
-        ///  Cloudflare Account ID.  This must match the account under which
-        ///  your tunnels are created.
-        /// </summary>
+        /// <summary>Cloudflare Account ID.</summary>
         public const string AccountId = "2a5f7d34c1a1e18d2dfffe551c418915";
 
         /// <summary>
-        ///  The symmetric key used to encrypt and decrypt the Cloudflare API
-        ///  token.  This is a 32‑byte array (AES‑256) extracted from the
-        ///  PowerShell SecureString.  You should generate your own key when
-        ///  producing a new encrypted token.  The key must remain secret and
-        ///  must match the one used when encrypting the token.
+        ///  Path to the DPAPI-protected token file written by the provisioning
+        ///  step.  An administrator must run Provision-Token.ps1 (or call
+        ///  TokenStore.Provision) on each target machine before the app can
+        ///  reach the Cloudflare API.
         /// </summary>
-        public static readonly byte[] Key = new byte[]
-        {
-            11, 92, 33, 54, 76, 21, 44, 87,
-            91, 62, 17, 203, 44, 56, 78, 19,
-            22, 89, 120, 45, 65, 11, 98, 74,
-            31, 44, 58, 73, 92, 10, 44, 61
-        };
+        public static readonly string TokenFilePath = System.IO.Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData),
+            "Bepoz", "CloudflaredMonitor", "token.dat");
 
-        /// <summary>
-        ///  The encrypted API token string produced by ConvertFrom‑SecureString -Key in
-        ///  PowerShell.  Only the token value should be encrypted, without the
-        ///  "Bearer" prefix.  To encrypt a new token, run the following in
-        ///  PowerShell (with $token containing your API token text):
-        ///  
-        ///  $secure = ConvertTo-SecureString $token -AsPlainText -Force
-        ///  ConvertFrom-SecureString $secure -Key $key
-        /// </summary>
-        public const string EncryptedApiToken =
-            "76492d1116743f0423413b16050a5345MgB8AHIARQBnADcAcQBoAE4AeABpAEkAeABTAE4AdAA5AGIAagA5AEsAagBDAFEAPQA9AHwAYgAyADEAZQAzADAANQA1AGMAMwAwADUAMgBiADAAYgA3ADUANABmADIAOABjADIAYgBhADEANgA4ADAANQAzAGEAOAAzADYAMgA5AGUAZABmADIAMgBhADMAZgBmADkANQA5AGQAYgAwADMAYwBiADkANwA2AGYAZgBmADYAOAA1ADgAMQBkADcAMgAzADQANwA0ADYAZAA4ADUANQA0AGEAYQA0ADYANQAxADkAMAAxADgANwA4ADEANABlADAAOQBlADcAZgBiADgAYwA4ADAAZQA3ADcAZAA2ADYAYwA0ADAAYwA2ADEAYQA1ADIAYgA5AGMAZgAxAGMAMQA3AGUAMgA0ADMAMwBkADcANAAxAGEAMQBmADEAYgA5AGYAMwBiAGMAYgA3ADUAOABiADgAYwBiADAAZQBjADQAYgA3AGYAMQBhADgAMgAyADMAMgBkADQANwA2AGUAMQA0ADMANQA3ADIAMQBiAGMAYgAzAGYAOAAxADcAMQAzADYA";
-
-        /// <summary>
-        ///  URL pointing to the latest cloudflared MSI.  The repair routine
-        ///  downloads this installer when reinstalling the service.  If you
-        ///  deploy your own private build of cloudflared, update this URL.
-        /// </summary>
+        /// <summary>URL for the latest cloudflared MSI.</summary>
         public const string CloudflaredMsiUrl =
             "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi";
 
-        /// <summary>
-        ///  Name of the Windows Service used by cloudflared.  You should not
-        ///  change this unless you have customised the service name during
-        ///  installation.
-        /// </summary>
+        /// <summary>Windows Service name for cloudflared.</summary>
         public const string ServiceName = "Cloudflared";
 
-        /// <summary>
-        ///  How long to wait while stopping the service before killing the
-        ///  process.  Tune this value if you find your service takes longer
-        ///  than 15 seconds to stop gracefully.
-        /// </summary>
+        /// <summary>How long to wait for the service to stop before killing it.</summary>
         public static readonly System.TimeSpan StopTimeout = System.TimeSpan.FromSeconds(15);
     }
 }
