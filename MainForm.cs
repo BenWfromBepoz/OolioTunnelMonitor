@@ -61,35 +61,38 @@ namespace CloudflaredMonitor
         }
     }
 
-    /// <summary>White card with rounded corners and subtle shadow.</summary>
+    /// <summary>White card with rounded corners and a soft drop shadow.</summary>
     internal sealed class RoundedPanel : Panel
     {
+        private const int Radius = 10;
+
         public RoundedPanel()
         {
-            BackColor = Color.White;
+            BackColor  = Color.FromArgb(241, 245, 249); // match parent
             DoubleBuffered = true;
+            ResizeRedraw = true;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            var rect = new Rectangle(2, 2, Width - 5, Height - 5);
-            // Shadow
-            using var shadow = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
-            e.Graphics.FillRoundedRectangle(shadow, new Rectangle(4, 4, Width - 6, Height - 6), 10);
-            // Card
-            using var fill = new SolidBrush(Color.White);
-            e.Graphics.FillRoundedRectangle(fill, rect, 10);
-        }
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
 
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            // Transparent so parent background shows (for shadow)
-        }
+            // Fill parent background colour to erase previous frame cleanly
+            g.Clear(Color.FromArgb(241, 245, 249));
 
-        protected override CreateParams CreateParams
-        {
-            get { var cp = base.CreateParams; cp.ExStyle |= 0x20; return cp; }
+            // Soft shadow - several translucent layers offset down-right
+            for (int i = 3; i >= 1; i--)
+            {
+                var shadowRect = new Rectangle(i + 1, i + 1, Width - i * 2 - 2, Height - i * 2 - 2);
+                using var shadowBrush = new SolidBrush(Color.FromArgb(12, 0, 0, 0));
+                g.FillRoundedRectangle(shadowBrush, shadowRect, Radius);
+            }
+
+            // White card face
+            var cardRect = new Rectangle(1, 1, Width - 4, Height - 4);
+            using var cardBrush = new SolidBrush(Color.White);
+            g.FillRoundedRectangle(cardBrush, cardRect, Radius);
         }
     }
 
@@ -182,7 +185,13 @@ namespace CloudflaredMonitor
 
             try
             {
-                LogInfo("Refreshing status...");
+                // Check token is provisioned before attempting API calls
+                                if (!TokenStore.IsProvisioned())
+                                {
+                                    LogError($"API token not provisioned. Run Provision-Token.ps1 as Administrator. Expected: {AppConfig.TokenFilePath}");
+                                    return;
+                                }
+                                LogInfo("Refreshing status...");
                 var status = await GetStatusAsync();
                 _currentStatus = status;
 
