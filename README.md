@@ -36,7 +36,9 @@ Configuration values live in `Services/AppConfig.cs` and include:
 
 The Cloudflare API token must be encrypted before being embedded in the
 repository.  Use PowerShell on a secure workstation to generate the
-encrypted string.
+encrypted string.  PowerShell is only needed at build/configuration time —
+the application decrypts the token itself using a pure C# AES-256
+implementation at runtime, with no PowerShell dependency on the host.
 
 ```powershell
 $token = "YOUR_API_TOKEN"               # token without the "Bearer" prefix
@@ -50,7 +52,7 @@ command.  Keep the key and encrypted token secret.
 
 ## Building
 
-The project targets .NET 8 and Windows.  To build it:
+The project targets .NET 8 and Windows.  To build it:
 
 ```bash
 dotnet restore
@@ -69,9 +71,6 @@ services, kill processes and install software.
   token passed via the `--token` argument.  If your deployment uses a
   different pattern (e.g. local `config.yml`), the tunnel ID may not be
   discoverable and the repair flow will not work.
-* API token decryption uses `powershell.exe` at runtime.  PowerShell must
-  be available on the host.  A future enhancement could embed a pure C#
-  decryptor.
 
 ## License
 
