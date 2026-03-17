@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CloudflaredMonitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.8")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0.8+5600097aeaf530bc9307b202eaa35369343dd936")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0.8+94f90b458444f8ae41ffc93f874509902777deb6")]
 [assembly: System.Reflection.AssemblyProductAttribute("CloudflaredMonitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CloudflaredMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.8")]
