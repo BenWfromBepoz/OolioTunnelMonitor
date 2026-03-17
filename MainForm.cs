@@ -14,7 +14,6 @@ namespace CloudflaredMonitor
     /// <summary>Pill-shaped button styled for the dark sidebar.</summary>
     internal sealed class ModernButton : Button
     {
-        private bool _hovered;
         private static readonly Color _normal = Color.FromArgb(30, 41, 59);
         private static readonly Color _hover  = Color.FromArgb(51, 65, 85);
         private static readonly Color _accent = Color.FromArgb(99, 102, 241);
@@ -31,8 +30,8 @@ namespace CloudflaredMonitor
             Padding = new Padding(12, 0, 0, 0);
         }
 
-        protected override void OnMouseEnter(EventArgs e) { _hovered = true;  BackColor = _hover;   Invalidate(); base.OnMouseEnter(e); }
-        protected override void OnMouseLeave(EventArgs e) { _hovered = false; BackColor = _normal;  Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnMouseEnter(EventArgs e) { BackColor = _hover;  Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { BackColor = _normal; Invalidate(); base.OnMouseLeave(e); }
 
         protected override void OnPaint(PaintEventArgs e)
         {
