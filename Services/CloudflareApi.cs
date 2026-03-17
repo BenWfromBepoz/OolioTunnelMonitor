@@ -8,15 +8,23 @@ using System.Threading.Tasks;
 namespace CloudflaredMonitor.Services
 {
     /// <summary>
-    ///  Calls the Cloudflare Zero Trust API.  The Bearer token is loaded at
-    ///  runtime from the DPAPI-protected store written by the provisioning step.
+    ///  Calls the Cloudflare Zero Trust API.
+    ///  The bearer token is passed in at construction time and held only in
+    ///  memory for the lifetime of this instance.  It is never written to
+    ///  disk or the registry.
     /// </summary>
     internal sealed class CloudflareApi
     {
         private readonly HttpClient _client;
+        private readonly string _bearerToken;
 
-        public CloudflareApi()
+        /// <param name="bearerToken">
+        ///  Cloudflare API token without the "Bearer" prefix.
+        ///  Obtain from LastPass; do not store on disk.
+        /// </param>
+        public CloudflareApi(string bearerToken)
         {
+            _bearerToken = bearerToken;
             _client = new HttpClient
             {
                 BaseAddress = new Uri("https://api.cloudflare.com/client/v4/"),
@@ -36,13 +44,27 @@ namespace CloudflaredMonitor.Services
             return result?.Token;
         }
 
+        /// <summary>
+        ///  Verify the token is valid by calling the tunnel endpoint.
+        ///  Returns null on success, or an error message on failure.
+        /// </summary>
+        public async Task<string?> TestTokenAsync(string tunnelId, CancellationToken ct)
+        {
+            try
+            {
+                await GetTunnelAsync(tunnelId, ct);
+                return null; // success
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
         private async Task<T?> SendAsync<T>(string relativeUrl, CancellationToken ct)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, relativeUrl);
-            // Load the DPAPI-protected token from disk on every call so that
-            // a re-provisioned token is picked up without restarting the app.
-            string token = TokenStore.Load();
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
             var response = await _client.SendAsync(request, ct);
             string json = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
