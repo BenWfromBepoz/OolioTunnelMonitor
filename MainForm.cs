@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -7,33 +9,133 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    /// <summary>
-    ///  Main window for the monitoring tool.  Exposes diagnostic status and
-    ///  repair actions and writes both to a log text area and a log file.
-    /// </summary>
+    // ── Custom controls ────────────────────────────────────────────────────────
+
+    /// <summary>Pill-shaped button styled for the dark sidebar.</summary>
+    internal sealed class ModernButton : Button
+    {
+        private bool _hovered;
+        private static readonly Color _normal = Color.FromArgb(30, 41, 59);
+        private static readonly Color _hover  = Color.FromArgb(51, 65, 85);
+        private static readonly Color _accent = Color.FromArgb(99, 102, 241);
+
+        public ModernButton()
+        {
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            BackColor = _normal;
+            ForeColor = Color.White;
+            Font = new Font("Segoe UI", 9.5f);
+            Cursor = Cursors.Hand;
+            TextAlign = ContentAlignment.MiddleLeft;
+            Padding = new Padding(12, 0, 0, 0);
+        }
+
+        protected override void OnMouseEnter(EventArgs e) { _hovered = true;  BackColor = _hover;   Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _hovered = false; BackColor = _normal;  Invalidate(); base.OnMouseLeave(e); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var brush = new SolidBrush(BackColor);
+            using var path  = RoundRect(ClientRectangle, 8);
+            e.Graphics.FillPath(brush, path);
+
+            // Accent left bar
+            using var accent = new SolidBrush(_accent);
+            e.Graphics.FillRectangle(accent, 0, 10, 3, Height - 20);
+
+            var tf = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
+            using var fg = new SolidBrush(ForeColor);
+            e.Graphics.DrawString(Text, Font, fg, new RectangleF(Padding.Left + 6, 0, Width - Padding.Left - 6, Height), tf);
+        }
+
+        private static GraphicsPath RoundRect(Rectangle r, int radius)
+        {
+            var path = new GraphicsPath();
+            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+    }
+
+    /// <summary>White card with rounded corners and subtle shadow.</summary>
+    internal sealed class RoundedPanel : Panel
+    {
+        public RoundedPanel()
+        {
+            BackColor = Color.White;
+            DoubleBuffered = true;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            var rect = new Rectangle(2, 2, Width - 5, Height - 5);
+            // Shadow
+            using var shadow = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
+            e.Graphics.FillRoundedRectangle(shadow, new Rectangle(4, 4, Width - 6, Height - 6), 10);
+            // Card
+            using var fill = new SolidBrush(Color.White);
+            e.Graphics.FillRoundedRectangle(fill, rect, 10);
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // Transparent so parent background shows (for shadow)
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get { var cp = base.CreateParams; cp.ExStyle |= 0x20; return cp; }
+        }
+    }
+
+    // ── Extension helpers ──────────────────────────────────────────────────────
+    internal static class GraphicsExtensions
+    {
+        public static void FillRoundedRectangle(this Graphics g, Brush brush, Rectangle rect, int radius)
+        {
+            using var path = new GraphicsPath();
+            path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            g.FillPath(brush, path);
+        }
+    }
+
+    // ── Main form ──────────────────────────────────────────────────────────────
+
     public partial class MainForm : Form
     {
         private readonly CloudflaredServiceManager _serviceManager = new();
-        private readonly CloudflaredInstaller _installer = new();
-        private readonly CloudflareApi _api = new();
-        private readonly FileLogger _logger = new();
-        private readonly DiagnosticsExporter _exporter;
+        private readonly CloudflaredInstaller      _installer      = new();
+        private readonly CloudflareApi             _api            = new();
+        private readonly FileLogger                _logger         = new();
+        private readonly DiagnosticsExporter       _exporter;
 
-        // Keep a copy of the most recent status for export
         private TunnelServiceStatus? _currentStatus;
-        // Maintain a live list of log lines for diagnostics export
         private readonly List<string> _uiLogs = new();
+
+        // Status badge colours
+        private static readonly Color _green  = Color.FromArgb(22, 163, 74);
+        private static readonly Color _red    = Color.FromArgb(220, 38, 38);
+        private static readonly Color _amber  = Color.FromArgb(217, 119, 6);
+        private static readonly Color _slate  = Color.FromArgb(100, 116, 139);
 
         public MainForm()
         {
             InitializeComponent();
-            // Instantiate exporter with logger dependency
             _exporter = new DiagnosticsExporter(_logger);
         }
 
-        /// <summary>
-        /// Append a message to the UI log and the file log.
-        /// </summary>
+        // ── Logging ────────────────────────────────────────────────────────────
+
         private void LogInfo(string message)
         {
             string line = $"INFO: {message}";
@@ -47,26 +149,36 @@ namespace CloudflaredMonitor
             string line = ex == null ? $"ERROR: {message}" : $"ERROR: {message} - {ex.Message}";
             txtLog.AppendText(line + Environment.NewLine);
             _uiLogs.Add(line);
-            if (ex == null)
-            {
-                _logger.Error(message);
-            }
-            else
-            {
-                _logger.Error(message, ex);
-            }
+            if (ex == null) _logger.Error(message); else _logger.Error(message, ex);
         }
 
-        /// <summary>
-        /// Refresh the service and tunnel status and update the UI.  Called on
-        /// startup and when the user clicks the refresh button.
-        /// </summary>
+        // ── Status badge helper ────────────────────────────────────────────────
+
+        private static Color BadgeColour(string? value, bool isService = false)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "-") return _slate;
+            var v = value.ToLowerInvariant();
+            if (isService)
+                return v == "running" ? _green : v == "stopped" ? _red : _amber;
+            // remote status
+            return v == "healthy" || v == "active" || v == "connected" ? _green
+                 : v == "inactive" || v == "degraded"                  ? _amber
+                 : _slate;
+        }
+
+        private void ApplyBadge(Label lbl, string text, bool isService = false)
+        {
+            lbl.Text      = text;
+            lbl.ForeColor = BadgeColour(text, isService);
+        }
+
+        // ── Refresh ────────────────────────────────────────────────────────────
+
         public async Task RefreshStatusAsync()
         {
             btnRefresh.Enabled = false;
-            btnRepair.Enabled = false;
-            btnExport.Enabled = false;
-
+            btnRepair.Enabled  = false;
+            btnExport.Enabled  = false;
             lstIngress.Items.Clear();
 
             try
@@ -75,55 +187,40 @@ namespace CloudflaredMonitor
                 var status = await GetStatusAsync();
                 _currentStatus = status;
 
-                lblService.Text = status.ServiceState;
-                lblTunnelId.Text = status.TunnelId ?? "-";
-                lblTunnelName.Text = status.TunnelName ?? "-";
-                lblRemoteStatus.Text = status.RemoteStatus ?? "-";
+                ApplyBadge(lblService,      status.ServiceState,    isService: true);
+                ApplyBadge(lblRemoteStatus, status.RemoteStatus ?? "-");
+
+                lblTunnelName.Text = status.TunnelName   ?? "-";
+                lblTunnelId.Text   = status.TunnelId     ?? "-";
+
                 if (!string.IsNullOrWhiteSpace(status.DiagnosticsNote))
-                {
                     LogInfo(status.DiagnosticsNote!);
-                }
+
                 foreach (var rule in status.Ingress)
-                {
                     lstIngress.Items.Add(rule.Display);
-                }
-                // enable buttons if we have a tunnel id
+
                 btnRepair.Enabled = status.TunnelId != null;
                 btnExport.Enabled = status.TunnelId != null;
                 LogInfo("Refresh complete.");
             }
-            catch (Exception ex)
-            {
-                LogError("Refresh failed", ex);
-            }
-            finally
-            {
-                btnRefresh.Enabled = true;
-            }
+            catch (Exception ex) { LogError("Refresh failed", ex); }
+            finally { btnRefresh.Enabled = true; }
         }
 
-        /// <summary>
-        /// Gather current status from local service, decode the tunnel ID and
-        /// query Cloudflare for remote state and ingress configuration.
-        /// </summary>
         private async Task<TunnelServiceStatus> GetStatusAsync()
         {
             var status = new TunnelServiceStatus();
-
-            // Check if the Windows service is present
             if (!_serviceManager.IsInstalled())
             {
-                status.ServiceState = "NotInstalled";
-                status.DiagnosticsNote = "Cloudflared service is not installed.";
+                status.ServiceState     = "NotInstalled";
+                status.DiagnosticsNote  = "Cloudflared service is not installed.";
                 return status;
             }
-
             status.ServiceState = _serviceManager.GetStatusText();
 
-            // Try to extract the token and decode the tunnel ID
             var imagePath = TunnelDiscovery.TryGetServiceImagePath();
-            var token = TunnelDiscovery.TryExtractTokenFromImagePath(imagePath);
-            var tunnelId = TunnelDiscovery.TryDecodeTunnelIdFromToken(token);
+            var token     = TunnelDiscovery.TryExtractTokenFromImagePath(imagePath);
+            var tunnelId  = TunnelDiscovery.TryDecodeTunnelIdFromToken(token);
             status.TunnelId = tunnelId;
             if (tunnelId == null)
             {
@@ -131,15 +228,13 @@ namespace CloudflaredMonitor
                 return status;
             }
 
-            // Fetch remote tunnel information
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
             try
             {
                 var tunnel = await _api.GetTunnelAsync(tunnelId, cts.Token);
-                status.TunnelName = tunnel?.Name;
+                status.TunnelName   = tunnel?.Name;
                 status.RemoteStatus = tunnel?.Status;
 
-                // Fetch ingress configuration
                 var cfg = await _api.GetTunnelConfigAsync(tunnelId, cts.Token);
                 if (cfg?.Config?.Ingress != null)
                 {
@@ -160,36 +255,25 @@ namespace CloudflaredMonitor
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                status.DiagnosticsNote = $"Failed to query Cloudflare: {ex.Message}";
-            }
+            catch (Exception ex) { status.DiagnosticsNote = $"Failed to query Cloudflare: {ex.Message}"; }
 
             return status;
         }
 
-        /// <summary>
-        /// Repair the existing tunnel by stopping and removing the service,
-        /// reinstalling the cloudflared MSI if requested, fetching a new token
-        /// and installing a fresh service.
-        /// </summary>
+        // ── Repair ─────────────────────────────────────────────────────────────
+
         public async Task RepairAsync()
         {
-            btnRepair.Enabled = false;
+            btnRepair.Enabled  = false;
             btnRefresh.Enabled = false;
-            btnExport.Enabled = false;
+            btnExport.Enabled  = false;
 
             try
             {
-                if (_currentStatus?.TunnelId == null)
-                {
-                    LogError("Cannot repair: no tunnel ID detected.");
-                    return;
-                }
+                if (_currentStatus?.TunnelId == null) { LogError("Cannot repair: no tunnel ID detected."); return; }
                 var tunnelId = _currentStatus.TunnelId;
                 LogInfo($"Repairing tunnel {tunnelId}...");
 
-                // Stop and remove service
                 LogInfo("Stopping service...");
                 _serviceManager.StopServiceBestEffort();
                 LogInfo("Killing residual cloudflared processes...");
@@ -197,21 +281,17 @@ namespace CloudflaredMonitor
                 LogInfo("Deleting service...");
                 _serviceManager.DeleteService();
 
-                // Optionally reinstall the MSI
                 if (chkReinstall.Checked)
                 {
                     LogInfo("Reinstalling cloudflared MSI...");
-                    using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3)))
-                    {
-                        var msiPath = await _installer.DownloadMsiAsync(cts.Token);
-                        _installer.InstallMsi(msiPath);
-                    }
+                    using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                    var msiPath = await _installer.DownloadMsiAsync(cts.Token);
+                    _installer.InstallMsi(msiPath);
                 }
 
                 LogInfo("Locating cloudflared executable...");
                 var exe = _installer.FindCloudflaredExeOrThrow();
 
-                // Fetch new token
                 LogInfo("Requesting new tunnel token via Cloudflare API...");
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
@@ -224,27 +304,15 @@ namespace CloudflaredMonitor
 
                 LogInfo("Starting service...");
                 _serviceManager.StartService();
-
                 LogInfo("Repair finished. Performing final refresh...");
                 await RefreshStatusAsync();
             }
-            catch (Exception ex)
-            {
-                LogError("Repair failed", ex);
-            }
-            finally
-            {
-                btnRefresh.Enabled = true;
-                btnRepair.Enabled = true;
-                btnExport.Enabled = true;
-            }
+            catch (Exception ex) { LogError("Repair failed", ex); }
+            finally { btnRefresh.Enabled = true; btnRepair.Enabled = true; btnExport.Enabled = true; }
         }
 
-        /// <summary>
-        /// Export a diagnostic bundle containing the current status, the log file
-        /// and the UI log lines.  The bundle is zipped to a file and stored in
-        /// ProgramData.
-        /// </summary>
+        // ── Export ─────────────────────────────────────────────────────────────
+
         public void ExportDiagnostics()
         {
             try
@@ -254,12 +322,8 @@ namespace CloudflaredMonitor
                     MessageBox.Show(this, "Status unknown. Please refresh first.", "Export Diagnostics", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                // Build list of ingress lines for export
                 var ingressLines = new List<string>();
-                foreach (var item in lstIngress.Items)
-                {
-                    ingressLines.Add(item?.ToString() ?? string.Empty);
-                }
+                foreach (var item in lstIngress.Items) ingressLines.Add(item?.ToString() ?? string.Empty);
                 var zipPath = _exporter.Export(_currentStatus, _uiLogs, ingressLines);
                 MessageBox.Show(this, $"Diagnostics exported to:\n{zipPath}", "Export Diagnostics", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -269,19 +333,10 @@ namespace CloudflaredMonitor
             }
         }
 
-        private async void btnRefresh_Click(object? sender, EventArgs e)
-        {
-            await RefreshStatusAsync();
-        }
+        // ── Handlers ───────────────────────────────────────────────────────────
 
-        private async void btnRepair_Click(object? sender, EventArgs e)
-        {
-            await RepairAsync();
-        }
-
-        private void btnExport_Click(object? sender, EventArgs e)
-        {
-            ExportDiagnostics();
-        }
+        private async void btnRefresh_Click(object? sender, EventArgs e) => await RefreshStatusAsync();
+        private async void btnRepair_Click(object? sender, EventArgs e)  => await RepairAsync();
+        private void btnExport_Click(object? sender, EventArgs e)         => ExportDiagnostics();
     }
 }
