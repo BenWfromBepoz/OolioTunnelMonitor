@@ -11,6 +11,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Explicit root namespace so classes are generated in the correct namespace -->
     <RootNamespace>CloudflaredMonitor</RootNamespace>
+    <Version>1.0.0.5</Version>
+    <AssemblyVersion>1.0.0.5</AssemblyVersion>
+    <FileVersion>1.0.0.5</FileVersion>
   </PropertyGroup>
 
 </Project>
