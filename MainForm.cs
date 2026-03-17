@@ -443,8 +443,7 @@ namespace CloudflaredMonitor
                 var ingressLines = new List<string>();
                 foreach (var item in lstIngress.Items) ingressLines.Add(item?.ToString() ?? string.Empty);
                 var zipPath = _exporter.Export(_currentStatus, _uiLogs, ingressLines);
-                MessageBox.Show(this, $"Diagnostics exported to:
-{zipPath}", "Export Diagnostics", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, "Diagnostics exported to:" + Environment.NewLine + zipPath, "Export Diagnostics", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
