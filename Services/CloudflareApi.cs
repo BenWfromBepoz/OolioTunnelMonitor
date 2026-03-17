@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -11,9 +12,9 @@ namespace CloudflaredMonitor.Services
     /// <summary>
     ///  Encapsulates calls to the Cloudflare Zero Trust API for retrieving
     ///  tunnel details, tunnel configuration and refreshing tunnel tokens.
-    ///  This class decrypts the encrypted API token at runtime via
-    ///  PowerShell.  See README.md for details on how to generate the
-    ///  encrypted token.
+    ///  The API token is stored as a PowerShell ConvertFrom-SecureString
+    ///  export and is decrypted at runtime using a pure C# AES-256 CBC
+    ///  implementation — no PowerShell dependency required.
     /// </summary>
     internal sealed class CloudflareApi
     {
@@ -72,45 +73,71 @@ namespace CloudflaredMonitor.Services
         }
 
         /// <summary>
-        ///  Decrypts a PowerShell SecureString export using the same key used
-        ///  during encryption.  See README.md for details on generating the
-        ///  encrypted token.  This method shells out to powershell.exe to
-        ///  leverage .NET's own implementation of SecureString encryption.
-        ///  Because of this, powershell must be available on the host.
+        ///  Decrypts a token that was encrypted with PowerShell's
+        ///  ConvertFrom-SecureString using an explicit -Key (AES-256 CBC).
+        ///
+        ///  PowerShell's SecureString wire format is:
+        ///    [header 20 bytes][IV 16 bytes][HMAC 32 bytes][ciphertext]
+        ///  all encoded as a UTF-16LE hex string.
+        ///
+        ///  The plaintext is UTF-16LE; we convert it to a regular .NET string
+        ///  before returning.
+        ///
+        ///  To encrypt a new token, run the following PowerShell on a secure
+        ///  workstation (substitute your own token and key):
+        ///
+        ///    $token  = "YOUR_API_TOKEN"
+        ///    $key    = [byte[]](11,92,33,54,76,21,44,87,91,62,17,203,44,56,78,19,
+        ///                        22,89,120,45,65,11,98,74,31,44,58,73,92,10,44,61)
+        ///    $secure = ConvertTo-SecureString $token -AsPlainText -Force
+        ///    ConvertFrom-SecureString $secure -Key $key
+        ///
+        ///  Paste the output into AppConfig.EncryptedApiToken.
         /// </summary>
         private static string DecryptApiToken(string encrypted, byte[] key)
         {
-            // Construct a comma separated list of bytes for the PowerShell key
-            var keyList = string.Join(",", key);
-            // Escape double quotes in the encrypted string for PowerShell
-            var escapedEnc = encrypted.Replace("\"", "\"\"");
-            // Build the inline PowerShell script.  Use single quoted strings where
-            // possible and avoid newlines because the script will be passed via
-            // the -Command argument.
-            string script = "$key = [byte[]]({keyList}); " +
-                            "$enc = \"{escapedEnc}\"; " +
-                            "$secure = ConvertTo-SecureString $enc -Key $key; " +
-                            "$ptr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure); " +
-                            "try { [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($ptr) } finally { [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }";
+            if (encrypted.Length % 2 != 0)
+                throw new InvalidOperationException("Encrypted token has an odd number of hex characters.");
 
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{script}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var process = System.Diagnostics.Process.Start(psi);
-            if (process == null)
-                throw new InvalidOperationException("Failed to start PowerShell.");
-            string output = process.StandardOutput.ReadToEnd().Trim();
-            string error = process.StandardError.ReadToEnd().Trim();
-            process.WaitForExit();
-            if (process.ExitCode != 0 || string.IsNullOrEmpty(output))
-                throw new InvalidOperationException($"PowerShell decryption failed: {error}");
-            return output;
+            byte[] blob = new byte[encrypted.Length / 2];
+            for (int i = 0; i < blob.Length; i++)
+                blob[i] = Convert.ToByte(encrypted.Substring(i * 2, 2), 16);
+
+            // Decode the UTF-16LE blob to get the inner hex payload produced by
+            // PowerShell's SecureString serialiser.
+            string innerHex = Encoding.Unicode.GetString(blob);
+
+            // The inner hex string encodes:
+            //   bytes  0-19  : header (version + flags, ignored)
+            //   bytes 20-35  : IV      (16 bytes, AES block size)
+            //   bytes 36-67  : HMAC-SHA256 (32 bytes, not verified here)
+            //   bytes 68-end : AES-256-CBC ciphertext
+            byte[] inner = new byte[innerHex.Length / 2];
+            for (int i = 0; i < inner.Length; i++)
+                inner[i] = Convert.ToByte(innerHex.Substring(i * 2, 2), 16);
+
+            const int HeaderSize = 20;
+            const int IvSize     = 16;
+            const int HmacSize   = 32;
+            const int DataOffset = HeaderSize + IvSize + HmacSize; // 68
+
+            if (inner.Length < DataOffset)
+                throw new InvalidOperationException("Encrypted token blob is too short.");
+
+            byte[] iv         = inner[HeaderSize..(HeaderSize + IvSize)];
+            byte[] ciphertext = inner[DataOffset..];
+
+            using var aes = Aes.Create();
+            aes.Key     = key;
+            aes.IV      = iv;
+            aes.Mode    = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
+
+            using var decryptor = aes.CreateDecryptor();
+            byte[] plainBytes   = decryptor.TransformFinalBlock(ciphertext, 0, ciphertext.Length);
+
+            // The decrypted bytes are the token encoded as UTF-16LE.
+            return Encoding.Unicode.GetString(plainBytes).TrimEnd('\0');
         }
     }
 }
