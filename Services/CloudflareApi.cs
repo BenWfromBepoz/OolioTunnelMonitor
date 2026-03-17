@@ -29,31 +29,19 @@ namespace CloudflaredMonitor.Services
             };
         }
 
-        /// <summary>
-        ///  Retrieve details about a specific tunnel by its ID.
-        /// </summary>
         public async Task<CfTunnel?> GetTunnelAsync(string tunnelId, CancellationToken ct)
         {
-            return await SendAsync<CfTunnel>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}", ct);
+            return await SendAsync<CfTunnel>(`accounts/${AppConfig.AccountId}/cfd_tunnel/${tunnelId}`, ct);
         }
 
-        /// <summary>
-        ///  Retrieve the remote configuration for a tunnel.  The config
-        ///  includes ingress rules and other settings.  Note that this will
-        ///  fail if the tunnel is locally managed via config.yml.
-        /// </summary>
         public async Task<CfTunnelConfigWrapper?> GetTunnelConfigAsync(string tunnelId, CancellationToken ct)
         {
-            return await SendAsync<CfTunnelConfigWrapper>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/configurations", ct);
+            return await SendAsync<CfTunnelConfigWrapper>(`accounts/${AppConfig.AccountId}/cfd_tunnel/${tunnelId}/configurations`, ct);
         }
 
-        /// <summary>
-        ///  Request a fresh tunnel token for reinstalling a connector.  The
-        ///  token should be passed to `cloudflared service install`.
-        /// </summary>
         public async Task<string?> GetTunnelTokenAsync(string tunnelId, CancellationToken ct)
         {
-            var result = await SendAsync<CfTunnelTokenResult>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/token", ct);
+            var result = await SendAsync<CfTunnelTokenResult>(`accounts/${AppConfig.AccountId}/cfd_tunnel/${tunnelId}/token`, ct);
             return result?.Token;
         }
 
@@ -73,59 +61,36 @@ namespace CloudflaredMonitor.Services
         }
 
         /// <summary>
-        ///  Decrypts a token that was encrypted with PowerShell's
-        ///  ConvertFrom-SecureString using an explicit -Key (AES-256 CBC).
+        ///  Decrypts a token produced by PowerShell ConvertFrom-SecureString -Key.
         ///
-        ///  PowerShell's SecureString wire format is:
-        ///    [header 20 bytes][IV 16 bytes][HMAC 32 bytes][ciphertext]
-        ///  all encoded as a UTF-16LE hex string.
+        ///  The format produced by PowerShell is a UTF-16LE string that, when the
+        ///  bytes are decoded, yields a string like:
+        ///    76492d1116743f04....|<base64-encoded-iv-and-ciphertext>
         ///
-        ///  The plaintext is UTF-16LE; we convert it to a regular .NET string
-        ///  before returning.
-        ///
-        ///  To encrypt a new token, run the following PowerShell on a secure
-        ///  workstation (substitute your own token and key):
-        ///
-        ///    $token  = "YOUR_API_TOKEN"
-        ///    $key    = [byte[]](11,92,33,54,76,21,44,87,91,62,17,203,44,56,78,19,
-        ///                        22,89,120,45,65,11,98,74,31,44,58,73,92,10,44,61)
-        ///    $secure = ConvertTo-SecureString $token -AsPlainText -Force
-        ///    ConvertFrom-SecureString $secure -Key $key
-        ///
-        ///  Paste the output into AppConfig.EncryptedApiToken.
+        ///  The portion before the pipe is a fixed magic header.
+        ///  The portion after the pipe is Base64 containing:
+        ///    bytes 0-15  : AES IV (16 bytes)
+        ///    bytes 16+   : AES-256-CBC ciphertext
+        ///  The decrypted plaintext is UTF-16LE (PowerShell native string encoding).
         /// </summary>
         private static string DecryptApiToken(string encrypted, byte[] key)
         {
-            if (encrypted.Length % 2 != 0)
-                throw new InvalidOperationException("Encrypted token has an odd number of hex characters.");
+            // The encrypted value is the raw string from ConvertFrom-SecureString.
+            // Split on the pipe — left side is magic header, right side is Base64 payload.
+            int pipeIndex = encrypted.IndexOf('|');
+            if (pipeIndex < 0)
+                throw new InvalidOperationException("Encrypted token is not in the expected PowerShell SecureString format (missing pipe separator).");
 
-            byte[] blob = new byte[encrypted.Length / 2];
-            for (int i = 0; i < blob.Length; i++)
-                blob[i] = Convert.ToByte(encrypted.Substring(i * 2, 2), 16);
+            string base64Payload = encrypted[(pipeIndex + 1)..];
+            byte[] payload = Convert.FromBase64String(base64Payload);
 
-            // Decode the UTF-16LE blob to get the inner hex payload produced by
-            // PowerShell's SecureString serialiser.
-            string innerHex = Encoding.Unicode.GetString(blob);
+            // First 16 bytes are the IV, remainder is the ciphertext.
+            const int IvSize = 16;
+            if (payload.Length < IvSize + 1)
+                throw new InvalidOperationException("Encrypted token payload is too short.");
 
-            // The inner hex string encodes:
-            //   bytes  0-19  : header (version + flags, ignored)
-            //   bytes 20-35  : IV      (16 bytes, AES block size)
-            //   bytes 36-67  : HMAC-SHA256 (32 bytes, not verified here)
-            //   bytes 68-end : AES-256-CBC ciphertext
-            byte[] inner = new byte[innerHex.Length / 2];
-            for (int i = 0; i < inner.Length; i++)
-                inner[i] = Convert.ToByte(innerHex.Substring(i * 2, 2), 16);
-
-            const int HeaderSize = 20;
-            const int IvSize     = 16;
-            const int HmacSize   = 32;
-            const int DataOffset = HeaderSize + IvSize + HmacSize; // 68
-
-            if (inner.Length < DataOffset)
-                throw new InvalidOperationException("Encrypted token blob is too short.");
-
-            byte[] iv         = inner[HeaderSize..(HeaderSize + IvSize)];
-            byte[] ciphertext = inner[DataOffset..];
+            byte[] iv         = payload[..IvSize];
+            byte[] ciphertext = payload[IvSize..];
 
             using var aes = Aes.Create();
             aes.Key     = key;
@@ -136,7 +101,7 @@ namespace CloudflaredMonitor.Services
             using var decryptor = aes.CreateDecryptor();
             byte[] plainBytes   = decryptor.TransformFinalBlock(ciphertext, 0, ciphertext.Length);
 
-            // The decrypted bytes are the token encoded as UTF-16LE.
+            // Plaintext is UTF-16LE (PowerShell's native string encoding).
             return Encoding.Unicode.GetString(plainBytes).TrimEnd('\0');
         }
     }
