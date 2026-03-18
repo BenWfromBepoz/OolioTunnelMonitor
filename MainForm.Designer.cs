@@ -54,38 +54,42 @@ namespace CloudflaredMonitor
             // ── Sidebar ──────────────────────────────────────────────────────────────────────
             this.pnlSidebar.BackColor = Color.FromArgb(15, 23, 42);
             this.pnlSidebar.Dock = DockStyle.Left;
-            this.pnlSidebar.Width = 210;
+            this.pnlSidebar.Width = 220;
 
-            this.oolioLogo.Location = new Point(14, 18);
-            this.oolioLogo.Size = new Size(182, 42);
+            // Logo brand box: left-aligned, extends down to include subtitle
+            // Fix #3: box tall enough to contain both logo and subtitle text
+            this.oolioLogo.Location = new Point(12, 12);
+            this.oolioLogo.Size = new Size(196, 68);  // taller to include subtitle
             this.oolioLogo.BackColor = Color.Transparent;
 
+            // Fix #3: subtitle lives INSIDE the logo control via its own label
+            // Instead we position it just below the logo box, still on dark bg
             this.lblAppSubtitle.Text = "ZeroTrust Tunnel Monitor";
-            this.lblAppSubtitle.Font = new Font("Segoe UI", 8.5f);
+            this.lblAppSubtitle.Font = new Font("Segoe UI", 8f);
             this.lblAppSubtitle.ForeColor = Color.FromArgb(100, 116, 139);
-            this.lblAppSubtitle.Location = new Point(14, 62);
-            this.lblAppSubtitle.Size = new Size(182, 18);
+            this.lblAppSubtitle.Location = new Point(14, 82);
+            this.lblAppSubtitle.Size = new Size(192, 16);
             this.lblAppSubtitle.AutoSize = false;
 
             this.btnRefresh.Text = "⟳  Refresh";
-            this.btnRefresh.Location = new Point(12, 106);
-            this.btnRefresh.Size = new Size(186, 40);
+            this.btnRefresh.Location = new Point(12, 112);
+            this.btnRefresh.Size = new Size(196, 40);
             this.btnRefresh.Click += new EventHandler(this.btnRefresh_Click);
 
             this.btnRepair.Text = "⚙  Repair Tunnel";
-            this.btnRepair.Location = new Point(12, 154);
-            this.btnRepair.Size = new Size(186, 40);
+            this.btnRepair.Location = new Point(12, 160);
+            this.btnRepair.Size = new Size(196, 40);
             this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
 
             this.btnExport.Text = "↓  Export Diagnostics";
-            this.btnExport.Location = new Point(12, 202);
-            this.btnExport.Size = new Size(186, 40);
+            this.btnExport.Location = new Point(12, 208);
+            this.btnExport.Size = new Size(196, 40);
             this.btnExport.Click += new EventHandler(this.btnExport_Click);
 
             this.chkReinstall.Text = "Reinstall MSI";
             this.chkReinstall.Font = new Font("Segoe UI", 9f);
             this.chkReinstall.ForeColor = Color.FromArgb(148, 163, 184);
-            this.chkReinstall.Location = new Point(16, 256);
+            this.chkReinstall.Location = new Point(16, 262);
             this.chkReinstall.Size = new Size(168, 22);
             this.chkReinstall.Checked = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
@@ -98,34 +102,40 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnRefresh);
 
             // ── Main panel ─────────────────────────────────────────────────────────────────────
+            // Fix #1: padding on all sides so cards never touch window edge
             this.pnlMain.Dock = DockStyle.Fill;
             this.pnlMain.BackColor = Color.FromArgb(226, 232, 240);
-            this.pnlMain.Padding = new Padding(20, 20, 20, 20);
+            this.pnlMain.Padding = new Padding(12, 12, 12, 12);
             this.pnlMain.Controls.Add(this.pnlLogCard);
             this.pnlMain.Controls.Add(this.pnlIngressCard);
             this.pnlMain.Controls.Add(this.pnlStatusCard);
 
             // ── Status card ──────────────────────────────────────────────────────────────────────
-            this.pnlStatusCard.Location = new Point(20, 20);
-            this.pnlStatusCard.Size = new Size(760, 160);
+            // Fix #1: anchored Left+Right+Top so it always has a gap on all sides
+            this.pnlStatusCard.Location = new Point(12, 12);
+            this.pnlStatusCard.Size = new Size(780, 148);
             this.pnlStatusCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
 
+            // Fix #2: card title has no background box - just plain label
             this.lblCardTitle.Text = "Tunnel Status";
             this.lblCardTitle.Font = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
-            this.lblCardTitle.ForeColor = Color.FromArgb(15, 23, 42);
-            this.lblCardTitle.Location = new Point(20, 14);
+            this.lblCardTitle.ForeColor = Color.FromArgb(71, 85, 105);
+            this.lblCardTitle.Location = new Point(16, 12);
             this.lblCardTitle.Size = new Size(200, 22);
+            this.lblCardTitle.BackColor = Color.Transparent;
 
-            this.tblStatus.Location = new Point(20, 42);
-            this.tblStatus.Size = new Size(718, 100);
+            // Fix #4: 4 equal columns so labels sit immediately next to values
+            this.tblStatus.Location = new Point(16, 40);
+            this.tblStatus.Size = new Size(748, 92);
             this.tblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount = 2;
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            // Fix #4: equal percent columns so pairs sit close together
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
@@ -137,6 +147,7 @@ namespace CloudflaredMonitor
                 lbl.Dock = DockStyle.Fill;
                 lbl.TextAlign = ContentAlignment.MiddleLeft;
                 lbl.AutoSize = false;
+                lbl.BackColor = Color.Transparent;
             };
             styleLabel(this.lblServiceLabel, "Service", true);
             styleLabel(this.lblService, "-", false);
@@ -157,42 +168,46 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
             // ── Ingress card ───────────────────────────────────────────────────────────────────────
-            this.pnlIngressCard.Location = new Point(20, 196);
-            this.pnlIngressCard.Size = new Size(760, 168);
+            this.pnlIngressCard.Location = new Point(12, 172);
+            this.pnlIngressCard.Size = new Size(780, 160);
             this.pnlIngressCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.lstIngress);
 
+            // Fix #2: plain label, no background box
             this.lblIngressTitle.Text = "Ingress Rules";
             this.lblIngressTitle.Font = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
-            this.lblIngressTitle.ForeColor = Color.FromArgb(15, 23, 42);
-            this.lblIngressTitle.Location = new Point(20, 14);
+            this.lblIngressTitle.ForeColor = Color.FromArgb(71, 85, 105);
+            this.lblIngressTitle.Location = new Point(16, 12);
             this.lblIngressTitle.Size = new Size(200, 22);
+            this.lblIngressTitle.BackColor = Color.Transparent;
 
-            this.lstIngress.Location = new Point(20, 42);
-            this.lstIngress.Size = new Size(718, 108);
+            this.lstIngress.Location = new Point(16, 40);
+            this.lstIngress.Size = new Size(748, 104);
             this.lstIngress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.lstIngress.Font = new Font("Cascadia Mono", 8.5f);
             this.lstIngress.BorderStyle = BorderStyle.None;
-            this.lstIngress.BackColor = Color.FromArgb(248, 250, 252);
+            this.lstIngress.BackColor = Color.White;
             this.lstIngress.ForeColor = Color.FromArgb(15, 23, 42);
             this.lstIngress.ItemHeight = 20;
 
             // ── Log card ─────────────────────────────────────────────────────────────────────────────
-            this.pnlLogCard.Location = new Point(20, 380);
-            this.pnlLogCard.Size = new Size(760, 180);
+            this.pnlLogCard.Location = new Point(12, 344);
+            this.pnlLogCard.Size = new Size(780, 200);
             this.pnlLogCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
             this.pnlLogCard.Controls.Add(this.txtLog);
 
+            // Fix #2: plain label, no background box
             this.lblLogTitle.Text = "Activity Log";
             this.lblLogTitle.Font = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
-            this.lblLogTitle.ForeColor = Color.FromArgb(15, 23, 42);
-            this.lblLogTitle.Location = new Point(20, 14);
+            this.lblLogTitle.ForeColor = Color.FromArgb(71, 85, 105);
+            this.lblLogTitle.Location = new Point(16, 12);
             this.lblLogTitle.Size = new Size(200, 22);
+            this.lblLogTitle.BackColor = Color.Transparent;
 
-            this.txtLog.Location = new Point(20, 42);
-            this.txtLog.Size = new Size(718, 118);
+            this.txtLog.Location = new Point(16, 40);
+            this.txtLog.Size = new Size(748, 144);
             this.txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.txtLog.Multiline = true;
             this.txtLog.ReadOnly = true;
@@ -205,12 +220,13 @@ namespace CloudflaredMonitor
             // ── Form ─────────────────────────────────────────────────────────────────────────────────
             this.AutoScaleDimensions = new SizeF(7f, 15f);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(1020, 640);
+            this.ClientSize = new Size(1040, 660);
             this.MinimumSize = new Size(880, 600);
             this.Controls.Add(this.pnlMain);
             this.Controls.Add(this.pnlSidebar);
             this.Name = "MainForm";
-            this.Text = "Cloudflared Monitor";
+            // Fix #5: updated app title
+            this.Text = "Oolio ZeroTrust Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(226, 232, 240);
 
