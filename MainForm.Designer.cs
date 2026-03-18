@@ -50,37 +50,34 @@ namespace CloudflaredMonitor
             this.pnlLogCard.SuspendLayout();
             this.SuspendLayout();
 
-            // ── Sidebar
-            this.pnlSidebar.BackColor = Color.FromArgb(15, 23, 42);
+            // ── Sidebar - fix #3: charcoal #3f4555
+            this.pnlSidebar.BackColor = Color.FromArgb(63, 69, 85);
             this.pnlSidebar.Dock = DockStyle.Left;
             this.pnlSidebar.Width = 224;
 
-            // Fix #2: logo control is tall enough to contain both the wordmark
-            // AND the subtitle drawn inside OolioLogoBrand.OnPaint.
-            // lblAppSubtitle is removed - subtitle is drawn inside the control.
             this.oolioLogo.Location = new Point(12, 12);
-            this.oolioLogo.Size = new Size(200, 100);  // tall enough for logo + subtitle
+            this.oolioLogo.Size = new Size(200, 106);
             this.oolioLogo.BackColor = Color.Transparent;
 
             this.btnRefresh.Text = "⟳  Refresh";
-            this.btnRefresh.Location = new Point(12, 126);
+            this.btnRefresh.Location = new Point(12, 130);
             this.btnRefresh.Size = new Size(200, 40);
             this.btnRefresh.Click += new EventHandler(this.btnRefresh_Click);
 
             this.btnRepair.Text = "⚙  Repair Tunnel";
-            this.btnRepair.Location = new Point(12, 174);
+            this.btnRepair.Location = new Point(12, 178);
             this.btnRepair.Size = new Size(200, 40);
             this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
 
             this.btnExport.Text = "↓  Export Diagnostics";
-            this.btnExport.Location = new Point(12, 222);
+            this.btnExport.Location = new Point(12, 226);
             this.btnExport.Size = new Size(200, 40);
             this.btnExport.Click += new EventHandler(this.btnExport_Click);
 
             this.chkReinstall.Text = "Reinstall MSI";
             this.chkReinstall.Font = new Font("Segoe UI", 9f);
-            this.chkReinstall.ForeColor = Color.FromArgb(148, 163, 184);
-            this.chkReinstall.Location = new Point(16, 276);
+            this.chkReinstall.ForeColor = Color.FromArgb(200, 210, 220);
+            this.chkReinstall.Location = new Point(16, 280);
             this.chkReinstall.Size = new Size(168, 22);
             this.chkReinstall.Checked = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
@@ -91,7 +88,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.btnRefresh);
 
-            // ── Main panel - padding gives the gap on all 4 sides (fix #2)
+            // ── Main panel - fix #1: padding creates gap on all 4 sides
             this.pnlMain.Dock = DockStyle.Fill;
             this.pnlMain.BackColor = Color.FromArgb(226, 232, 240);
             this.pnlMain.Padding = new Padding(12, 12, 12, 12);
@@ -99,7 +96,7 @@ namespace CloudflaredMonitor
             this.pnlMain.Controls.Add(this.pnlIngressCard);
             this.pnlMain.Controls.Add(this.pnlStatusCard);
 
-            // ── Status card
+            // ── Status card - fix #1: Right anchor means it scales but always has gap on right
             this.pnlStatusCard.Location = new Point(12, 12);
             this.pnlStatusCard.Size = new Size(780, 148);
             this.pnlStatusCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -113,18 +110,16 @@ namespace CloudflaredMonitor
             this.lblCardTitle.Size = new Size(200, 22);
             this.lblCardTitle.BackColor = Color.Transparent;
 
-            // Fix #3: left column is Absolute width sized to fit the longest
-            // label ("Tunnel ID") plus the longest value (a 36-char UUID ~290px).
-            // Using Absolute for cols 0+1 means they stay tight; cols 2+3 fill rest.
+            // fix #3: tight fixed columns so pairs sit next to each other
             this.tblStatus.Location = new Point(16, 40);
             this.tblStatus.Size = new Size(748, 92);
             this.tblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount = 2;
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));   // "Service" / "Tunnel ID" label
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 310));  // value - wide enough for UUID
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));  // "Tunnel Name" / "Remote Status" label
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));   // value - takes remaining space
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 310));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
@@ -137,22 +132,22 @@ namespace CloudflaredMonitor
                 lbl.AutoSize = false;
                 lbl.BackColor = Color.Transparent;
             };
-            styleLabel(this.lblServiceLabel, "Service", true);
-            styleLabel(this.lblService, "-", false);
-            styleLabel(this.lblNameLabel, "Tunnel Name", true);
-            styleLabel(this.lblTunnelName, "-", false);
-            styleLabel(this.lblIdLabel, "Tunnel ID", true);
-            styleLabel(this.lblTunnelId, "-", false);
-            styleLabel(this.lblRemoteLabel, "Remote Status", true);
-            styleLabel(this.lblRemoteStatus, "-", false);
+            styleLabel(this.lblServiceLabel, "Service",       true);
+            styleLabel(this.lblService,      "-",             false);
+            styleLabel(this.lblNameLabel,    "Tunnel Name",   true);
+            styleLabel(this.lblTunnelName,   "-",             false);
+            styleLabel(this.lblIdLabel,      "Tunnel ID",     true);
+            styleLabel(this.lblTunnelId,     "-",             false);
+            styleLabel(this.lblRemoteLabel,  "Remote Status", true);
+            styleLabel(this.lblRemoteStatus, "-",             false);
 
             this.tblStatus.Controls.Add(this.lblServiceLabel, 0, 0);
-            this.tblStatus.Controls.Add(this.lblService, 1, 0);
-            this.tblStatus.Controls.Add(this.lblNameLabel, 2, 0);
-            this.tblStatus.Controls.Add(this.lblTunnelName, 3, 0);
-            this.tblStatus.Controls.Add(this.lblIdLabel, 0, 1);
-            this.tblStatus.Controls.Add(this.lblTunnelId, 1, 1);
-            this.tblStatus.Controls.Add(this.lblRemoteLabel, 2, 1);
+            this.tblStatus.Controls.Add(this.lblService,      1, 0);
+            this.tblStatus.Controls.Add(this.lblNameLabel,    2, 0);
+            this.tblStatus.Controls.Add(this.lblTunnelName,   3, 0);
+            this.tblStatus.Controls.Add(this.lblIdLabel,      0, 1);
+            this.tblStatus.Controls.Add(this.lblTunnelId,     1, 1);
+            this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
             // ── Ingress card
