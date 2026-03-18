@@ -17,13 +17,24 @@ namespace CloudflaredMonitor
 
         private void InitializeComponent()
         {
+            // Sidebar controls
             this.pnlSidebar      = new Panel();
             this.oolioLogo       = new OolioLogoBrand();
             this.btnRefresh      = new ModernButton();
             this.btnRepair       = new ModernButton();
             this.btnExport       = new ModernButton();
+            this.btnRetrieve     = new ModernButton();
             this.chkReinstall    = new CheckBox();
+            // Main area
             this.pnlMain         = new Panel();
+            // Token card
+            this.pnlTokenCard    = new RoundedPanel();
+            this.lblTokenTitle   = new Label();
+            this.lblTokenHint    = new Label();
+            this.txtApiToken     = new TextBox();
+            this.btnTestToken    = new Button();
+            this.chkShowToken    = new CheckBox();
+            // Status card
             this.pnlStatusCard   = new RoundedPanel();
             this.lblCardTitle    = new Label();
             this.tblStatus       = new TableLayoutPanel();
@@ -35,23 +46,21 @@ namespace CloudflaredMonitor
             this.lblTunnelId     = new Label();
             this.lblRemoteLabel  = new Label();
             this.lblRemoteStatus = new Label();
+            // Ingress card
             this.pnlIngressCard  = new RoundedPanel();
             this.lblIngressTitle = new Label();
             this.lstIngress      = new ListBox();
+            // Log card
             this.pnlLogCard      = new RoundedPanel();
             this.lblLogTitle     = new Label();
             this.txtLog          = new TextBox();
 
             this.pnlSidebar.SuspendLayout();
             this.pnlMain.SuspendLayout();
-            this.pnlStatusCard.SuspendLayout();
-            this.tblStatus.SuspendLayout();
-            this.pnlIngressCard.SuspendLayout();
-            this.pnlLogCard.SuspendLayout();
             this.SuspendLayout();
 
-            // ── Sidebar - fix #3: charcoal #3f4555
-            this.pnlSidebar.BackColor = Color.FromArgb(63, 69, 85);
+            // ── Sidebar - fix #1: #272e3f
+            this.pnlSidebar.BackColor = Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock = DockStyle.Left;
             this.pnlSidebar.Width = 224;
 
@@ -69,35 +78,96 @@ namespace CloudflaredMonitor
             this.btnRepair.Size = new Size(200, 40);
             this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
 
-            this.btnExport.Text = "↓  Export Diagnostics";
-            this.btnExport.Location = new Point(12, 226);
+            this.btnRetrieve.Text = "↓  Retrieve Tunnel Details";
+            this.btnRetrieve.Location = new Point(12, 226);
+            this.btnRetrieve.Size = new Size(200, 40);
+            this.btnRetrieve.Enabled = false;
+            this.btnRetrieve.Click += new EventHandler(this.btnRetrieve_Click);
+
+            this.btnExport.Text = "∙  Export Diagnostics";
+            this.btnExport.Location = new Point(12, 274);
             this.btnExport.Size = new Size(200, 40);
             this.btnExport.Click += new EventHandler(this.btnExport_Click);
 
-            this.chkReinstall.Text = "Reinstall MSI";
-            this.chkReinstall.Font = new Font("Segoe UI", 9f);
-            this.chkReinstall.ForeColor = Color.FromArgb(200, 210, 220);
-            this.chkReinstall.Location = new Point(16, 280);
-            this.chkReinstall.Size = new Size(168, 22);
+            this.chkReinstall.Text = "Reinstall MSI on repair";
+            this.chkReinstall.Font = new Font("Segoe UI", 8.5f);
+            this.chkReinstall.ForeColor = Color.FromArgb(180, 190, 210);
+            this.chkReinstall.Location = new Point(16, 328);
+            this.chkReinstall.Size = new Size(196, 22);
             this.chkReinstall.Checked = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
-            this.pnlSidebar.Controls.Add(this.chkReinstall);
-            this.pnlSidebar.Controls.Add(this.btnExport);
-            this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.btnRefresh);
+            this.pnlSidebar.Controls.Add(this.btnRepair);
+            this.pnlSidebar.Controls.Add(this.btnRetrieve);
+            this.pnlSidebar.Controls.Add(this.btnExport);
+            this.pnlSidebar.Controls.Add(this.chkReinstall);
 
-            // ── Main panel - fix #1: padding creates gap on all 4 sides
+            // ── Main panel
             this.pnlMain.Dock = DockStyle.Fill;
             this.pnlMain.BackColor = Color.FromArgb(226, 232, 240);
             this.pnlMain.Padding = new Padding(12, 12, 12, 12);
             this.pnlMain.Controls.Add(this.pnlLogCard);
             this.pnlMain.Controls.Add(this.pnlIngressCard);
             this.pnlMain.Controls.Add(this.pnlStatusCard);
+            this.pnlMain.Controls.Add(this.pnlTokenCard);
 
-            // ── Status card - fix #1: Right anchor means it scales but always has gap on right
-            this.pnlStatusCard.Location = new Point(12, 12);
+            // ── Token card (top of main area)
+            this.pnlTokenCard.Location = new Point(12, 12);
+            this.pnlTokenCard.Size = new Size(780, 72);
+            this.pnlTokenCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+            this.lblTokenTitle.Text = "Cloudflare API Token";
+            this.lblTokenTitle.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold);
+            this.lblTokenTitle.ForeColor = Color.FromArgb(71, 85, 105);
+            this.lblTokenTitle.Location = new Point(14, 10);
+            this.lblTokenTitle.Size = new Size(160, 18);
+            this.lblTokenTitle.BackColor = Color.Transparent;
+
+            this.lblTokenHint.Text = "ⓘ LastPass / HubSpot → Company Record → Network & Environment";
+            this.lblTokenHint.Font = new Font("Segoe UI", 7.5f);
+            this.lblTokenHint.ForeColor = Color.FromArgb(103, 58, 182);
+            this.lblTokenHint.Location = new Point(178, 12);
+            this.lblTokenHint.Size = new Size(380, 16);
+            this.lblTokenHint.BackColor = Color.Transparent;
+
+            this.txtApiToken.Location = new Point(14, 34);
+            this.txtApiToken.Size = new Size(560, 24);
+            this.txtApiToken.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            this.txtApiToken.UseSystemPasswordChar = true;
+            this.txtApiToken.Font = new Font("Cascadia Mono", 8.5f);
+            this.txtApiToken.BorderStyle = BorderStyle.FixedSingle;
+            this.txtApiToken.BackColor = Color.FromArgb(248, 250, 252);
+
+            this.chkShowToken.Text = "Show";
+            this.chkShowToken.Font = new Font("Segoe UI", 8f);
+            this.chkShowToken.ForeColor = Color.FromArgb(100, 116, 139);
+            this.chkShowToken.Location = new Point(582, 36);
+            this.chkShowToken.Size = new Size(56, 18);
+            this.chkShowToken.BackColor = Color.Transparent;
+            this.chkShowToken.FlatStyle = FlatStyle.Flat;
+            this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
+
+            this.btnTestToken.Text = "Test Token";
+            this.btnTestToken.Location = new Point(644, 30);
+            this.btnTestToken.Size = new Size(96, 28);
+            this.btnTestToken.FlatStyle = FlatStyle.Flat;
+            this.btnTestToken.BackColor = Color.FromArgb(103, 58, 182);
+            this.btnTestToken.ForeColor = Color.White;
+            this.btnTestToken.Font = new Font("Segoe UI", 8.5f);
+            this.btnTestToken.FlatAppearance.BorderSize = 0;
+            this.btnTestToken.Cursor = Cursors.Hand;
+            this.btnTestToken.Click += new EventHandler(this.btnTestToken_Click);
+
+            this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
+            this.pnlTokenCard.Controls.Add(this.lblTokenHint);
+            this.pnlTokenCard.Controls.Add(this.txtApiToken);
+            this.pnlTokenCard.Controls.Add(this.chkShowToken);
+            this.pnlTokenCard.Controls.Add(this.btnTestToken);
+
+            // ── Status card
+            this.pnlStatusCard.Location = new Point(12, 96);
             this.pnlStatusCard.Size = new Size(780, 148);
             this.pnlStatusCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -110,7 +180,6 @@ namespace CloudflaredMonitor
             this.lblCardTitle.Size = new Size(200, 22);
             this.lblCardTitle.BackColor = Color.Transparent;
 
-            // fix #3: tight fixed columns so pairs sit next to each other
             this.tblStatus.Location = new Point(16, 40);
             this.tblStatus.Size = new Size(748, 92);
             this.tblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -127,10 +196,8 @@ namespace CloudflaredMonitor
                 lbl.Text = text;
                 lbl.Font = isKey ? new Font("Segoe UI", 8.5f) : new Font("Segoe UI Semibold", 9.5f, FontStyle.Bold);
                 lbl.ForeColor = isKey ? Color.FromArgb(71, 85, 105) : Color.FromArgb(15, 23, 42);
-                lbl.Dock = DockStyle.Fill;
-                lbl.TextAlign = ContentAlignment.MiddleLeft;
-                lbl.AutoSize = false;
-                lbl.BackColor = Color.Transparent;
+                lbl.Dock = DockStyle.Fill; lbl.TextAlign = ContentAlignment.MiddleLeft;
+                lbl.AutoSize = false; lbl.BackColor = Color.Transparent;
             };
             styleLabel(this.lblServiceLabel, "Service",       true);
             styleLabel(this.lblService,      "-",             false);
@@ -151,8 +218,8 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
             // ── Ingress card
-            this.pnlIngressCard.Location = new Point(12, 172);
-            this.pnlIngressCard.Size = new Size(780, 160);
+            this.pnlIngressCard.Location = new Point(12, 256);
+            this.pnlIngressCard.Size = new Size(780, 148);
             this.pnlIngressCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.lstIngress);
@@ -165,7 +232,7 @@ namespace CloudflaredMonitor
             this.lblIngressTitle.BackColor = Color.Transparent;
 
             this.lstIngress.Location = new Point(16, 40);
-            this.lstIngress.Size = new Size(748, 104);
+            this.lstIngress.Size = new Size(748, 92);
             this.lstIngress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.lstIngress.Font = new Font("Cascadia Mono", 8.5f);
             this.lstIngress.BorderStyle = BorderStyle.None;
@@ -174,7 +241,7 @@ namespace CloudflaredMonitor
             this.lstIngress.ItemHeight = 20;
 
             // ── Log card
-            this.pnlLogCard.Location = new Point(12, 344);
+            this.pnlLogCard.Location = new Point(12, 416);
             this.pnlLogCard.Size = new Size(780, 200);
             this.pnlLogCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
@@ -190,8 +257,7 @@ namespace CloudflaredMonitor
             this.txtLog.Location = new Point(16, 40);
             this.txtLog.Size = new Size(748, 144);
             this.txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.txtLog.Multiline = true;
-            this.txtLog.ReadOnly = true;
+            this.txtLog.Multiline = true; this.txtLog.ReadOnly = true;
             this.txtLog.ScrollBars = ScrollBars.Vertical;
             this.txtLog.Font = new Font("Cascadia Mono", 8.5f);
             this.txtLog.BorderStyle = BorderStyle.None;
@@ -201,8 +267,8 @@ namespace CloudflaredMonitor
             // ── Form
             this.AutoScaleDimensions = new SizeF(7f, 15f);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(1040, 660);
-            this.MinimumSize = new Size(880, 600);
+            this.ClientSize = new Size(1040, 700);
+            this.MinimumSize = new Size(900, 640);
             this.Controls.Add(this.pnlMain);
             this.Controls.Add(this.pnlSidebar);
             this.Name = "MainForm";
@@ -212,20 +278,24 @@ namespace CloudflaredMonitor
 
             this.pnlSidebar.ResumeLayout(false);
             this.pnlMain.ResumeLayout(false);
-            this.pnlStatusCard.ResumeLayout(false);
-            this.tblStatus.ResumeLayout(false);
-            this.pnlIngressCard.ResumeLayout(false);
-            this.pnlLogCard.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
+        // Fields
         private Panel            pnlSidebar;
         private OolioLogoBrand   oolioLogo;
         private ModernButton     btnRefresh;
         private ModernButton     btnRepair;
+        private ModernButton     btnRetrieve;
         private ModernButton     btnExport;
         private CheckBox         chkReinstall;
         private Panel            pnlMain;
+        private RoundedPanel     pnlTokenCard;
+        private Label            lblTokenTitle;
+        private Label            lblTokenHint;
+        private TextBox          txtApiToken;
+        private CheckBox         chkShowToken;
+        private Button           btnTestToken;
         private RoundedPanel     pnlStatusCard;
         private Label            lblCardTitle;
         private TableLayoutPanel tblStatus;
