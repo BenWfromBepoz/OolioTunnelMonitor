@@ -5,39 +5,43 @@ using System.Text;
 namespace CloudflaredMonitor.Services
 {
     /// <summary>
-    ///  Simple file-based logger.  Logs are written to a directory under
-    ///  ProgramData so they persist across sessions and can be collected for
-    ///  support.  The log file name includes the date and a standard prefix.
+    ///  Rolling daily log file stored under ProgramData.
+    ///  One file per day named tool-yy-mm-dd.log.
+    ///  Timestamp format on each line: yy-mm-dd:hh-mm-ss (24-hr local time).
+    ///  All activity is automatically written here - no manual export needed.
     /// </summary>
     internal sealed class FileLogger
     {
         private readonly string _logDir;
-        private readonly string _logFile;
         private readonly object _lock = new object();
 
         public FileLogger()
         {
-            // Use ProgramData\Bepoz\CloudflaredMonitor\logs
-            var baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "logs");
-            Directory.CreateDirectory(baseDir);
-            _logDir = baseDir;
-            _logFile = Path.Combine(_logDir, $"tool-{DateTime.Now:yyyy-MM-dd}.log");
+            _logDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "Bepoz", "CloudflaredMonitor", "logs");
+            Directory.CreateDirectory(_logDir);
         }
 
         public string LogDirectory => _logDir;
-        public string LogFilePath => _logFile;
 
-        public void Info(string message) => Write("INFO", message);
-        public void Warn(string message) => Write("WARN", message);
+        // Current log file path - recalculated each call so it rolls over at midnight
+        public string LogFilePath =>
+            Path.Combine(_logDir, $"tool-{DateTime.Now:yy-MM-dd}.log");
+
+        public void Info(string message)  => Write("INFO",  message);
+        public void Warn(string message)  => Write("WARN",  message);
         public void Error(string message) => Write("ERROR", message);
         public void Error(string message, Exception ex) => Write("ERROR", message + Environment.NewLine + ex.ToString());
 
         private void Write(string level, string message)
         {
-            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{level}] {message}{Environment.NewLine}";
+            // Format: yy-mm-dd:hh-mm-ss [LEVEL] message
+            var ts   = DateTime.Now.ToString("yy-MM-dd:HH-mm-ss");
+            var line = $"{ts} [{level}] {message}{Environment.NewLine}";
             lock (_lock)
             {
-                File.AppendAllText(_logFile, line, Encoding.UTF8);
+                File.AppendAllText(LogFilePath, line, Encoding.UTF8);
             }
         }
     }
