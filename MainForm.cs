@@ -26,12 +26,27 @@ namespace CloudflaredMonitor
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            float scale = Math.Min(Width / 926f, Height / 242f);
+
+            // Light grey rounded background pill
+            const int radius = 8;
+            int d = radius * 2;
+            using var bgPath = new GraphicsPath();
+            bgPath.AddArc(0,         0,          d, d, 180, 90);
+            bgPath.AddArc(Width - d, 0,          d, d, 270, 90);
+            bgPath.AddArc(Width - d, Height - d, d, d,   0, 90);
+            bgPath.AddArc(0,         Height - d, d, d,  90, 90);
+            bgPath.CloseFigure();
+            using var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249));
+            g.FillPath(bgBrush, bgPath);
+
+            // Oolio lettermark in brand purple, centred
+            float scale   = Math.Min((Width - 16) / 926f, (Height - 12) / 242f);
+            float offsetX = (Width  - 926f * scale) / 2f;
             float offsetY = (Height - 242f * scale) / 2f;
-            g.TranslateTransform(0, offsetY);
+            g.TranslateTransform(offsetX, offsetY);
             g.ScaleTransform(scale, scale);
-            using var path = BuildOolioPath();
-            using var brush = new SolidBrush(Color.White);
+            using var path  = BuildOolioPath();
+            using var brush = new SolidBrush(Color.FromArgb(103, 58, 182));
             g.FillPath(brush, path);
             g.ResetTransform();
         }
