@@ -13,8 +13,6 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // ── Oolio logo brand control ────────────────────────────────────────────
-
     internal sealed class OolioLogoBrand : Control
     {
         private const string Subtitle = "ZeroTrust Tunnel Monitor";
@@ -59,8 +57,6 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // ── Custom button ─────────────────────────────────────────────────────────
-
     internal sealed class ModernButton : Button
     {
         private static readonly Color _normal = Color.FromArgb(45, 52, 68);
@@ -91,8 +87,6 @@ namespace CloudflaredMonitor
         private static GraphicsPath RR(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
-
-    // ── Rounded card panel ────────────────────────────────────────────────
 
     internal sealed class RoundedPanel : Panel
     {
@@ -129,55 +123,30 @@ namespace CloudflaredMonitor
         { using var p = new GraphicsPath(FillMode.Alternate); p.AddEllipse(ox, oy, ow, oh); p.AddEllipse(ox + ins, oy + hIns, ow - ins * 2, oh - hIns * 2); g.FillPath(b, p); }
     }
 
-    // ── Ingress item model ─────────────────────────────────────────────────────────
-
     internal sealed class IngressItem
     {
         public string CloudEndpoint { get; }
         public string LocalEndpoint { get; }
         public IngressItem(string cloud, string local) { CloudEndpoint = cloud; LocalEndpoint = local; }
-
-        /// <summary>
-        /// Returns true if this is the Cloudflare catch-all rule (http_status:NNN or
-        /// a wildcard hostname with no real service).  These are not useful to
-        /// show technicians so we filter them out.
-        /// </summary>
         public bool IsCatchAll =>
             LocalEndpoint.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase) ||
             (CloudEndpoint == "*" && string.IsNullOrWhiteSpace(LocalEndpoint));
     }
 
-    // ── Ingress helper ───────────────────────────────────────────────────────────────
-
     internal static class IngressHelper
     {
-        /// <summary>
-        /// Build a display-ready IngressItem from raw hostname/path/service strings.
-        /// - Appends /{path} to the hostname when a non-wildcard path is configured.
-        /// - Returns null for catch-all rules (http_status:NNN or bare *).
-        /// </summary>
         public static IngressItem? Build(string? hostname, string? path, string? service)
         {
-            // Skip the Cloudflare catch-all rule entirely
             string svc = service ?? "";
-            if (svc.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase))
-                return null;
-
+            if (svc.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase)) return null;
             string host = hostname ?? "";
-            // Skip bare wildcard rows with no real service
-            if (host == "*" && string.IsNullOrWhiteSpace(svc))
-                return null;
-
-            // Append path to hostname if it's a real path (not * and not empty)
-            string cloudEndpoint = host;
+            if (host == "*" && string.IsNullOrWhiteSpace(svc)) return null;
+            string cloud = host;
             if (!string.IsNullOrWhiteSpace(path) && path != "*")
-                cloudEndpoint = host.TrimEnd('/') + "/" + path.TrimStart('/');
-
-            return new IngressItem(cloudEndpoint, svc);
+                cloud = host.TrimEnd('/') + "/" + path.TrimStart('/');
+            return new IngressItem(cloud, svc);
         }
     }
-
-    // ── Main form ─────────────────────────────────────────────────────────────────
 
     public partial class MainForm : Form
     {
@@ -191,7 +160,6 @@ namespace CloudflaredMonitor
         private static readonly Color _red   = Color.FromArgb(220, 38, 38);
         private static readonly Color _amber = Color.FromArgb(217, 119, 6);
         private static readonly Color _slate = Color.FromArgb(100, 116, 139);
-
         private const string AppVersion     = "1.0.0";
         private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/main/version.json";
 
@@ -203,8 +171,8 @@ namespace CloudflaredMonitor
 
         private static string Ts() => DateTime.Now.ToString("yy-MM-dd:HH-mm-ss");
 
-        private void LogInfo(string message)  { AppendLog($"{Ts()} {message}");          _logger.Info(message); }
-        private void LogWarn(string message)  { AppendLog($"{Ts()} WARN: {message}");    _logger.Warn(message); }
+        private void LogInfo(string message)  { AppendLog($"{Ts()} {message}");        _logger.Info(message); }
+        private void LogWarn(string message)  { AppendLog($"{Ts()} WARN: {message}");  _logger.Warn(message); }
         private void LogError(string message, Exception? ex = null)
         {
             string detail = ex == null ? message : $"{message} - {ex.Message}";
@@ -219,19 +187,17 @@ namespace CloudflaredMonitor
             else txtLog.AppendText(line + Environment.NewLine);
         }
 
-        private static Color BadgeColour(string? value, bool isService = false)
+        private static Color BadgeColour(string? v, bool svc = false)
         {
-            if (string.IsNullOrWhiteSpace(value) || value == "-") return _slate;
-            var v = value.ToLowerInvariant();
-            if (isService) return v == "running" ? _green : v == "stopped" ? _red : _amber;
-            return v is "healthy" or "active" or "connected" ? _green : v is "inactive" or "degraded" ? _amber : _slate;
+            if (string.IsNullOrWhiteSpace(v) || v == "-") return _slate;
+            var s = v.ToLowerInvariant();
+            if (svc) return s == "running" ? _green : s == "stopped" ? _red : _amber;
+            return s is "healthy" or "active" or "connected" ? _green : s is "inactive" or "degraded" ? _amber : _slate;
         }
         private void ApplyBadge(Label lbl, string text, bool isService = false) { lbl.Text = text; lbl.ForeColor = BadgeColour(text, isService); }
-
         private string GetToken() => txtApiToken.Text.Trim();
         private bool   HasToken() => !string.IsNullOrWhiteSpace(txtApiToken.Text);
 
-        // Populate the ListView with ingress items, filtering out catch-all rules
         private void PopulateIngress(IEnumerable<IngressItem> items)
         {
             lstIngress.Items.Clear();
@@ -250,32 +216,28 @@ namespace CloudflaredMonitor
             catch (Exception ex) { LogError("Could not open log folder", ex); }
         }
 
-        // ── CHECK FOR UPDATES
         public async Task CheckForUpdatesAsync(bool silent = false)
         {
             try
             {
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-                var json    = await http.GetStringAsync(VersionJsonUrl);
+                var json = await http.GetStringAsync(VersionJsonUrl);
                 using var doc = JsonDocument.Parse(json);
-                var root    = doc.RootElement;
-                string latest      = root.TryGetProperty("version",     out var v) ? v.GetString() ?? AppVersion : AppVersion;
-                string downloadUrl = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "";
+                var root = doc.RootElement;
+                string latest = root.TryGetProperty("version", out var v) ? v.GetString() ?? AppVersion : AppVersion;
+                string url    = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "";
                 if (latest != AppVersion)
                 {
                     LogInfo($"Update available: v{latest} (current: v{AppVersion})");
-                    var result = MessageBox.Show(this,
-                        $"A new version is available: v{latest}\nCurrent: v{AppVersion}\n\nOpen download page?",
-                        "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
-                    if (result == DialogResult.Yes && !string.IsNullOrWhiteSpace(downloadUrl))
-                        Process.Start(new ProcessStartInfo(downloadUrl) { UseShellExecute = true });
+                    if (MessageBox.Show(this, $"New version v{latest} available.\nOpen download page?",
+                        "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes && !string.IsNullOrWhiteSpace(url))
+                        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
-                else if (!silent) { LogInfo($"Up to date (v{AppVersion})"); }
+                else if (!silent) LogInfo($"Up to date (v{AppVersion})");
             }
             catch (Exception ex) { if (!silent) LogWarn($"Update check failed: {ex.Message}"); }
         }
 
-        // ── TEST TOKEN
         public async Task TestTokenAsync()
         {
             if (!HasToken()) { LogWarn("No API token entered."); return; }
@@ -284,24 +246,21 @@ namespace CloudflaredMonitor
             try
             {
                 var api = new CloudflareApi(GetToken());
-                var tunnelId = _currentStatus?.TunnelId;
+                var tid = _currentStatus?.TunnelId;
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                if (tunnelId != null) { var t = await api.GetTunnelAsync(tunnelId, cts.Token); LogInfo($"Token OK (read) – {t?.Name ?? tunnelId}"); }
-                else { LogInfo("Token appears valid. Check Service Status first."); }
-                try { if (tunnelId != null) { using var c2 = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tunnelId, c2.Token); LogInfo("Token scope: READ + WRITE"); } }
+                if (tid != null) { var t = await api.GetTunnelAsync(tid, cts.Token); LogInfo($"Token OK (read) - {t?.Name ?? tid}"); }
+                else { LogInfo("Token valid. Check Service Status first to associate with a tunnel."); }
+                try { if (tid != null) { using var c2 = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tid, c2.Token); LogInfo("Token scope: READ + WRITE"); } }
                 catch { LogInfo("Token scope: READ ONLY"); }
             }
             catch (Exception ex) { LogError("Token test failed", ex); }
             finally { btnTestToken.Enabled = true; }
         }
 
-        // ── CHECK SERVICE STATUS
+        // CHECK SERVICE STATUS - only disables btnRefresh while running, nothing else
         public async Task RefreshStatusAsync()
         {
-            btnRefresh.Enabled      = false;
-            btnRepair.Enabled       = false;
-            btnRetrieve.Enabled     = false;
-            btnTunnelStatus.Enabled = false;
+            btnRefresh.Enabled = false;
             lstIngress.Items.Clear();
             try
             {
@@ -310,17 +269,12 @@ namespace CloudflaredMonitor
                 _currentStatus = status;
                 ApplyBadge(lblService, status.ServiceState, isService: true);
                 lblTunnelId.Text = status.TunnelId ?? "-";
-
                 if (status.TunnelId != null)
                 {
                     var jsonPath = TunnelDetailsPath(status.TunnelId);
                     if (File.Exists(jsonPath)) await LoadTunnelDetailsFromJsonAsync(jsonPath);
                 }
-
                 if (!string.IsNullOrWhiteSpace(status.DiagnosticsNote)) LogInfo(status.DiagnosticsNote!);
-                btnRepair.Enabled       = status.TunnelId != null;
-                btnRetrieve.Enabled     = status.TunnelId != null;
-                btnTunnelStatus.Enabled = status.TunnelId != null;
                 LogInfo("Service check complete.");
             }
             catch (Exception ex) { LogError("Service check failed", ex); }
@@ -341,16 +295,16 @@ namespace CloudflaredMonitor
                     var items = new List<IngressItem>();
                     foreach (var route in routes.EnumerateArray())
                     {
-                        string host = route.TryGetProperty("Hostname", out var h) ? h.GetString() ?? "" : "";
-                        string path = route.TryGetProperty("Path",     out var p) ? p.GetString() ?? "" : "";
-                        string svc  = route.TryGetProperty("Service",  out var s) ? s.GetString() ?? "" : "";
-                        var item = IngressHelper.Build(host, path, svc);
+                        string h = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "" : "";
+                        string p = route.TryGetProperty("Path",     out var pp) ? pp.GetString() ?? "" : "";
+                        string s = route.TryGetProperty("Service",  out var sp) ? sp.GetString() ?? "" : "";
+                        var item = IngressHelper.Build(h, p, s);
                         if (item != null) items.Add(item);
                     }
                     PopulateIngress(items);
                 }
             }
-            catch { /* stale/corrupt JSON */ }
+            catch { }
         }
 
         private Task<TunnelServiceStatus> GetLocalStatusAsync()
@@ -366,12 +320,10 @@ namespace CloudflaredMonitor
             return Task.FromResult(status);
         }
 
-        // ── CHECK TUNNEL STATUS
         public async Task CheckTunnelStatusAsync()
         {
-            if (_currentStatus?.TunnelId == null) { LogWarn("Check Service Status first."); return; }
+            if (_currentStatus?.TunnelId == null) { LogWarn("Run Check Service Status first."); return; }
             var tunnelId = _currentStatus.TunnelId;
-            btnTunnelStatus.Enabled = false;
             try
             {
                 var jsonPath = TunnelDetailsPath(tunnelId);
@@ -388,83 +340,92 @@ namespace CloudflaredMonitor
                     {
                         lblTunnelName.Text = tunnel.Name ?? "-";
                         ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-");
-                        LogInfo($"Tunnel: {tunnel.Name}  Remote status: {tunnel.Status}");
-                        var existingJson = await File.ReadAllTextAsync(jsonPath);
-                        using var existingDoc = JsonDocument.Parse(existingJson);
-                        var routesList = new List<object>();
-                        if (existingDoc.RootElement.TryGetProperty("Routes", out var er))
-                            foreach (var route in er.EnumerateArray())
+                        LogInfo($"Tunnel: {tunnel.Name}  Status: {tunnel.Status}");
+                        var existing = await File.ReadAllTextAsync(jsonPath);
+                        using var ed = JsonDocument.Parse(existing);
+                        var rl = new List<object>();
+                        if (ed.RootElement.TryGetProperty("Routes", out var er))
+                            foreach (var rt in er.EnumerateArray())
                             {
-                                string h = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "*" : "*";
-                                string p = route.TryGetProperty("Path",     out var pp) ? pp.GetString() ?? "*" : "*";
-                                string s = route.TryGetProperty("Service",  out var sp) ? sp.GetString() ?? "-" : "-";
-                                routesList.Add(new { Hostname = h, Path = p, Service = s });
+                                string h = rt.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "*" : "*";
+                                string p = rt.TryGetProperty("Path",     out var pp) ? pp.GetString() ?? "*" : "*";
+                                string s = rt.TryGetProperty("Service",  out var sp) ? sp.GetString() ?? "-" : "-";
+                                rl.Add(new { Hostname = h, Path = p, Service = s });
                             }
-                        var updated = new { TunnelId = tunnelId, TunnelName = tunnel.Name, Status = tunnel.Status, Retrieved = DateTime.UtcNow.ToString("o"), Routes = routesList };
-                        await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(updated, new JsonSerializerOptions { WriteIndented = true }));
+                        await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(
+                            new { TunnelId = tunnelId, TunnelName = tunnel.Name, Status = tunnel.Status, Retrieved = DateTime.UtcNow.ToString("o"), Routes = rl },
+                            new JsonSerializerOptions { WriteIndented = true }));
                     }
                 }
-                else { LogInfo("No token – showing cached data only."); }
+                else LogInfo("No token - showing cached data only.");
             }
             catch (Exception ex) { LogError("Check tunnel status failed", ex); }
-            finally { btnTunnelStatus.Enabled = true; }
         }
 
-        // ── RETRIEVE TUNNEL DETAILS
         public async Task RetrieveTunnelDetailsAsync()
         {
             if (!HasToken())                      { LogWarn("Enter an API token first."); return; }
-            if (_currentStatus?.TunnelId == null) { LogWarn("No tunnel ID – check service status first."); return; }
-            btnRetrieve.Enabled = false;
+            if (_currentStatus?.TunnelId == null) { LogWarn("Run Check Service Status first."); return; }
             try
             {
-                var api = new CloudflareApi(GetToken()); var tunnelId = _currentStatus.TunnelId;
-                LogInfo($"Retrieving tunnel details for {tunnelId}...");
-                using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                var tunnel = await api.GetTunnelAsync(tunnelId, cts1.Token);
+                var api = new CloudflareApi(GetToken()); var tid = _currentStatus.TunnelId;
+                LogInfo($"Retrieving tunnel details for {tid}...");
+                using var c1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                var tunnel = await api.GetTunnelAsync(tid, c1.Token);
                 LogInfo($"Tunnel: {tunnel?.Name ?? "-"}  Status: {tunnel?.Status ?? "-"}");
-                using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                var config  = await api.GetTunnelConfigAsync(tunnelId, cts2.Token);
+                using var c2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                var config  = await api.GetTunnelConfigAsync(tid, c2.Token);
                 var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
-
                 LogInfo($"Published routes ({ingress.Count}):");
                 var items = new List<IngressItem>();
                 foreach (var rule in ingress)
                 {
                     var item = IngressHelper.Build(rule.Hostname, rule.Path, rule.Service);
                     if (item == null) continue;
-                    LogInfo($"  {item.CloudEndpoint} → {item.LocalEndpoint}");
+                    LogInfo($"  {item.CloudEndpoint} -> {item.LocalEndpoint}");
                     items.Add(item);
                 }
                 PopulateIngress(items);
                 lblTunnelName.Text = tunnel?.Name ?? "-";
                 ApplyBadge(lblRemoteStatus, tunnel?.Status ?? "-");
-
                 var outDir  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "tunnel-details");
                 Directory.CreateDirectory(outDir);
-                var outPath = Path.Combine(outDir, $"{tunnelId}.json");
-                // Save all routes including catch-all so they can be preserved in later status updates
-                var export  = new { TunnelId = tunnelId, TunnelName = tunnel?.Name, Status = tunnel?.Status, Retrieved = DateTime.UtcNow.ToString("o"), Routes = ingress.ConvertAll(r => new { r.Hostname, Path = r.Path ?? "*", r.Service }) };
-                await File.WriteAllTextAsync(outPath, JsonSerializer.Serialize(export, new JsonSerializerOptions { WriteIndented = true }));
+                var outPath = Path.Combine(outDir, $"{tid}.json");
+                await File.WriteAllTextAsync(outPath, JsonSerializer.Serialize(
+                    new { TunnelId = tid, TunnelName = tunnel?.Name, Status = tunnel?.Status, Retrieved = DateTime.UtcNow.ToString("o"), Routes = ingress.ConvertAll(r => new { r.Hostname, Path = r.Path ?? "*", r.Service }) },
+                    new JsonSerializerOptions { WriteIndented = true }));
                 LogInfo($"Saved to: {outPath}");
             }
             catch (Exception ex) { LogError("Retrieve tunnel details failed", ex); }
-            finally { btnRetrieve.Enabled = true; }
         }
 
-        // ── REPAIR
         public async Task RepairAsync()
         {
-            if (_currentStatus?.TunnelId == null) { LogError("No tunnel ID. Check service status first."); return; }
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
-            if (MessageBox.Show(this, "This will stop the cloudflared service and reinstall it. Continue?",
+            if (MessageBox.Show(this, "This will reinstall the cloudflared service. Continue?",
                 "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) { LogInfo("Repair cancelled."); return; }
-
             var api = new CloudflareApi(GetToken());
-            btnRepair.Enabled = false; btnRefresh.Enabled = false; btnRetrieve.Enabled = false; btnTunnelStatus.Enabled = false;
+            btnRepair.Enabled = false;
             try
             {
-                var tunnelId = _currentStatus.TunnelId;
+                // Try to get tunnel ID from current status or saved JSON
+                string? tunnelId = _currentStatus?.TunnelId;
+                if (tunnelId == null)
+                {
+                    // Check if there is exactly one saved JSON we can use
+                    var detailsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "tunnel-details");
+                    if (Directory.Exists(detailsDir))
+                    {
+                        var files = Directory.GetFiles(detailsDir, "*.json");
+                        if (files.Length == 1)
+                        {
+                            tunnelId = Path.GetFileNameWithoutExtension(files[0]);
+                            LogInfo($"Using cached tunnel ID: {tunnelId}");
+                        }
+                    }
+                }
+                if (tunnelId == null) { LogError("No tunnel ID found. Cannot repair."); return; }
+
                 LogInfo($"Repairing tunnel {tunnelId}...");
                 LogInfo("Stopping service..."); _serviceManager.StopServiceBestEffort();
                 LogInfo("Killing processes..."); _serviceManager.KillCloudflaredProcess();
@@ -473,31 +434,18 @@ namespace CloudflaredMonitor
                 if (chkReinstall.Checked)
                 {
                     LogInfo("Downloading cloudflared MSI...");
-                    using var dlCts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-                    var msiPath = await _installer.DownloadMsiAsync(dlCts.Token);
-                    LogInfo("Installing MSI (this may take up to 60 seconds)...");
-                    try
-                    {
-                        _installer.InstallMsi(msiPath);
-                    }
+                    using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                    var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
+                    LogInfo("Installing MSI (may take up to 60 seconds)...");
+                    try { _installer.InstallMsi(msiPath); }
                     catch (InvalidOperationException msiEx) when (msiEx.Message.Contains("1603"))
-                    {
-                        // Exit code 1603 = fatal error during installation.
-                        // Often caused by a pending reboot or another installer running.
-                        throw new InvalidOperationException(
-                            "MSI install failed (exit code 1603). This usually means Windows has a " +
-                            "pending reboot or another installation is in progress. " +
-                            "Please reboot the machine and try again.", msiEx);
-                    }
-                    finally
-                    {
-                        try { File.Delete(msiPath); } catch { /* ignore cleanup failure */ }
-                    }
+                    { throw new InvalidOperationException("MSI failed (exit 1603) - pending reboot or another installer running. Reboot and try again.", msiEx); }
+                    finally { try { File.Delete(msiPath); } catch { } }
                 }
 
                 LogInfo("Locating cloudflared executable...");
                 var exe = _installer.FindCloudflaredExeOrThrow();
-                LogInfo("Requesting new tunnel token from Cloudflare API...");
+                LogInfo("Requesting new tunnel token...");
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
                     var newToken = await api.GetTunnelTokenAsync(tunnelId, cts.Token);
@@ -509,17 +457,7 @@ namespace CloudflaredMonitor
                 LogInfo("Repair complete."); await RefreshStatusAsync();
             }
             catch (Exception ex) { LogError("Repair failed", ex); }
-            finally
-            {
-                // Always re-enable buttons so the UI is never left frozen
-                if (!IsDisposed)
-                {
-                    btnRefresh.Enabled      = true;
-                    btnRepair.Enabled       = true;
-                    btnRetrieve.Enabled     = _currentStatus?.TunnelId != null;
-                    btnTunnelStatus.Enabled = _currentStatus?.TunnelId != null;
-                }
-            }
+            finally { btnRepair.Enabled = true; }
         }
 
         public void ExportDiagnostics()
@@ -527,7 +465,7 @@ namespace CloudflaredMonitor
             try
             {
                 if (_currentStatus == null) { MessageBox.Show(this, "Check service status first.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-                var lines = new List<string>(); foreach (ListViewItem item in lstIngress.Items) lines.Add($"{item.Text}  →  {item.SubItems[1].Text}");
+                var lines = new List<string>(); foreach (ListViewItem item in lstIngress.Items) lines.Add($"{item.Text}  ->  {item.SubItems[1].Text}");
                 var zipPath = _exporter.Export(_currentStatus, _uiLogs, lines);
                 MessageBox.Show(this, "Exported to:" + Environment.NewLine + zipPath, "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
