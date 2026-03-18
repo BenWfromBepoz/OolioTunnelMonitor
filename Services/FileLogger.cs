@@ -5,10 +5,9 @@ using System.Text;
 namespace CloudflaredMonitor.Services
 {
     /// <summary>
-    ///  Rolling daily log file stored under ProgramData.
-    ///  One file per day named tool-yy-mm-dd.log.
-    ///  Timestamp format on each line: yy-mm-dd:hh-mm-ss (24-hr local time).
-    ///  All activity is automatically written here - no manual export needed.
+    ///  Rolling daily log. One file per day named yymmdd_tunnelmonitor.log
+    ///  stored under ProgramData\Bepoz\CloudflaredMonitor\logs.
+    ///  Timestamp format: yy-MM-dd:HH-mm-ss (24-hr local time).
     /// </summary>
     internal sealed class FileLogger
     {
@@ -25,9 +24,9 @@ namespace CloudflaredMonitor.Services
 
         public string LogDirectory => _logDir;
 
-        // Current log file path - recalculated each call so it rolls over at midnight
+        // Filename: yymmdd_tunnelmonitor.log - recalculated each write so it rolls at midnight
         public string LogFilePath =>
-            Path.Combine(_logDir, $"tool-{DateTime.Now:yy-MM-dd}.log");
+            Path.Combine(_logDir, $"{DateTime.Now:yyMMdd}_tunnelmonitor.log");
 
         public void Info(string message)  => Write("INFO",  message);
         public void Warn(string message)  => Write("WARN",  message);
@@ -36,7 +35,6 @@ namespace CloudflaredMonitor.Services
 
         private void Write(string level, string message)
         {
-            // Format: yy-mm-dd:hh-mm-ss [LEVEL] message
             var ts   = DateTime.Now.ToString("yy-MM-dd:HH-mm-ss");
             var line = $"{ts} [{level}] {message}{Environment.NewLine}";
             lock (_lock)
