@@ -17,43 +17,47 @@ namespace CloudflaredMonitor
 
         private void InitializeComponent()
         {
-            this.pnlSidebar      = new Panel();
-            this.oolioLogo       = new OolioLogoBrand();
-            this.btnRefresh      = new ModernButton();
-            this.btnRetrieve     = new ModernButton();
-            this.btnOpenLogs     = new ModernButton();
-            this.btnRepair       = new ModernButton();
-            this.chkReinstall    = new CheckBox();
-            this.pnlMain         = new Panel();
-            this.pnlTokenCard    = new RoundedPanel();
-            this.lblTokenTitle   = new Label();
-            this.lblTokenHint    = new Label();
-            this.txtApiToken     = new TextBox();
-            this.chkShowToken    = new CheckBox();
-            this.btnTestToken    = new Button();
-            this.pnlStatusCard   = new RoundedPanel();
-            this.lblCardTitle    = new Label();
-            this.tblStatus       = new TableLayoutPanel();
-            this.lblServiceLabel = new Label();
-            this.lblService      = new Label();
-            this.lblNameLabel    = new Label();
-            this.lblTunnelName   = new Label();
-            this.lblIdLabel      = new Label();
-            this.lblTunnelId     = new Label();
-            this.lblRemoteLabel  = new Label();
-            this.lblRemoteStatus = new Label();
-            this.pnlIngressCard  = new RoundedPanel();
-            this.lblIngressTitle = new Label();
-            this.lstIngress      = new ListBox();
-            this.pnlLogCard      = new RoundedPanel();
-            this.lblLogTitle     = new Label();
-            this.txtLog          = new TextBox();
+            this.pnlSidebar       = new Panel();
+            this.oolioLogo        = new OolioLogoBrand();
+            this.btnRefresh       = new ModernButton();
+            this.btnTunnelStatus  = new ModernButton();
+            this.btnRetrieve      = new ModernButton();
+            this.btnOpenLogs      = new ModernButton();
+            this.btnRepair        = new ModernButton();
+            this.chkReinstall     = new CheckBox();
+            this.lblVersion       = new Label();
+            this.pnlMain          = new Panel();
+            this.pnlTokenCard     = new RoundedPanel();
+            this.lblTokenTitle    = new Label();
+            this.lblTokenHint     = new Label();
+            this.txtApiToken      = new TextBox();
+            this.chkShowToken     = new CheckBox();
+            this.btnTestToken     = new Button();
+            this.pnlStatusCard    = new RoundedPanel();
+            this.lblCardTitle     = new Label();
+            this.tblStatus        = new TableLayoutPanel();
+            this.lblServiceLabel  = new Label();
+            this.lblService       = new Label();
+            this.lblNameLabel     = new Label();
+            this.lblTunnelName    = new Label();
+            this.lblIdLabel       = new Label();
+            this.lblTunnelId      = new Label();
+            this.lblRemoteLabel   = new Label();
+            this.lblRemoteStatus  = new Label();
+            this.pnlIngressCard   = new RoundedPanel();
+            this.lblIngressTitle  = new Label();
+            this.lstIngress       = new ListView();
+            this.colCloud         = new ColumnHeader();
+            this.colLocal         = new ColumnHeader();
+            this.pnlLogCard       = new RoundedPanel();
+            this.lblLogTitle      = new Label();
+            this.txtLog           = new TextBox();
 
             this.pnlSidebar.SuspendLayout();
             this.pnlMain.SuspendLayout();
             this.SuspendLayout();
 
-            // ── Sidebar  #272e3f
+            // ── Sidebar
             this.pnlSidebar.BackColor = Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock = DockStyle.Left;
             this.pnlSidebar.Width = 224;
@@ -62,43 +66,59 @@ namespace CloudflaredMonitor
             this.oolioLogo.Size = new Size(200, 106);
             this.oolioLogo.BackColor = Color.Transparent;
 
-            // Menu order: Refresh, Retrieve, Open Logs, Repair, [checkbox]
-            this.btnRefresh.Text = "⟳  Refresh Service Status";
+            // Menu order: Check Service Status, Check Tunnel Status, Retrieve, Open Logs, Repair
+            this.btnRefresh.Text = "⟳  Check Service Status";
             this.btnRefresh.Location = new Point(12, 130);
             this.btnRefresh.Size = new Size(200, 40);
             this.btnRefresh.Click += new EventHandler(this.btnRefresh_Click);
 
+            this.btnTunnelStatus.Text = "○  Check Tunnel Status";
+            this.btnTunnelStatus.Location = new Point(12, 178);
+            this.btnTunnelStatus.Size = new Size(200, 40);
+            this.btnTunnelStatus.Enabled = false;
+            this.btnTunnelStatus.Click += new EventHandler(this.btnTunnelStatus_Click);
+
             this.btnRetrieve.Text = "↓  Retrieve Tunnel Details";
-            this.btnRetrieve.Location = new Point(12, 178);
+            this.btnRetrieve.Location = new Point(12, 226);
             this.btnRetrieve.Size = new Size(200, 40);
             this.btnRetrieve.Enabled = false;
             this.btnRetrieve.Click += new EventHandler(this.btnRetrieve_Click);
 
             this.btnOpenLogs.Text = "≡  Open Logfile Folder";
-            this.btnOpenLogs.Location = new Point(12, 226);
+            this.btnOpenLogs.Location = new Point(12, 274);
             this.btnOpenLogs.Size = new Size(200, 40);
             this.btnOpenLogs.Click += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnRepair.Text = "⚙  Repair Tunnel";
-            this.btnRepair.Location = new Point(12, 274);
+            this.btnRepair.Location = new Point(12, 322);
             this.btnRepair.Size = new Size(200, 40);
             this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
 
-            // Reinstall checkbox sits directly under Repair button
             this.chkReinstall.Text = "Reinstall MSI on repair";
             this.chkReinstall.Font = new Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location = new Point(20, 320);
+            this.chkReinstall.Location = new Point(20, 368);
             this.chkReinstall.Size = new Size(196, 20);
             this.chkReinstall.Checked = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
+            // Version label - bottom left of sidebar
+            this.lblVersion.Text = "v1.0.0";
+            this.lblVersion.Font = new Font("Segoe UI", 7.5f);
+            this.lblVersion.ForeColor = Color.FromArgb(100, 115, 140);
+            this.lblVersion.Location = new Point(14, 410);
+            this.lblVersion.Size = new Size(196, 16);
+            this.lblVersion.BackColor = Color.Transparent;
+            this.lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnRefresh);
+            this.pnlSidebar.Controls.Add(this.btnTunnelStatus);
             this.pnlSidebar.Controls.Add(this.btnRetrieve);
             this.pnlSidebar.Controls.Add(this.btnOpenLogs);
             this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.chkReinstall);
+            this.pnlSidebar.Controls.Add(this.lblVersion);
 
             // ── Main panel
             this.pnlMain.Dock = DockStyle.Fill;
@@ -110,8 +130,6 @@ namespace CloudflaredMonitor
             this.pnlMain.Controls.Add(this.pnlTokenCard);
 
             // ── Token card
-            // Fix #1: txtApiToken has fixed width ending at ~"Environment" in the hint.
-            // btnTestToken has rounded corners via Region.
             this.pnlTokenCard.Location = new Point(12, 12);
             this.pnlTokenCard.Size = new Size(780, 76);
             this.pnlTokenCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -130,7 +148,6 @@ namespace CloudflaredMonitor
             this.lblTokenHint.Size = new Size(380, 16);
             this.lblTokenHint.BackColor = Color.Transparent;
 
-            // Fixed width: 560px puts right edge roughly under "Environment" in hint above
             this.txtApiToken.Location = new Point(14, 36);
             this.txtApiToken.Size = new Size(500, 24);
             this.txtApiToken.UseSystemPasswordChar = true;
@@ -147,7 +164,6 @@ namespace CloudflaredMonitor
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
 
-            // Fix #1: rounded corners on Test Token button via Region
             this.btnTestToken.Text = "Test Token";
             this.btnTestToken.Location = new Point(578, 32);
             this.btnTestToken.Size = new Size(100, 30);
@@ -216,28 +232,40 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card
+            // ── Ingress card - now a ListView with Cloud Endpoint / Local Endpoint columns
             this.pnlIngressCard.Location = new Point(12, 260);
             this.pnlIngressCard.Size = new Size(780, 148);
             this.pnlIngressCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.lstIngress);
 
-            this.lblIngressTitle.Text = "Ingress Rules";
+            this.lblIngressTitle.Text = "Published Routes";
             this.lblIngressTitle.Font = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
             this.lblIngressTitle.ForeColor = Color.FromArgb(71, 85, 105);
             this.lblIngressTitle.Location = new Point(16, 12);
             this.lblIngressTitle.Size = new Size(200, 22);
             this.lblIngressTitle.BackColor = Color.Transparent;
 
+            // ListView with two columns
+            this.colCloud.Text  = "Cloud Endpoint";
+            this.colCloud.Width = 380;
+            this.colLocal.Text  = "Local Endpoint";
+            this.colLocal.Width = 340;
+
             this.lstIngress.Location = new Point(16, 40);
             this.lstIngress.Size = new Size(748, 92);
             this.lstIngress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            this.lstIngress.Font = new Font("Cascadia Mono", 8.5f);
+            this.lstIngress.View = View.Details;
+            this.lstIngress.FullRowSelect = true;
+            this.lstIngress.GridLines = false;
             this.lstIngress.BorderStyle = BorderStyle.None;
             this.lstIngress.BackColor = Color.White;
             this.lstIngress.ForeColor = Color.FromArgb(15, 23, 42);
-            this.lstIngress.ItemHeight = 20;
+            this.lstIngress.Font = new Font("Cascadia Mono", 8.5f);
+            this.lstIngress.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+            this.lstIngress.Columns.Add(this.colCloud);
+            this.lstIngress.Columns.Add(this.colLocal);
+            this.lstIngress.OwnerDraw = false;
 
             // ── Log card
             this.pnlLogCard.Location = new Point(12, 420);
@@ -291,10 +319,12 @@ namespace CloudflaredMonitor
         private Panel            pnlSidebar;
         private OolioLogoBrand   oolioLogo;
         private ModernButton     btnRefresh;
+        private ModernButton     btnTunnelStatus;
         private ModernButton     btnRetrieve;
         private ModernButton     btnOpenLogs;
         private ModernButton     btnRepair;
         private CheckBox         chkReinstall;
+        private Label            lblVersion;
         private Panel            pnlMain;
         private RoundedPanel     pnlTokenCard;
         private Label            lblTokenTitle;
@@ -315,7 +345,9 @@ namespace CloudflaredMonitor
         private Label            lblRemoteStatus;
         private RoundedPanel     pnlIngressCard;
         private Label            lblIngressTitle;
-        private ListBox          lstIngress;
+        private ListView         lstIngress;
+        private ColumnHeader     colCloud;
+        private ColumnHeader     colLocal;
         private RoundedPanel     pnlLogCard;
         private Label            lblLogTitle;
         private TextBox          txtLog;
