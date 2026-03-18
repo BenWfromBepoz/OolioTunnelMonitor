@@ -39,40 +39,54 @@ namespace CloudflaredMonitor
             using var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249));
             g.FillPath(bgBrush, bgPath);
 
-            // Oolio lettermark in brand purple, centred
-            float scale   = Math.Min((Width - 16) / 926f, (Height - 12) / 242f);
-            float offsetX = (Width  - 926f * scale) / 2f;
-            float offsetY = (Height - 242f * scale) / 2f;
+            // Scale logo to fit with padding, left-aligned
+            const float svgW = 926f, svgH = 242f;
+            const int padX = 10, padY = 8;
+            float availW = Width  - padX * 2;
+            float availH = Height - padY * 2;
+            float scale  = Math.Min(availW / svgW, availH / svgH);
+            // Left-aligned: start at padX, centre vertically
+            float offsetX = padX;
+            float offsetY = (Height - svgH * scale) / 2f;
+
             g.TranslateTransform(offsetX, offsetY);
             g.ScaleTransform(scale, scale);
-            using var path  = BuildOolioPath();
+
+            // FillMode.Winding ensures the inner 'hole' ellipses actually cut through,
+            // removing the white overlap between the two O letters
+            using var path = BuildOolioPath();
+            path.FillMode = FillMode.Winding;
             using var brush = new SolidBrush(Color.FromArgb(103, 58, 182));
             g.FillPath(brush, path);
+
             g.ResetTransform();
         }
 
         private static GraphicsPath BuildOolioPath()
         {
-            var gp = new GraphicsPath();
-            // rightmost 'o'
+            var gp = new GraphicsPath(FillMode.Winding);
+
+            // rightmost 'o' (outer ring minus inner hole via Winding mode)
             gp.AddEllipse(684, 0, 242, 242);
             gp.AddEllipse(765, 81, 80, 80);
             gp.CloseFigure();
-            // 'l'
+            // 'l' vertical bar
             gp.AddRectangle(new RectangleF(594, 0, 80, 242));
             gp.CloseFigure();
-            // 'i'
+            // 'i' - vertical bar
             gp.AddRectangle(new RectangleF(414, 0, 70, 242));
+            // 'i' - top dot / serif rectangle
             gp.AddRectangle(new RectangleF(494, 172, 90, 70));
             gp.CloseFigure();
-            // right 'o' of oo
+            // right 'o' of the 'oo' pair
             gp.AddEllipse(160, 0, 244, 242);
             gp.AddEllipse(243, 81, 80, 80);
             gp.CloseFigure();
-            // left 'o' of oo
+            // left 'o' of the 'oo' pair
             gp.AddEllipse(0, 0, 242, 242);
             gp.AddEllipse(81, 81, 80, 80);
             gp.CloseFigure();
+
             return gp;
         }
     }
