@@ -65,10 +65,10 @@ namespace CloudflaredMonitor
 
             // Sidebar
             this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
-            this.pnlSidebar.Dock = DockStyle.Left;
+            this.pnlSidebar.Dock  = DockStyle.Left;
             this.pnlSidebar.Width = 224;
-            this.oolioLogo.Location = new System.Drawing.Point(12, 12);
-            this.oolioLogo.Size     = new System.Drawing.Size(200, 106);
+            this.oolioLogo.Location  = new System.Drawing.Point(12, 12);
+            this.oolioLogo.Size      = new System.Drawing.Size(200, 106);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
@@ -133,7 +133,7 @@ namespace CloudflaredMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 140));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,  100));
 
-            // Token card - Test Token vertically centred at y=19 in 68px card
+            // Token card
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 10);
             this.lblTokenTitle.Text      = "Cloudflare API Token";
@@ -159,7 +159,6 @@ namespace CloudflaredMonitor
             this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
-            // Test Token centred vertically: card=68px, button=28px -> y=(68-28)/2=20
             this.btnTestToken.Text                      = "Test Token";
             this.btnTestToken.Location                  = new System.Drawing.Point(578, 20);
             this.btnTestToken.Size                      = new System.Drawing.Size(100, 28);
@@ -177,7 +176,7 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
-            // Status card - 4 fields across 2 rows
+            // Status card - tblStatus uses Dock=Fill to always fill the card
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -189,12 +188,14 @@ namespace CloudflaredMonitor
             this.lblCardTitle.Location  = new System.Drawing.Point(16, 10);
             this.lblCardTitle.Size      = new System.Drawing.Size(200, 22);
             this.lblCardTitle.BackColor = System.Drawing.Color.Transparent;
-            this.tblStatus.Location    = new System.Drawing.Point(16, 36);
+            // tblStatus: fixed top/bottom positions, anchored all 4 sides so right edge tracks card width
+            this.tblStatus.Location    = new System.Drawing.Point(16, 38);
             this.tblStatus.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.tblStatus.Size        = new System.Drawing.Size(600, 100);
+            this.tblStatus.Size        = new System.Drawing.Size(200, 100);
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
+            // Key columns fixed width, value columns share remaining space equally
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   50));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
@@ -210,28 +211,26 @@ namespace CloudflaredMonitor
                 lbl.AutoSize  = false;
                 lbl.BackColor = System.Drawing.Color.Transparent;
             };
-            styleLabel(this.lblServiceLabel, "Service",        true);
-            styleLabel(this.lblService,      "-",              false);
-            styleLabel(this.lblNameLabel,    "Tunnel Name",    true);
-            styleLabel(this.lblTunnelName,   "-",              false);
-            styleLabel(this.lblIdLabel,      "Tunnel ID",      true);
-            styleLabel(this.lblTunnelId,     "-",              false);
-            styleLabel(this.lblRemoteLabel,  "Tunnel Status",  true);
-            styleLabel(this.lblRemoteStatus, "-",              false);
+            styleLabel(this.lblServiceLabel, "Service",       true);
+            styleLabel(this.lblService,      "-",             false);
+            styleLabel(this.lblNameLabel,    "Tunnel Name",   true);
+            styleLabel(this.lblTunnelName,   "-",             false);
+            styleLabel(this.lblIdLabel,      "Tunnel ID",     true);
+            styleLabel(this.lblTunnelId,     "-",             false);
+            styleLabel(this.lblRemoteLabel,  "Tunnel Status", true);
+            styleLabel(this.lblRemoteStatus, "-",             false);
             this.lblService.Cursor      = Cursors.Help;
             this.lblRemoteStatus.Cursor = Cursors.Help;
-            // Row 0: Service | value | Tunnel Name | value
             this.tblStatus.Controls.Add(this.lblServiceLabel, 0, 0);
             this.tblStatus.Controls.Add(this.lblService,      1, 0);
             this.tblStatus.Controls.Add(this.lblNameLabel,    2, 0);
             this.tblStatus.Controls.Add(this.lblTunnelName,   3, 0);
-            // Row 1: Tunnel ID | value | Tunnel Status | value
             this.tblStatus.Controls.Add(this.lblIdLabel,      0, 1);
             this.tblStatus.Controls.Add(this.lblTunnelId,     1, 1);
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // Ingress card - DataGridView for pretty table with fine borders
+            // Ingress card
             this.pnlIngressCard.Dock   = DockStyle.Fill;
             this.pnlIngressCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
@@ -243,46 +242,55 @@ namespace CloudflaredMonitor
             this.lblIngressTitle.Location  = new System.Drawing.Point(16, 10);
             this.lblIngressTitle.Size      = new System.Drawing.Size(200, 22);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
-            // DataGridView setup
-            this.colCloud.HeaderText        = "Cloud Endpoint";
-            this.colCloud.Name              = "colCloud";
-            this.colCloud.AutoSizeMode      = DataGridViewAutoSizeColumnMode.Fill;
-            this.colCloud.FillWeight        = 55;
-            this.colCloud.ReadOnly          = true;
-            this.colLocal.HeaderText        = "Local Endpoint";
-            this.colLocal.Name              = "colLocal";
-            this.colLocal.AutoSizeMode      = DataGridViewAutoSizeColumnMode.Fill;
-            this.colLocal.FillWeight        = 45;
-            this.colLocal.ReadOnly          = true;
-            this.dgvIngress.Location        = new System.Drawing.Point(16, 36);
-            this.dgvIngress.Anchor          = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size            = new System.Drawing.Size(600, 88);
-            this.dgvIngress.Font            = new System.Drawing.Font("Cascadia Mono", 8.5f);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI Semibold", 8.5f, System.Drawing.FontStyle.Bold);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            this.dgvIngress.ColumnHeadersBorderStyle   = DataGridViewHeaderBorderStyle.Single;
-            this.dgvIngress.ColumnHeadersHeight        = 28;
-            this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.dgvIngress.DefaultCellStyle.BackColor = System.Drawing.Color.White;
-            this.dgvIngress.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+
+            // Cloud Endpoint column: light purple header (#ede9fe), dark purple text (#4c1d95)
+            this.colCloud.HeaderText   = "Cloud Endpoint";
+            this.colCloud.Name         = "colCloud";
+            this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            this.colCloud.FillWeight   = 55;
+            this.colCloud.ReadOnly     = true;
+            this.colCloud.HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.colCloud.HeaderCell.Style.ForeColor = System.Drawing.Color.FromArgb(76, 29, 149);
+            this.colCloud.HeaderCell.Style.Font      = new System.Drawing.Font("Segoe UI Semibold", 8.5f, System.Drawing.FontStyle.Bold);
+            this.colCloud.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+
+            // Local Endpoint column: light grey header (#f1f5f9), charcoal text (#334155)
+            this.colLocal.HeaderText   = "Local Endpoint";
+            this.colLocal.Name         = "colLocal";
+            this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            this.colLocal.FillWeight   = 45;
+            this.colLocal.ReadOnly     = true;
+            this.colLocal.HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            this.colLocal.HeaderCell.Style.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
+            this.colLocal.HeaderCell.Style.Font      = new System.Drawing.Font("Segoe UI Semibold", 8.5f, System.Drawing.FontStyle.Bold);
+            this.colLocal.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+
+            this.dgvIngress.Location   = new System.Drawing.Point(16, 36);
+            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.dgvIngress.Size       = new System.Drawing.Size(200, 88);
+            this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.dgvIngress.ColumnHeadersBorderStyle            = DataGridViewHeaderBorderStyle.Single;
+            this.dgvIngress.ColumnHeadersHeight                 = 28;
+            this.dgvIngress.ColumnHeadersHeightSizeMode         = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
+            this.dgvIngress.DefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(30, 41, 59);
             this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(237, 233, 254);
             this.dgvIngress.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
             this.dgvIngress.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(249, 250, 251);
-            this.dgvIngress.GridColor               = System.Drawing.Color.FromArgb(226, 232, 240);
-            this.dgvIngress.BorderStyle             = BorderStyle.None;
-            this.dgvIngress.CellBorderStyle         = DataGridViewCellBorderStyle.SingleHorizontal;
-            this.dgvIngress.SelectionMode           = DataGridViewSelectionMode.FullRowSelect;
-            this.dgvIngress.MultiSelect             = false;
-            this.dgvIngress.ReadOnly                = true;
-            this.dgvIngress.AllowUserToAddRows      = false;
-            this.dgvIngress.AllowUserToDeleteRows   = false;
-            this.dgvIngress.AllowUserToResizeRows   = false;
-            this.dgvIngress.RowHeadersVisible       = false;
-            this.dgvIngress.AutoSizeRowsMode        = DataGridViewAutoSizeRowsMode.None;
-            this.dgvIngress.RowTemplate.Height      = 24;
-            this.dgvIngress.BackgroundColor         = System.Drawing.Color.White;
+            this.dgvIngress.GridColor             = System.Drawing.Color.FromArgb(226, 232, 240);
+            this.dgvIngress.BorderStyle           = BorderStyle.None;
+            this.dgvIngress.CellBorderStyle       = DataGridViewCellBorderStyle.SingleHorizontal;
+            this.dgvIngress.SelectionMode         = DataGridViewSelectionMode.FullRowSelect;
+            this.dgvIngress.MultiSelect           = false;
+            this.dgvIngress.ReadOnly              = true;
+            this.dgvIngress.AllowUserToAddRows    = false;
+            this.dgvIngress.AllowUserToDeleteRows = false;
+            this.dgvIngress.AllowUserToResizeRows = false;
+            this.dgvIngress.RowHeadersVisible     = false;
+            this.dgvIngress.AutoSizeRowsMode      = DataGridViewAutoSizeRowsMode.None;
+            this.dgvIngress.RowTemplate.Height    = 24;
+            this.dgvIngress.BackgroundColor       = System.Drawing.Color.White;
+            // EnableHeadersVisualStyles must be false for per-column header colours to work
             this.dgvIngress.EnableHeadersVisualStyles = false;
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
@@ -301,7 +309,7 @@ namespace CloudflaredMonitor
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
             this.txtLog.Location    = new System.Drawing.Point(16, 36);
             this.txtLog.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.txtLog.Size        = new System.Drawing.Size(600, 100);
+            this.txtLog.Size        = new System.Drawing.Size(200, 100);
             this.txtLog.ReadOnly    = true;
             this.txtLog.ScrollBars  = RichTextBoxScrollBars.Vertical;
             this.txtLog.Font        = new System.Drawing.Font("Cascadia Mono", 8.5f);
