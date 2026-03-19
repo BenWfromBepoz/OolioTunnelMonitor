@@ -8,15 +8,8 @@ using Microsoft.Win32;
 
 namespace CloudflaredMonitor.Services
 {
-    /// <summary>
-    /// Handles downloading, uninstalling, installing and registering cloudflared.
-    /// The uninstall step before reinstalling removes the Windows Installer product
-    /// record and prevents msiexec exit code 1603.
-    /// </summary>
     internal sealed class CloudflaredInstaller
     {
-        // ── Download ──────────────────────────────────────────────────────────
-
         public async Task<string> DownloadMsiAsync(CancellationToken ct)
         {
             string temp = Path.Combine(Path.GetTempPath(), "cloudflared.msi");
@@ -26,68 +19,63 @@ namespace CloudflaredMonitor.Services
             return temp;
         }
 
-        // ── Uninstall existing cloudflared MSI ───────────────────────────────
-
-        /// <summary>
-        /// Uninstalls any existing cloudflared MSI via msiexec /x using the
-        /// product code found in the registry. Never throws - if nothing is found
-        /// it is a silent no-op.
-        /// </summary>
+        // Uninstall any existing cloudflared MSI to clear Windows Installer record.
+        // This prevents msiexec exit code 1603 on the subsequent fresh install.
         public void UninstallExistingMsi()
         {
             string? productCode = FindCloudflaredProductCode();
             if (productCode == null) return;
-            RunProcess("msiexec.exe", $"/x {productCode} /quiet /norestart", waitMs: 90000);
+            RunProcess("msiexec.exe", "/x " + productCode + " /quiet /norestart", waitMs: 90000);
         }
 
         private static string? FindCloudflaredProductCode()
         {
-            string[] roots =
-            {
-                @"SOFTWAREMicrosoftWindowsCurrentVersionUninstall",
-                @"SOFTWAREWOW6432NodeMicrosoftWindowsCurrentVersionUninstall"
+            // Build registry paths at runtime - avoids escape issues in source
+            string sep = System.IO.Path.DirectorySeparatorChar.ToString();
+            string[] roots = {
+                string.Join(sep, "SOFTWARE", "Microsoft", "Windows", "CurrentVersion", "Uninstall"),
+                string.Join(sep, "SOFTWARE", "WOW6432Node", "Microsoft", "Windows", "CurrentVersion", "Uninstall")
             };
             foreach (var root in roots)
             {
-                using var key = Registry.LocalMachine.OpenSubKey(root);
-                if (key == null) continue;
-                foreach (var subName in key.GetSubKeyNames())
+                try
                 {
-                    try
+                    using var key = Registry.LocalMachine.OpenSubKey(root);
+                    if (key == null) continue;
+                    foreach (var subName in key.GetSubKeyNames())
                     {
-                        using var sub = key.OpenSubKey(subName);
-                        if (sub == null) continue;
-                        var displayName = sub.GetValue("DisplayName") as string ?? "";
-                        if (displayName.IndexOf("cloudflared", StringComparison.OrdinalIgnoreCase) >= 0)
-                            return subName;
+                        try
+                        {
+                            using var sub = key.OpenSubKey(subName);
+                            if (sub == null) continue;
+                            var dn = sub.GetValue("DisplayName") as string ?? "";
+                            if (dn.IndexOf("cloudflared", StringComparison.OrdinalIgnoreCase) >= 0)
+                                return subName;
+                        }
+                        catch { }
                     }
-                    catch { }
                 }
+                catch { }
             }
             return null;
         }
 
-        // ── Install MSI ───────────────────────────────────────────────────────
-
         public void InstallMsi(string msiPath)
         {
-            int exit = RunProcess("msiexec.exe",
-                $"/i "{msiPath}" /quiet /norestart",
-                waitMs: 120000);
-
+            string args = "/i " + '"' + msiPath + '"' + " /quiet /norestart";
+            int exit = RunProcess("msiexec.exe", args, waitMs: 120000);
             if (exit != 0)
-                throw new InvalidOperationException(
-                    $"msiexec failed with exit code {exit}. " +
-                    (exit == 1603
-                        ? "Exit 1603: a pending Windows reboot may be required, or another installer is running. Please reboot and retry."
-                        : "Check Windows Event Viewer > Application for MSI errors."));
+            {
+                string msg = "msiexec failed with exit code " + exit + ". ";
+                msg += exit == 1603
+                    ? "Exit 1603: pending reboot or another installer running. Reboot and retry."
+                    : "Check Windows Event Viewer > Application for MSI errors.";
+                throw new InvalidOperationException(msg);
+            }
         }
-
-        // ── Locate cloudflared.exe ────────────────────────────────────────────
 
         public string FindCloudflaredExeOrThrow()
         {
-            // 1. Check PATH
             var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
             foreach (var dir in pathEnv.Split(';'))
             {
@@ -98,38 +86,28 @@ namespace CloudflaredMonitor.Services
                 }
                 catch { }
             }
-
-            // 2. Common install locations
             var pf   = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-            var candidates = new[]
-            {
+            string[] candidates = {
                 Path.Combine(pf,   "Cloudflare",  "Cloudflared", "cloudflared.exe"),
                 Path.Combine(pf,   "cloudflared", "cloudflared.exe"),
                 Path.Combine(pf86, "cloudflared", "cloudflared.exe"),
                 Path.Combine("C:", "cloudflared", "cloudflared.exe")
             };
-
             foreach (var c in candidates)
                 if (File.Exists(c)) return c;
-
             throw new FileNotFoundException(
                 "cloudflared.exe not found after MSI installation. " +
-                "Try opening a new command prompt (to refresh PATH) and verify " +
-                "the install completed successfully.");
+                "Open a new command prompt to refresh PATH and verify the install.");
         }
-
-        // ── Install Windows service ───────────────────────────────────────────
 
         public void InstallServiceWithToken(string exePath, string token)
         {
-            int exit = RunProcess(exePath, $"service install {token}", waitMs: 30000);
+            int exit = RunProcess(exePath, "service install " + token, waitMs: 30000);
             if (exit != 0)
                 throw new InvalidOperationException(
-                    $"cloudflared service install failed with exit code {exit}.");
+                    "cloudflared service install failed with exit code " + exit + ".");
         }
-
-        // ── Process helper ────────────────────────────────────────────────────
 
         private static int RunProcess(string fileName, string arguments, int waitMs)
         {
@@ -143,7 +121,7 @@ namespace CloudflaredMonitor.Services
                 RedirectStandardError  = true
             };
             using var p = Process.Start(psi)
-                ?? throw new InvalidOperationException($"Failed to start {fileName}");
+                ?? throw new InvalidOperationException("Failed to start " + fileName);
             p.WaitForExit(waitMs);
             if (!p.HasExited) { try { p.Kill(entireProcessTree: true); } catch { } }
             return p.ExitCode;
