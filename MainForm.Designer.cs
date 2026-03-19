@@ -17,47 +17,48 @@ namespace CloudflaredMonitor
 
         private void InitializeComponent()
         {
-            this.pnlSidebar      = new Panel();
-            this.oolioLogo       = new OolioLogoBrand();
-            this.btnRefresh      = new ModernButton();
-            this.btnTunnelStatus = new ModernButton();
-            this.btnRetrieve     = new ModernButton();
-            this.btnOpenLogs     = new ModernButton();
-            this.btnRepair       = new ModernButton();
-            this.chkReinstall    = new CheckBox();
-            this.lblVersion      = new Label();
-            this.pnlMain         = new Panel();
-            this.pnlTokenCard    = new RoundedPanel();
-            this.lblTokenTitle   = new Label();
-            this.lblTokenHint    = new Label();
-            this.txtApiToken     = new TextBox();
-            this.chkShowToken    = new CheckBox();
-            this.btnTestToken    = new Button();
-            this.pnlStatusCard   = new RoundedPanel();
-            this.lblCardTitle    = new Label();
-            this.tblStatus       = new TableLayoutPanel();
-            this.lblServiceLabel = new Label();
-            this.lblService      = new Label();
-            this.lblNameLabel    = new Label();
-            this.lblTunnelName   = new Label();
-            this.lblIdLabel      = new Label();
-            this.lblTunnelId     = new Label();
-            this.lblRemoteLabel  = new Label();
-            this.lblRemoteStatus = new Label();
-            this.pnlIngressCard  = new RoundedPanel();
-            this.lblIngressTitle = new Label();
-            this.lstIngress      = new ListView();
-            this.colCloud        = new ColumnHeader();
-            this.colLocal        = new ColumnHeader();
-            this.pnlLogCard      = new RoundedPanel();
-            this.lblLogTitle     = new Label();
-            this.txtLog          = new TextBox();
+            this.pnlSidebar       = new Panel();
+            this.oolioLogo        = new OolioLogoBrand();
+            this.btnRefresh       = new ModernButton();
+            this.btnTunnelStatus  = new ModernButton();
+            this.btnRetrieve      = new ModernButton();
+            this.btnOpenLogs      = new ModernButton();
+            this.btnRepair        = new ModernButton();
+            this.btnCreateTunnel  = new ModernButton();
+            this.chkReinstall     = new CheckBox();
+            this.lblVersion       = new Label();
+            this.pnlMain          = new Panel();
+            this.pnlTokenCard     = new RoundedPanel();
+            this.lblTokenTitle    = new Label();
+            this.lblTokenHint     = new Label();
+            this.txtApiToken      = new TextBox();
+            this.chkShowToken     = new CheckBox();
+            this.btnTestToken     = new Button();
+            this.pnlStatusCard    = new RoundedPanel();
+            this.lblCardTitle     = new Label();
+            this.tblStatus        = new TableLayoutPanel();
+            this.lblServiceLabel  = new Label();
+            this.lblService       = new Label();
+            this.lblNameLabel     = new Label();
+            this.lblTunnelName    = new Label();
+            this.lblIdLabel       = new Label();
+            this.lblTunnelId      = new Label();
+            this.lblRemoteLabel   = new Label();
+            this.lblRemoteStatus  = new Label();
+            this.pnlIngressCard   = new RoundedPanel();
+            this.lblIngressTitle  = new Label();
+            this.lstIngress       = new ListView();
+            this.colCloud         = new ColumnHeader();
+            this.colLocal         = new ColumnHeader();
+            this.pnlLogCard       = new RoundedPanel();
+            this.lblLogTitle      = new Label();
+            this.txtLog           = new TextBox();
 
             this.pnlSidebar.SuspendLayout();
             this.pnlMain.SuspendLayout();
             this.SuspendLayout();
 
-            // Sidebar
+            // ── Sidebar
             this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock = DockStyle.Left;
             this.pnlSidebar.Width = 224;
@@ -66,6 +67,7 @@ namespace CloudflaredMonitor
             this.oolioLogo.Size = new System.Drawing.Size(200, 106);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
+            // All buttons enabled from startup - handlers guard themselves
             this.btnRefresh.Text = "⟳  Check Service Status";
             this.btnRefresh.Location = new System.Drawing.Point(12, 130);
             this.btnRefresh.Size = new System.Drawing.Size(200, 40);
@@ -91,6 +93,7 @@ namespace CloudflaredMonitor
             this.btnRepair.Size = new System.Drawing.Size(200, 40);
             this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
 
+            // Reinstall checkbox sits directly under Repair
             this.chkReinstall.Text = "Reinstall MSI on repair";
             this.chkReinstall.Font = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
@@ -99,10 +102,17 @@ namespace CloudflaredMonitor
             this.chkReinstall.Checked = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
+            // Create Tunnel - separated from repair group by a gap
+            this.btnCreateTunnel.Text = "+  Create New Tunnel";
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 402);
+            this.btnCreateTunnel.Size = new System.Drawing.Size(200, 40);
+            this.btnCreateTunnel.Click += new EventHandler(this.btnCreateTunnel_Click);
+
+            // Version label anchored near bottom
             this.lblVersion.Text = "v1.0.0";
             this.lblVersion.Font = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(100, 115, 140);
-            this.lblVersion.Location = new System.Drawing.Point(14, 400);
+            this.lblVersion.Location = new System.Drawing.Point(14, 452);
             this.lblVersion.Size = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -114,9 +124,10 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnOpenLogs);
             this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.chkReinstall);
+            this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // Main panel
+            // ── Main panel
             this.pnlMain.Dock = DockStyle.Fill;
             this.pnlMain.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
             this.pnlMain.Padding = new Padding(12, 12, 12, 12);
@@ -125,7 +136,7 @@ namespace CloudflaredMonitor
             this.pnlMain.Controls.Add(this.pnlStatusCard);
             this.pnlMain.Controls.Add(this.pnlTokenCard);
 
-            // Token card
+            // ── Token card
             this.pnlTokenCard.Location = new System.Drawing.Point(12, 12);
             this.pnlTokenCard.Size = new System.Drawing.Size(780, 76);
             this.pnlTokenCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -178,7 +189,7 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
 
-            // Status card
+            // ── Status card
             this.pnlStatusCard.Location = new System.Drawing.Point(12, 100);
             this.pnlStatusCard.Size = new System.Drawing.Size(780, 148);
             this.pnlStatusCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -231,7 +242,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // Ingress card
+            // ── Ingress card
             this.pnlIngressCard.Location = new System.Drawing.Point(12, 260);
             this.pnlIngressCard.Size = new System.Drawing.Size(780, 148);
             this.pnlIngressCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -264,7 +275,7 @@ namespace CloudflaredMonitor
             this.lstIngress.Columns.Add(this.colCloud);
             this.lstIngress.Columns.Add(this.colLocal);
 
-            // Log card
+            // ── Log card
             this.pnlLogCard.Location = new System.Drawing.Point(12, 420);
             this.pnlLogCard.Size = new System.Drawing.Size(780, 200);
             this.pnlLogCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
@@ -289,7 +300,7 @@ namespace CloudflaredMonitor
             this.txtLog.BackColor = System.Drawing.Color.FromArgb(15, 23, 42);
             this.txtLog.ForeColor = System.Drawing.Color.FromArgb(203, 213, 225);
 
-            // Form
+            // ── Form
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode = AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1040, 700);
@@ -325,6 +336,7 @@ namespace CloudflaredMonitor
         private ModernButton     btnRetrieve;
         private ModernButton     btnOpenLogs;
         private ModernButton     btnRepair;
+        private ModernButton     btnCreateTunnel;
         private CheckBox         chkReinstall;
         private Label            lblVersion;
         private Panel            pnlMain;
