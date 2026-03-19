@@ -19,12 +19,12 @@ namespace CloudflaredMonitor
         {
             this.pnlSidebar       = new Panel();
             this.oolioLogo        = new OolioLogoBrand();
+            this.btnCreateTunnel  = new ModernButton();
             this.btnRefresh       = new ModernButton();
             this.btnTunnelStatus  = new ModernButton();
             this.btnRetrieve      = new ModernButton();
             this.btnOpenLogs      = new ModernButton();
             this.btnRepair        = new ModernButton();
-            this.btnCreateTunnel  = new ModernButton();
             this.chkReinstall     = new CheckBox();
             this.lblVersion       = new Label();
             this.pnlMain          = new Panel();
@@ -52,7 +52,7 @@ namespace CloudflaredMonitor
             this.colLocal         = new ColumnHeader();
             this.pnlLogCard       = new RoundedPanel();
             this.lblLogTitle      = new Label();
-            this.txtLog           = new TextBox();
+            this.txtLog           = new RichTextBox();
 
             this.pnlSidebar.SuspendLayout();
             this.pnlMain.SuspendLayout();
@@ -67,63 +67,61 @@ namespace CloudflaredMonitor
             this.oolioLogo.Size = new System.Drawing.Size(200, 106);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            // --- Manage Tunnel group ---
+            // Install New Tunnel - TOP of menu
+            this.btnCreateTunnel.Text = "+  Install New Tunnel";
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
+            this.btnCreateTunnel.Size = new System.Drawing.Size(200, 40);
+            this.btnCreateTunnel.Click += new EventHandler(this.btnCreateTunnel_Click);
+
             this.btnRefresh.Text = "⟳  Check Service Status";
-            this.btnRefresh.Location = new System.Drawing.Point(12, 130);
+            this.btnRefresh.Location = new System.Drawing.Point(12, 178);
             this.btnRefresh.Size = new System.Drawing.Size(200, 40);
             this.btnRefresh.Click += new EventHandler(this.btnRefresh_Click);
 
             this.btnTunnelStatus.Text = "○  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 178);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 226);
             this.btnTunnelStatus.Size = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnRetrieve.Text = "↓  Retrieve Tunnel Details";
-            this.btnRetrieve.Location = new System.Drawing.Point(12, 226);
+            this.btnRetrieve.Location = new System.Drawing.Point(12, 274);
             this.btnRetrieve.Size = new System.Drawing.Size(200, 40);
             this.btnRetrieve.Click += new EventHandler(this.btnRetrieve_Click);
 
             this.btnOpenLogs.Text = "≡  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 274);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 322);
             this.btnOpenLogs.Size = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnRepair.Text = "⚙  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 322);
+            this.btnRepair.Location = new System.Drawing.Point(12, 370);
             this.btnRepair.Size = new System.Drawing.Size(200, 40);
             this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text = "Reinstall MSI on repair";
             this.chkReinstall.Font = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location = new System.Drawing.Point(20, 368);
+            this.chkReinstall.Location = new System.Drawing.Point(20, 416);
             this.chkReinstall.Size = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
-            // --- Install New Tunnel (separated by gap) ---
-            this.btnCreateTunnel.Text = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 402);
-            this.btnCreateTunnel.Size = new System.Drawing.Size(200, 40);
-            this.btnCreateTunnel.Click += new EventHandler(this.btnCreateTunnel_Click);
-
-            // Version label - bottom of sidebar
             this.lblVersion.Text = "v1.1.0.1";
             this.lblVersion.Font = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(100, 115, 140);
-            this.lblVersion.Location = new System.Drawing.Point(14, 452);
+            this.lblVersion.Location = new System.Drawing.Point(14, 500);
             this.lblVersion.Size = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
+            this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
             this.pnlSidebar.Controls.Add(this.btnRefresh);
             this.pnlSidebar.Controls.Add(this.btnTunnelStatus);
             this.pnlSidebar.Controls.Add(this.btnRetrieve);
             this.pnlSidebar.Controls.Add(this.btnOpenLogs);
             this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.chkReinstall);
-            this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
             // Main panel
@@ -170,6 +168,7 @@ namespace CloudflaredMonitor
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
 
+            // Test Token button - tight radius (4px) matching sidebar button style
             this.btnTestToken.Text = "Test Token";
             this.btnTestToken.Location = new System.Drawing.Point(578, 32);
             this.btnTestToken.Size = new System.Drawing.Size(100, 30);
@@ -179,7 +178,7 @@ namespace CloudflaredMonitor
             this.btnTestToken.Font = new System.Drawing.Font("Segoe UI", 8.5f);
             this.btnTestToken.FlatAppearance.BorderSize = 0;
             this.btnTestToken.Cursor = Cursors.Hand;
-            this.btnTestToken.Region = RoundedRegion(100, 30, 6);
+            this.btnTestToken.Region = RoundedRegion(100, 30, 4);
             this.btnTestToken.Click += new EventHandler(this.btnTestToken_Click);
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
@@ -274,7 +273,7 @@ namespace CloudflaredMonitor
             this.lstIngress.Columns.Add(this.colCloud);
             this.lstIngress.Columns.Add(this.colLocal);
 
-            // Log card
+            // Log card - RichTextBox with scrollbar, loads from file
             this.pnlLogCard.Location = new System.Drawing.Point(12, 420);
             this.pnlLogCard.Size = new System.Drawing.Size(780, 200);
             this.pnlLogCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
@@ -288,16 +287,17 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Size = new System.Drawing.Size(200, 22);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
 
+            // RichTextBox - scrollable, auto-scrolls to bottom on new entries
             this.txtLog.Location = new System.Drawing.Point(16, 40);
             this.txtLog.Size = new System.Drawing.Size(748, 144);
             this.txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.txtLog.Multiline = true;
             this.txtLog.ReadOnly = true;
-            this.txtLog.ScrollBars = ScrollBars.Vertical;
+            this.txtLog.ScrollBars = RichTextBoxScrollBars.Vertical;
             this.txtLog.Font = new System.Drawing.Font("Cascadia Mono", 8.5f);
             this.txtLog.BorderStyle = BorderStyle.None;
             this.txtLog.BackColor = System.Drawing.Color.FromArgb(15, 23, 42);
             this.txtLog.ForeColor = System.Drawing.Color.FromArgb(203, 213, 225);
+            this.txtLog.WordWrap = false;
 
             // Form
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
@@ -330,12 +330,12 @@ namespace CloudflaredMonitor
 
         private Panel            pnlSidebar;
         private OolioLogoBrand   oolioLogo;
+        private ModernButton     btnCreateTunnel;
         private ModernButton     btnRefresh;
         private ModernButton     btnTunnelStatus;
         private ModernButton     btnRetrieve;
         private ModernButton     btnOpenLogs;
         private ModernButton     btnRepair;
-        private ModernButton     btnCreateTunnel;
         private CheckBox         chkReinstall;
         private Label            lblVersion;
         private Panel            pnlMain;
@@ -363,6 +363,6 @@ namespace CloudflaredMonitor
         private ColumnHeader     colLocal;
         private RoundedPanel     pnlLogCard;
         private Label            lblLogTitle;
-        private TextBox          txtLog;
+        private RichTextBox      txtLog;
     }
 }
