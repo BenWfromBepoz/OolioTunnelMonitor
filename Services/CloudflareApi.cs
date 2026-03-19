@@ -25,43 +25,44 @@ namespace CloudflaredMonitor.Services
             };
         }
 
-        // Read methods
+        // Read tunnel details
         public Task<CfTunnel?> GetTunnelAsync(string tunnelId, CancellationToken ct)
-            => SendAsync<CfTunnel>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}", ct);
+            => SendAsync<CfTunnel>("accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId, ct);
 
         public Task<CfTunnelConfigWrapper?> GetTunnelConfigAsync(string tunnelId, CancellationToken ct)
-            => SendAsync<CfTunnelConfigWrapper>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/configurations", ct);
+            => SendAsync<CfTunnelConfigWrapper>("accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId + "/configurations", ct);
 
         public async Task<string?> GetTunnelTokenAsync(string tunnelId, CancellationToken ct)
         {
-            var result = await SendAsync<CfTunnelTokenResult>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/token", ct);
+            var result = await SendAsync<CfTunnelTokenResult>(
+                "accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId + "/token", ct);
             return result?.Token;
         }
 
-        public async Task<string?> TestTokenAsync(string tunnelId, CancellationToken ct)
+        // Verify token and return detailed permission information
+        public async Task<CfTokenVerifyResult?> VerifyTokenAsync(CancellationToken ct)
         {
-            try { await GetTunnelAsync(tunnelId, ct); return null; }
-            catch (Exception ex) { return ex.Message; }
+            // The /user/tokens/verify endpoint returns the token status and its policies/permissions
+            return await SendAsync<CfTokenVerifyResult>("user/tokens/verify", ct);
         }
 
         // Create a new named tunnel
         public async Task<CfTunnel?> CreateTunnelAsync(string name, CancellationToken ct)
         {
             var body = JsonSerializer.Serialize(new { name, config_src = "cloudflare" });
-            return await PostAsync<CfTunnel>($"accounts/{AppConfig.AccountId}/cfd_tunnel", body, ct);
+            return await PostAsync<CfTunnel>("accounts/" + AppConfig.AccountId + "/cfd_tunnel", body, ct);
         }
 
-        // Push a full ingress config to a tunnel (replaces existing config)
+        // Push ingress config (replaces existing)
         public async Task PutTunnelConfigAsync(string tunnelId, List<CfIngressRule> ingressRules, CancellationToken ct)
         {
-            // Always append the required Cloudflare catch-all rule at the end
             var rules = new List<CfIngressRule>(ingressRules)
             {
                 new CfIngressRule { Service = "http_status:404" }
             };
             var payload = new { config = new { ingress = rules } };
             var opts    = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
-            await PutAsync($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/configurations",
+            await PutAsync("accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId + "/configurations",
                            JsonSerializer.Serialize(payload, opts), ct);
         }
 
@@ -73,10 +74,11 @@ namespace CloudflaredMonitor.Services
             var response = await _client.SendAsync(req, ct);
             string json  = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Cloudflare API {(int)response.StatusCode}: {json}");
+                throw new InvalidOperationException(
+                    "Cloudflare API " + (int)response.StatusCode + ": " + json);
             var parsed = JsonSerializer.Deserialize<CfApiResponse<T>>(json);
             if (parsed is null || !parsed.Success || parsed.Result is null)
-                throw new InvalidOperationException($"Cloudflare API returned an error: {json}");
+                throw new InvalidOperationException("Cloudflare API returned an error: " + json);
             return parsed.Result;
         }
 
@@ -88,10 +90,11 @@ namespace CloudflaredMonitor.Services
             var response = await _client.SendAsync(req, ct);
             string json  = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Cloudflare API {(int)response.StatusCode}: {json}");
+                throw new InvalidOperationException(
+                    "Cloudflare API " + (int)response.StatusCode + ": " + json);
             var parsed = JsonSerializer.Deserialize<CfApiResponse<T>>(json);
             if (parsed is null || !parsed.Success || parsed.Result is null)
-                throw new InvalidOperationException($"Cloudflare API error: {json}");
+                throw new InvalidOperationException("Cloudflare API error: " + json);
             return parsed.Result;
         }
 
@@ -103,7 +106,8 @@ namespace CloudflaredMonitor.Services
             var response = await _client.SendAsync(req, ct);
             string json  = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Cloudflare API {(int)response.StatusCode}: {json}");
+                throw new InvalidOperationException(
+                    "Cloudflare API " + (int)response.StatusCode + ": " + json);
         }
     }
 }
