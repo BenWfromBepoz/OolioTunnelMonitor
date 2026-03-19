@@ -92,13 +92,31 @@ namespace CloudflaredMonitor
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
-        public RoundedPanel() { DoubleBuffered = true; ResizeRedraw = true; SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent; }
-        protected override void OnResize(EventArgs e) { base.OnResize(e); if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); } }
+        public RoundedPanel()
+        {
+            DoubleBuffered = true; ResizeRedraw = true;
+            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+        }
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); }
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            for (int i = 3; i >= 1; i--) { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
-            using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
+            // Shadow layers
+            for (int i = 3; i >= 1; i--)
+            {
+                using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
+                using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius);
+                g.FillPath(sb, sp);
+            }
+            // White fill - explicit white background to prevent see-through
+            using var wb = new SolidBrush(Color.White);
+            using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+            g.FillPath(wb, wp);
         }
         private static GraphicsPath RRP(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
@@ -199,7 +217,6 @@ namespace CloudflaredMonitor
             txtLog.ScrollToCaret();
         }
 
-        // Timestamp format: yy-mm-dd | hh:mm:ss (24hr)
         private static string Ts() => DateTime.Now.ToString("yy-MM-dd | HH:mm:ss");
 
         private void LogInfo(string m) { AppendLog(m); _logger.Info(m); }
@@ -230,7 +247,39 @@ namespace CloudflaredMonitor
             if (svc) return s == "running" ? _green : s == "stopped" ? _red : _amber;
             return s is "healthy" or "active" or "connected" ? _green : s is "inactive" or "degraded" ? _amber : _slate;
         }
-        private void ApplyBadge(Label lbl, string text, bool isService = false) { lbl.Text = text; lbl.ForeColor = BadgeColour(text, isService); }
+
+        // Service status tooltips
+        private static string ServiceTooltip(string? value)
+        {
+            return (value ?? "").ToLowerInvariant() switch
+            {
+                "running"      => "The local Cloudflared service is installed and running.",
+                "notinstalled" => "The Cloudflared service is not installed. Use Repair Tunnel, or install a new tunnel.",
+                "stopped"      => "The Cloudflared service is installed but not running. Use Repair Tunnel to re-initiate the service.",
+                _              => "Cloudflared service state is unknown."
+            };
+        }
+
+        // Remote/tunnel status tooltips
+        private static string RemoteTooltip(string? value)
+        {
+            return (value ?? "").ToLowerInvariant() switch
+            {
+                "healthy" or "active" or "connected" => "URL endpoints are reachable — the tunnel is fully operational.",
+                "inactive" or "degraded"              => "URL endpoints are not reachable. Use Repair Tunnel to re-initiate the service, or install a new tunnel.",
+                _                                     => "Tunnel remote status is unknown or not yet retrieved."
+            };
+        }
+
+        private void ApplyBadge(Label lbl, string text, bool isService = false)
+        {
+            lbl.Text      = text;
+            lbl.ForeColor = BadgeColour(text, isService);
+            // Update tooltip to match current status
+            string tip = isService ? ServiceTooltip(text) : RemoteTooltip(text);
+            toolTip.SetToolTip(lbl, tip);
+        }
+
         private string GetToken() => txtApiToken.Text.Trim();
         private bool   HasToken() => !string.IsNullOrWhiteSpace(txtApiToken.Text);
 
@@ -272,7 +321,6 @@ namespace CloudflaredMonitor
             catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
 
-        // Test token - verifies token, checks scope, pulls back permissions
         public async Task TestTokenAsync()
         {
             if (!HasToken()) { LogWarn("No API token entered."); return; }
@@ -283,7 +331,6 @@ namespace CloudflaredMonitor
                 var api = new CloudflareApi(GetToken());
                 var tid = _currentStatus?.TunnelId;
 
-                // Step 1: Verify token is valid via /user/tokens/verify
                 using var ctsV = new CancellationTokenSource(TimeSpan.FromSeconds(15));
                 try
                 {
@@ -292,12 +339,8 @@ namespace CloudflaredMonitor
                     string expires = verify?.ExpiresOn != null ? " | Expires: " + verify.ExpiresOn : " | No expiry";
                     LogInfo("Token status: " + status + expires);
                 }
-                catch (Exception vEx)
-                {
-                    LogWarn("Could not verify token via /user/tokens/verify: " + vEx.Message);
-                }
+                catch (Exception vEx) { LogWarn("Could not verify token via /user/tokens/verify: " + vEx.Message); }
 
-                // Step 2: Test read access against the known tunnel (if available)
                 if (tid != null)
                 {
                     using var ctsR = new CancellationTokenSource(TimeSpan.FromSeconds(15));
@@ -309,7 +352,6 @@ namespace CloudflaredMonitor
                     LogInfo("Read scope: appears valid (no tunnel ID to verify against - run Check Service Status first)");
                 }
 
-                // Step 3: Test write access by attempting to retrieve a tunnel token
                 if (tid != null)
                 {
                     try
@@ -321,7 +363,7 @@ namespace CloudflaredMonitor
                     catch (Exception wEx)
                     {
                         if (wEx.Message.Contains("403"))
-                            LogWarn("Write access DENIED - Token scope: READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission. Update the token in Cloudflare dashboard.");
+                            LogWarn("Write access DENIED - Token scope: READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission.");
                         else
                             LogWarn("Write access test inconclusive: " + wEx.Message);
                     }
