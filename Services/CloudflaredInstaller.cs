@@ -96,13 +96,22 @@ namespace CloudflaredMonitor.Services
         }
 
         // Install the Windows service with the tunnel token.
-        // The cloudflared MSI sometimes auto-registers a service during installation.
-        // We delete any existing service first so the install is always clean.
+        // Strategy:
+        //   1. Remove any existing service (MSI auto-creates one)
+        //   2. Delete the EventLog registry key the MSI creates (causes exit 1 on service install)
+        //   3. Run cloudflared service install
+        //   4. Treat the result as success if the service now exists, even if exit != 0
         public void InstallServiceWithToken(string exePath, string token)
         {
-            // Remove any service the MSI may have created automatically
+            // Step A: Remove any service the MSI may have auto-created
             EnsureServiceDeleted(exePath);
 
+            // Step B: Delete the EventLog registry key that the MSI creates.
+            // cloudflared service install tries to create this key and fails with exit 1
+            // if it already exists, even though the service itself installs successfully.
+            DeleteEventLogRegistryKey();
+
+            // Step C: Run service install and capture output
             var psi = new ProcessStartInfo
             {
                 FileName               = exePath,
@@ -114,29 +123,57 @@ namespace CloudflaredMonitor.Services
             };
             using var p = Process.Start(psi)
                 ?? throw new InvalidOperationException("Failed to start cloudflared.exe");
+            // Read output before WaitForExit to avoid deadlock on full buffers
+            string stdout = p.StandardOutput.ReadToEnd();
+            string stderr = p.StandardError.ReadToEnd();
             p.WaitForExit(30000);
             if (!p.HasExited) { try { p.Kill(entireProcessTree: true); } catch { } }
 
-            if (p.ExitCode != 0)
-            {
-                // Capture output to give a meaningful error message
-                string stderr = p.StandardError.ReadToEnd().Trim();
-                string stdout = p.StandardOutput.ReadToEnd().Trim();
-                string detail = !string.IsNullOrEmpty(stderr) ? stderr : stdout;
-                throw new InvalidOperationException(
-                    "cloudflared service install failed (exit " + p.ExitCode + ")" +
-                    (string.IsNullOrEmpty(detail) ? "." : ": " + detail));
-            }
+            // Step D: Check if the service actually got installed regardless of exit code.
+            // cloudflared exits 1 when the EventLog key exists but still installs the service.
+            bool serviceExists = IsServiceInstalled();
+            if (serviceExists)
+                return; // Service is installed - success regardless of exit code
+
+            // Service is genuinely not installed - throw with detail
+            string detail = !string.IsNullOrEmpty(stderr) ? stderr.Trim() : stdout.Trim();
+            throw new InvalidOperationException(
+                "cloudflared service install failed (exit " + p.ExitCode + ")" +
+                (string.IsNullOrEmpty(detail) ? "." : ": " + detail));
         }
 
-        // Delete the cloudflared service cleanly before (re)installing
+        // Check whether the Cloudflared service exists in the SCM
+        private static bool IsServiceInstalled()
+        {
+            try
+            {
+                using var sc = new System.ServiceProcess.ServiceController(AppConfig.ServiceName);
+                _ = sc.Status; // throws if not installed
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // Delete HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\Cloudflared
+        // The MSI creates this key; cloudflared service install tries to recreate it and exits 1.
+        private static void DeleteEventLogRegistryKey()
+        {
+            try
+            {
+                string sep = System.IO.Path.DirectorySeparatorChar.ToString();
+                string keyPath = string.Join(sep,
+                    "SYSTEM", "CurrentControlSet", "Services",
+                    "EventLog", "Application", AppConfig.ServiceName);
+                Registry.LocalMachine.DeleteSubKeyTree(keyPath, throwOnMissingSubKey: false);
+            }
+            catch { }
+        }
+
+        // Remove any existing cloudflared service cleanly before reinstalling
         private static void EnsureServiceDeleted(string exePath)
         {
-            // Try cloudflared's own uninstall command first
             try { RunProcess(exePath, "service uninstall", waitMs: 15000); } catch { }
-            // Then sc.exe as belt-and-braces
             try { RunProcess("sc.exe", "delete " + AppConfig.ServiceName, waitMs: 15000); } catch { }
-            // Give the SCM a moment to complete the delete
             Thread.Sleep(1500);
         }
 
