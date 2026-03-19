@@ -19,8 +19,7 @@ namespace CloudflaredMonitor.Services
             return temp;
         }
 
-        // Uninstall any existing cloudflared MSI to clear Windows Installer record.
-        // This prevents msiexec exit code 1603 on the subsequent fresh install.
+        // Uninstall existing cloudflared MSI - clears Windows Installer record to prevent exit 1603
         public void UninstallExistingMsi()
         {
             string? productCode = FindCloudflaredProductCode();
@@ -30,7 +29,6 @@ namespace CloudflaredMonitor.Services
 
         private static string? FindCloudflaredProductCode()
         {
-            // Build registry paths at runtime - avoids escape issues in source
             string sep = System.IO.Path.DirectorySeparatorChar.ToString();
             string[] roots = {
                 string.Join(sep, "SOFTWARE", "Microsoft", "Windows", "CurrentVersion", "Uninstall"),
@@ -68,7 +66,7 @@ namespace CloudflaredMonitor.Services
             {
                 string msg = "msiexec failed with exit code " + exit + ". ";
                 msg += exit == 1603
-                    ? "Exit 1603: pending reboot or another installer running. Reboot and retry."
+                    ? "Exit 1603: pending Windows reboot or another installer running. Reboot and retry."
                     : "Check Windows Event Viewer > Application for MSI errors.";
                 throw new InvalidOperationException(msg);
             }
@@ -79,11 +77,7 @@ namespace CloudflaredMonitor.Services
             var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
             foreach (var dir in pathEnv.Split(';'))
             {
-                try
-                {
-                    var c = Path.Combine(dir.Trim(), "cloudflared.exe");
-                    if (File.Exists(c)) return c;
-                }
+                try { var c = Path.Combine(dir.Trim(), "cloudflared.exe"); if (File.Exists(c)) return c; }
                 catch { }
             }
             var pf   = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
@@ -98,15 +92,52 @@ namespace CloudflaredMonitor.Services
                 if (File.Exists(c)) return c;
             throw new FileNotFoundException(
                 "cloudflared.exe not found after MSI installation. " +
-                "Open a new command prompt to refresh PATH and verify the install.");
+                "Open a new command prompt to refresh PATH and verify the install completed.");
         }
 
+        // Install the Windows service with the tunnel token.
+        // The cloudflared MSI sometimes auto-registers a service during installation.
+        // We delete any existing service first so the install is always clean.
         public void InstallServiceWithToken(string exePath, string token)
         {
-            int exit = RunProcess(exePath, "service install " + token, waitMs: 30000);
-            if (exit != 0)
+            // Remove any service the MSI may have created automatically
+            EnsureServiceDeleted(exePath);
+
+            var psi = new ProcessStartInfo
+            {
+                FileName               = exePath,
+                Arguments              = "service install " + token,
+                UseShellExecute        = false,
+                CreateNoWindow         = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true
+            };
+            using var p = Process.Start(psi)
+                ?? throw new InvalidOperationException("Failed to start cloudflared.exe");
+            p.WaitForExit(30000);
+            if (!p.HasExited) { try { p.Kill(entireProcessTree: true); } catch { } }
+
+            if (p.ExitCode != 0)
+            {
+                // Capture output to give a meaningful error message
+                string stderr = p.StandardError.ReadToEnd().Trim();
+                string stdout = p.StandardOutput.ReadToEnd().Trim();
+                string detail = !string.IsNullOrEmpty(stderr) ? stderr : stdout;
                 throw new InvalidOperationException(
-                    "cloudflared service install failed with exit code " + exit + ".");
+                    "cloudflared service install failed (exit " + p.ExitCode + ")" +
+                    (string.IsNullOrEmpty(detail) ? "." : ": " + detail));
+            }
+        }
+
+        // Delete the cloudflared service cleanly before (re)installing
+        private static void EnsureServiceDeleted(string exePath)
+        {
+            // Try cloudflared's own uninstall command first
+            try { RunProcess(exePath, "service uninstall", waitMs: 15000); } catch { }
+            // Then sc.exe as belt-and-braces
+            try { RunProcess("sc.exe", "delete " + AppConfig.ServiceName, waitMs: 15000); } catch { }
+            // Give the SCM a moment to complete the delete
+            Thread.Sleep(1500);
         }
 
         private static int RunProcess(string fileName, string arguments, int waitMs)
