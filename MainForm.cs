@@ -172,11 +172,10 @@ namespace CloudflaredMonitor
         {
             InitializeComponent();
             _exporter = new DiagnosticsExporter(_logger);
-            // Load today's log file into the activity log box on startup
             _ = LoadTodaysLogAsync();
         }
 
-        // Load existing log entries from today's file so history is visible on launch
+        // Load today's log file into the RichTextBox on startup
         private async Task LoadTodaysLogAsync()
         {
             try
@@ -200,19 +199,20 @@ namespace CloudflaredMonitor
             txtLog.ScrollToCaret();
         }
 
-        private static string Ts() => DateTime.Now.ToString("yy-MM-dd:HH-mm-ss");
-        private void LogInfo(string m) { AppendLog(m, false); _logger.Info(m); }
-        private void LogWarn(string m) { AppendLog("WARN: " + m, false); _logger.Warn(m); }
+        // Timestamp format: yy-mm-dd | hh:mm:ss (24hr)
+        private static string Ts() => DateTime.Now.ToString("yy-MM-dd | HH:mm:ss");
+
+        private void LogInfo(string m) { AppendLog(m); _logger.Info(m); }
+        private void LogWarn(string m) { AppendLog("WARN: " + m); _logger.Warn(m); }
         private void LogError(string m, Exception? ex = null)
         {
             string detail = ex == null ? m : m + " - " + ex.Message;
-            // Friendly explanation for Cloudflare 403/auth errors
             if (ex != null && ex.Message.Contains("403") && ex.Message.Contains("10000"))
-                detail = detail + " | TOKEN SCOPE: The API token needs 'Cloudflare Tunnel:Edit' permission to retrieve tunnel tokens. A read-only token is not sufficient for Repair.";
-            AppendLog("ERROR: " + detail, false);
+                detail += " | TOKEN SCOPE: Needs 'Cloudflare Tunnel:Edit' permission for Repair.";
+            AppendLog("ERROR: " + detail);
             if (ex == null) _logger.Error(m); else _logger.Error(m, ex);
         }
-        private void AppendLog(string message, bool withPrefix = true)
+        private void AppendLog(string message)
         {
             string line = Ts() + " " + message;
             _uiLogs.Add(line);
@@ -272,26 +272,60 @@ namespace CloudflaredMonitor
             catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
 
+        // Test token - verifies token, checks scope, pulls back permissions
         public async Task TestTokenAsync()
         {
             if (!HasToken()) { LogWarn("No API token entered."); return; }
-            LogInfo("Testing API token..."); btnTestToken.Enabled = false;
+            LogInfo("Testing API token...");
+            btnTestToken.Enabled = false;
             try
             {
-                var api = new CloudflareApi(GetToken()); var tid = _currentStatus?.TunnelId;
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                if (tid != null) { var t = await api.GetTunnelAsync(tid, cts.Token); LogInfo("Token OK (read) - " + (t?.Name ?? tid)); }
-                else LogInfo("Token valid. Run Check Service Status first.");
+                var api = new CloudflareApi(GetToken());
+                var tid = _currentStatus?.TunnelId;
+
+                // Step 1: Verify token is valid via /user/tokens/verify
+                using var ctsV = new CancellationTokenSource(TimeSpan.FromSeconds(15));
                 try
                 {
-                    if (tid != null)
+                    var verify = await api.VerifyTokenAsync(ctsV.Token);
+                    string status  = verify?.Status  ?? "unknown";
+                    string expires = verify?.ExpiresOn != null ? " | Expires: " + verify.ExpiresOn : " | No expiry";
+                    LogInfo("Token status: " + status + expires);
+                }
+                catch (Exception vEx)
+                {
+                    LogWarn("Could not verify token via /user/tokens/verify: " + vEx.Message);
+                }
+
+                // Step 2: Test read access against the known tunnel (if available)
+                if (tid != null)
+                {
+                    using var ctsR = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    var tunnel = await api.GetTunnelAsync(tid, ctsR.Token);
+                    LogInfo("Read access OK - Tunnel: " + (tunnel?.Name ?? tid));
+                }
+                else
+                {
+                    LogInfo("Read scope: appears valid (no tunnel ID to verify against - run Check Service Status first)");
+                }
+
+                // Step 3: Test write access by attempting to retrieve a tunnel token
+                if (tid != null)
+                {
+                    try
                     {
-                        using var c2 = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                        await api.GetTunnelTokenAsync(tid, c2.Token);
-                        LogInfo("Token scope: READ + WRITE (suitable for Repair)");
+                        using var ctsW = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                        await api.GetTunnelTokenAsync(tid, ctsW.Token);
+                        LogInfo("Write access OK - Token scope: READ + WRITE (suitable for Repair)");
+                    }
+                    catch (Exception wEx)
+                    {
+                        if (wEx.Message.Contains("403"))
+                            LogWarn("Write access DENIED - Token scope: READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission. Update the token in Cloudflare dashboard.");
+                        else
+                            LogWarn("Write access test inconclusive: " + wEx.Message);
                     }
                 }
-                catch { LogInfo("Token scope: READ ONLY (not sufficient for Repair - needs Cloudflare Tunnel:Edit permission)"); }
             }
             catch (Exception ex) { LogError("Token test failed", ex); }
             finally { btnTestToken.Enabled = true; }
@@ -443,7 +477,7 @@ namespace CloudflaredMonitor
                     {
                         var files = Directory.GetFiles(dd, "*.json");
                         if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached tunnel ID: " + tid); }
-                        else if (files.Length > 1) { LogWarn("Multiple cached tunnels found. Run Check Service Status to identify the active tunnel, then retry."); return; }
+                        else if (files.Length > 1) { LogWarn("Multiple cached tunnels found. Run Check Service Status to identify the active one, then retry."); return; }
                     }
                 }
                 if (tid == null) { LogError("No tunnel ID found. Run Check Service Status or Retrieve Tunnel Details first."); return; }
@@ -474,7 +508,7 @@ namespace CloudflaredMonitor
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
                     newToken = await api.GetTunnelTokenAsync(tid, cts.Token)
-                               ?? throw new InvalidOperationException("API returned an empty tunnel token. Ensure your token has Cloudflare Tunnel:Edit permission.");
+                               ?? throw new InvalidOperationException("API returned empty token. Ensure token has Cloudflare Tunnel:Edit permission.");
                 }
                 LogInfo("          Token received.");
                 LogInfo("Step 8/8  Installing cloudflared Windows service...");
