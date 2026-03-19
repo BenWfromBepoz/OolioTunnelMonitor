@@ -25,26 +25,43 @@ namespace CloudflaredMonitor.Services
             };
         }
 
-        // Read tunnel details
         public Task<CfTunnel?> GetTunnelAsync(string tunnelId, CancellationToken ct)
             => SendAsync<CfTunnel>("accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId, ct);
 
         public Task<CfTunnelConfigWrapper?> GetTunnelConfigAsync(string tunnelId, CancellationToken ct)
             => SendAsync<CfTunnelConfigWrapper>("accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId + "/configurations", ct);
 
+        // Cloudflare returns result as a plain string token, not a nested object.
+        // We deserialise as string directly to avoid the CfTunnelTokenResult conversion error.
         public async Task<string?> GetTunnelTokenAsync(string tunnelId, CancellationToken ct)
         {
-            var result = await SendAsync<CfTunnelTokenResult>(
-                "accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId + "/token", ct);
-            return result?.Token;
+            var url = "accounts/" + AppConfig.AccountId + "/cfd_tunnel/" + tunnelId + "/token";
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
+            var response = await _client.SendAsync(req, ct);
+            string json  = await response.Content.ReadAsStringAsync(ct);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException(
+                    "Cloudflare API " + (int)response.StatusCode + ": " + json);
+            // Parse as generic document - result may be a string or object
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("success", out var successProp) || !successProp.GetBoolean())
+                throw new InvalidOperationException("Cloudflare API error: " + json);
+            if (!root.TryGetProperty("result", out var resultProp))
+                return null;
+            // Handle both formats: result is a plain string OR result is { "token": "..." }
+            if (resultProp.ValueKind == JsonValueKind.String)
+                return resultProp.GetString();
+            if (resultProp.ValueKind == JsonValueKind.Object &&
+                resultProp.TryGetProperty("token", out var tokenProp))
+                return tokenProp.GetString();
+            return null;
         }
 
-        // Verify token and return detailed permission information
-        public async Task<CfTokenVerifyResult?> VerifyTokenAsync(CancellationToken ct)
-        {
-            // The /user/tokens/verify endpoint returns the token status and its policies/permissions
-            return await SendAsync<CfTokenVerifyResult>("user/tokens/verify", ct);
-        }
+        // Token verification via /user/tokens/verify
+        public Task<CfTokenVerifyResult?> VerifyTokenAsync(CancellationToken ct)
+            => SendAsync<CfTokenVerifyResult>("user/tokens/verify", ct);
 
         // Create a new named tunnel
         public async Task<CfTunnel?> CreateTunnelAsync(string name, CancellationToken ct)
@@ -66,7 +83,6 @@ namespace CloudflaredMonitor.Services
                            JsonSerializer.Serialize(payload, opts), ct);
         }
 
-        // HTTP helpers
         private async Task<T?> SendAsync<T>(string relativeUrl, CancellationToken ct)
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, relativeUrl);
