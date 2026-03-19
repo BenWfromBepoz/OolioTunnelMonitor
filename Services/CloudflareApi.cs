@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,12 +21,11 @@ namespace CloudflaredMonitor.Services
             _client = new HttpClient
             {
                 BaseAddress = new Uri("https://api.cloudflare.com/client/v4/"),
-                Timeout = TimeSpan.FromSeconds(30)
+                Timeout     = TimeSpan.FromSeconds(30)
             };
         }
 
-        // ── Existing read methods ─────────────────────────────────────────────────────
-
+        // Read methods
         public Task<CfTunnel?> GetTunnelAsync(string tunnelId, CancellationToken ct)
             => SendAsync<CfTunnel>($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}", ct);
 
@@ -43,47 +44,33 @@ namespace CloudflaredMonitor.Services
             catch (Exception ex) { return ex.Message; }
         }
 
-        // ── Create tunnel ─────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Creates a new Cloudflare Tunnel and returns the created tunnel object.
-        /// Requires Cloudflare Zero Trust Edit permission.
-        /// </summary>
+        // Create a new named tunnel
         public async Task<CfTunnel?> CreateTunnelAsync(string name, CancellationToken ct)
         {
             var body = JsonSerializer.Serialize(new { name, config_src = "cloudflare" });
-            var result = await PostAsync<CfTunnel>(
-                $"accounts/{AppConfig.AccountId}/cfd_tunnel",
-                body, ct);
-            return result;
+            return await PostAsync<CfTunnel>($"accounts/{AppConfig.AccountId}/cfd_tunnel", body, ct);
         }
 
-        /// <summary>
-        /// Puts the full ingress configuration for a tunnel.
-        /// Replaces any existing config with the provided ingress rules.
-        /// </summary>
-        public async Task PutTunnelConfigAsync(string tunnelId, System.Collections.Generic.List<CfIngressRule> ingressRules, CancellationToken ct)
+        // Push a full ingress config to a tunnel (replaces existing config)
+        public async Task PutTunnelConfigAsync(string tunnelId, List<CfIngressRule> ingressRules, CancellationToken ct)
         {
-            // Always append the required catch-all rule at the end
-            var rules = new System.Collections.Generic.List<CfIngressRule>(ingressRules)
+            // Always append the required Cloudflare catch-all rule at the end
+            var rules = new List<CfIngressRule>(ingressRules)
             {
                 new CfIngressRule { Service = "http_status:404" }
             };
             var payload = new { config = new { ingress = rules } };
-            var body    = JsonSerializer.Serialize(payload, new JsonSerializerOptions
-            {
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            });
-            await PutAsync($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/configurations", body, ct);
+            var opts    = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+            await PutAsync($"accounts/{AppConfig.AccountId}/cfd_tunnel/{tunnelId}/configurations",
+                           JsonSerializer.Serialize(payload, opts), ct);
         }
 
-        // ── HTTP helpers ─────────────────────────────────────────────────────────────────
-
+        // HTTP helpers
         private async Task<T?> SendAsync<T>(string relativeUrl, CancellationToken ct)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, relativeUrl);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
-            var response = await _client.SendAsync(request, ct);
+            using var req = new HttpRequestMessage(HttpMethod.Get, relativeUrl);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
+            var response = await _client.SendAsync(req, ct);
             string json  = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Cloudflare API {(int)response.StatusCode}: {json}");
@@ -95,10 +82,10 @@ namespace CloudflaredMonitor.Services
 
         private async Task<T?> PostAsync<T>(string relativeUrl, string jsonBody, CancellationToken ct)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
-            request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-            var response = await _client.SendAsync(request, ct);
+            using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
+            req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            var response = await _client.SendAsync(req, ct);
             string json  = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Cloudflare API {(int)response.StatusCode}: {json}");
@@ -110,10 +97,10 @@ namespace CloudflaredMonitor.Services
 
         private async Task PutAsync(string relativeUrl, string jsonBody, CancellationToken ct)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Put, relativeUrl);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
-            request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-            var response = await _client.SendAsync(request, ct);
+            using var req = new HttpRequestMessage(HttpMethod.Put, relativeUrl);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
+            req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            var response = await _client.SendAsync(req, ct);
             string json  = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Cloudflare API {(int)response.StatusCode}: {json}");
