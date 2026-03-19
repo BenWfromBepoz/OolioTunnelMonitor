@@ -378,41 +378,106 @@ namespace CloudflaredMonitor
             catch (Exception ex) { LogError("Retrieve tunnel details failed", ex); }
         }
 
+        // ── REPAIR TUNNEL ─────────────────────────────────────────────────────
+        // Exact sequence:
+        //  1. Stop the cloudflared service gracefully
+        //  2. Force-kill any remaining cloudflared.exe processes
+        //  3. Delete the service entry from SCM
+        //  4. Uninstall the existing cloudflared MSI (removes the Windows Installer
+        //     product record - this is what prevents exit code 1603 on reinstall)
+        //  5. Download the latest MSI and install it
+        //  6. Find the cloudflared.exe from the fresh install
+        //  7. Read tunnel ID from cached JSON in AppData (or from live service)
+        //  8. Request a fresh token from the Cloudflare API
+        //  9. Install the Windows service with the new token and start it
         public async Task RepairAsync()
         {
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
-            if (MessageBox.Show(this, "This will reinstall the cloudflared service. Continue?",
-                "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) { LogInfo("Repair cancelled."); return; }
-            var api = new CloudflareApi(GetToken()); btnRepair.Enabled = false;
+            if (MessageBox.Show(this,
+                    "This will stop, uninstall and reinstall the cloudflared service.\n\nContinue?",
+                    "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+            { LogInfo("Repair cancelled."); return; }
+
+            var api = new CloudflareApi(GetToken());
+            btnRepair.Enabled = false;
             try
             {
+                // Resolve tunnel ID - prefer live service, fall back to cached JSON
                 string? tid = _currentStatus?.TunnelId;
                 if (tid == null)
                 {
-                    var dd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "tunnel-details");
-                    if (Directory.Exists(dd)) { var fs = Directory.GetFiles(dd, "*.json"); if (fs.Length == 1) { tid = Path.GetFileNameWithoutExtension(fs[0]); LogInfo($"Using cached tunnel ID: {tid}"); } }
+                    var dd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                                          "Bepoz", "CloudflaredMonitor", "tunnel-details");
+                    if (Directory.Exists(dd))
+                    {
+                        var files = Directory.GetFiles(dd, "*.json");
+                        if (files.Length == 1)
+                        {
+                            tid = Path.GetFileNameWithoutExtension(files[0]);
+                            LogInfo($"Using cached tunnel ID: {tid}");
+                        }
+                        else if (files.Length > 1)
+                        {
+                            // Multiple tunnels - ask user which one
+                            LogWarn("Multiple cached tunnels found. Run Check Service Status to identify the active tunnel, then retry.");
+                            return;
+                        }
+                    }
                 }
-                if (tid == null) { LogError("No tunnel ID found. Cannot repair."); return; }
-                LogInfo($"Repairing tunnel {tid}..."); LogInfo("Stopping service..."); _serviceManager.StopServiceBestEffort();
-                LogInfo("Killing processes..."); _serviceManager.KillCloudflaredProcess(); LogInfo("Deleting service..."); _serviceManager.DeleteService();
-                if (chkReinstall.Checked)
-                {
-                    LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-                    var msiPath = await _installer.DownloadMsiAsync(dlc.Token); LogInfo("Installing MSI...");
-                    try { _installer.InstallMsi(msiPath); }
-                    catch (InvalidOperationException msiEx) when (msiEx.Message.Contains("1603"))
-                    { throw new InvalidOperationException("MSI failed (exit 1603) - pending reboot or another installer running. Reboot and try again.", msiEx); }
-                    finally { try { File.Delete(msiPath); } catch { } }
-                }
-                LogInfo("Locating cloudflared exe..."); var exe = _installer.FindCloudflaredExeOrThrow();
-                LogInfo("Requesting new tunnel token...");
+                if (tid == null) { LogError("No tunnel ID found. Run Check Service Status or retrieve tunnel details first."); return; }
+
+                LogInfo($"Starting repair for tunnel {tid}...");
+
+                // Step 1: Stop service gracefully
+                LogInfo("Step 1/8  Stopping cloudflared service...");
+                _serviceManager.StopServiceBestEffort();
+
+                // Step 2: Force-kill any remaining processes
+                LogInfo("Step 2/8  Force-killing cloudflared.exe processes...");
+                _serviceManager.KillCloudflaredProcess();
+
+                // Step 3: Delete service entry from SCM
+                LogInfo("Step 3/8  Removing service from Service Control Manager...");
+                _serviceManager.DeleteService();
+
+                // Step 4: Uninstall existing MSI (critical - prevents exit 1603)
+                LogInfo("Step 4/8  Uninstalling existing cloudflared MSI...");
+                await Task.Run(() => _installer.UninstallExistingMsi());
+                LogInfo("          Uninstall complete (or no existing install found).");
+
+                // Step 5: Download and install fresh MSI
+                LogInfo("Step 5/8  Downloading latest cloudflared MSI...");
+                string msiPath;
+                using (var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+                    msiPath = await _installer.DownloadMsiAsync(dlc.Token);
+                LogInfo("          Installing MSI (this may take up to 90 seconds)...");
+                await Task.Run(() => _installer.InstallMsi(msiPath));
+                try { File.Delete(msiPath); } catch { }
+                LogInfo("          MSI installed successfully.");
+
+                // Step 6: Locate the freshly installed cloudflared.exe
+                LogInfo("Step 6/8  Locating cloudflared executable...");
+                var exe = _installer.FindCloudflaredExeOrThrow();
+                LogInfo($"          Found: {exe}");
+
+                // Step 7: Request a fresh tunnel token from the Cloudflare API
+                LogInfo("Step 7/8  Requesting fresh tunnel token from Cloudflare API...");
+                string newToken;
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
-                    var newToken = await api.GetTunnelTokenAsync(tid, cts.Token);
-                    if (string.IsNullOrWhiteSpace(newToken)) throw new InvalidOperationException("API returned empty token.");
-                    LogInfo("Installing service..."); _installer.InstallServiceWithToken(exe, newToken);
+                    newToken = await api.GetTunnelTokenAsync(tid, cts.Token)
+                               ?? throw new InvalidOperationException("API returned an empty tunnel token.");
                 }
-                LogInfo("Starting service..."); _serviceManager.StartService(); LogInfo("Repair complete."); await RefreshStatusAsync();
+                LogInfo("          Token received.");
+
+                // Step 8: Install the Windows service and start it
+                LogInfo("Step 8/8  Installing cloudflared Windows service...");
+                await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
+                _serviceManager.StartService();
+                LogInfo("          Service started.");
+
+                LogInfo("Repair complete. Running status refresh...");
+                await RefreshStatusAsync();
             }
             catch (Exception ex) { LogError("Repair failed", ex); }
             finally { btnRepair.Enabled = true; }
@@ -432,7 +497,6 @@ namespace CloudflaredMonitor
                 var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
                 if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
                 LogInfo($"Tunnel created: {tunnel.Name} ({tunnel.Id})");
-
                 var ingressRules = spec.Routes.Select(r => new CfIngressRule
                 {
                     Hostname = r.Hostname,
@@ -443,7 +507,6 @@ namespace CloudflaredMonitor
                 await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token);
                 LogInfo($"Configured {ingressRules.Count} route(s):");
                 foreach (var r in spec.Routes) LogInfo($"  {r.CloudUrl} -> {r.Service}");
-
                 var outDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "tunnel-details");
                 Directory.CreateDirectory(outDir);
                 await File.WriteAllTextAsync(Path.Combine(outDir, $"{tunnel.Id}.json"), JsonSerializer.Serialize(
@@ -451,24 +514,22 @@ namespace CloudflaredMonitor
                           Routes = spec.Routes.Select(r => new { Hostname = r.Hostname, Path = string.IsNullOrEmpty(r.Path) ? "*" : r.Path, r.Service }).ToList() },
                     new JsonSerializerOptions { WriteIndented = true }));
                 LogInfo("Details saved locally.");
-
                 if (MessageBox.Show(this,
                     $"Tunnel '{spec.TunnelName}' created!\n\nTunnel ID: {tunnel.Id}\n\nInstall cloudflared on this machine now?",
                     "Tunnel Created", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
                     LogInfo("Fetching tunnel token...");
                     using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token);
-                    if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException("API returned empty token.");
-                    LogInfo("Downloading cloudflared MSI...");
-                    using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                    var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token)
+                                ?? throw new InvalidOperationException("API returned empty token.");
+                    LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
                     var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
-                    LogInfo("Installing MSI..."); _installer.InstallMsi(msiPath);
+                    LogInfo("Uninstalling any existing cloudflared..."); await Task.Run(() => _installer.UninstallExistingMsi());
+                    LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath));
                     try { File.Delete(msiPath); } catch { }
                     var exe = _installer.FindCloudflaredExeOrThrow();
-                    LogInfo("Installing Windows service..."); _installer.InstallServiceWithToken(exe, token);
-                    LogInfo("Starting service..."); _serviceManager.StartService();
-                    LogInfo("Installation complete."); await RefreshStatusAsync();
+                    LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
+                    _serviceManager.StartService(); LogInfo("Installation complete."); await RefreshStatusAsync();
                 }
             }
             catch (Exception ex) { LogError("Install tunnel failed", ex); }
