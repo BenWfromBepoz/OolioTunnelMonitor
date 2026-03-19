@@ -161,7 +161,7 @@ namespace CloudflaredMonitor
         private static readonly Color _red   = Color.FromArgb(220, 38, 38);
         private static readonly Color _amber = Color.FromArgb(217, 119, 6);
         private static readonly Color _slate = Color.FromArgb(100, 116, 139);
-        private const string AppVersion     = "1.0.0";
+        private const string AppVersion     = "1.1.0.1";
         private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/main/version.json";
 
         private static string TunnelDetailsPath(string id) =>
@@ -422,19 +422,17 @@ namespace CloudflaredMonitor
         {
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
             using var dlg = new CreateTunnelForm();
-            if (dlg.ShowDialog(this) != DialogResult.OK || dlg.Result == null) { LogInfo("Create tunnel cancelled."); return; }
+            if (dlg.ShowDialog(this) != DialogResult.OK || dlg.Result == null) { LogInfo("Install tunnel cancelled."); return; }
             var spec = dlg.Result;
             LogInfo($"Creating tunnel: {spec.TunnelName}");
             var api = new CloudflareApi(GetToken());
             try
             {
-                // 1. Create the tunnel in Cloudflare
                 using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
                 if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
                 LogInfo($"Tunnel created: {tunnel.Name} ({tunnel.Id})");
 
-                // 2. Push the ingress config
                 var ingressRules = spec.Routes.Select(r => new CfIngressRule
                 {
                     Hostname = r.Hostname,
@@ -446,7 +444,6 @@ namespace CloudflaredMonitor
                 LogInfo($"Configured {ingressRules.Count} route(s):");
                 foreach (var r in spec.Routes) LogInfo($"  {r.CloudUrl} -> {r.Service}");
 
-                // 3. Save details locally
                 var outDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "tunnel-details");
                 Directory.CreateDirectory(outDir);
                 await File.WriteAllTextAsync(Path.Combine(outDir, $"{tunnel.Id}.json"), JsonSerializer.Serialize(
@@ -455,7 +452,6 @@ namespace CloudflaredMonitor
                     new JsonSerializerOptions { WriteIndented = true }));
                 LogInfo("Details saved locally.");
 
-                // 4. Offer to install cloudflared on this machine
                 if (MessageBox.Show(this,
                     $"Tunnel '{spec.TunnelName}' created!\n\nTunnel ID: {tunnel.Id}\n\nInstall cloudflared on this machine now?",
                     "Tunnel Created", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
@@ -475,7 +471,7 @@ namespace CloudflaredMonitor
                     LogInfo("Installation complete."); await RefreshStatusAsync();
                 }
             }
-            catch (Exception ex) { LogError("Create tunnel failed", ex); }
+            catch (Exception ex) { LogError("Install tunnel failed", ex); }
         }
 
         public void ExportDiagnostics()
@@ -490,12 +486,12 @@ namespace CloudflaredMonitor
             catch (Exception ex) { MessageBox.Show(this, $"Export failed: {ex.Message}", "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        private async void btnRefresh_Click(object? sender, EventArgs e)       => await RefreshStatusAsync();
-        private async void btnRepair_Click(object? sender, EventArgs e)         => await RepairAsync();
-        private async void btnRetrieve_Click(object? sender, EventArgs e)       => await RetrieveTunnelDetailsAsync();
-        private async void btnTunnelStatus_Click(object? sender, EventArgs e)   => await CheckTunnelStatusAsync();
-        private async void btnTestToken_Click(object? sender, EventArgs e)      => await TestTokenAsync();
-        private void btnOpenLogs_Click(object? sender, EventArgs e)              => OpenLogFolder();
-        private async void btnCreateTunnel_Click(object? sender, EventArgs e)   => await CreateTunnelAsync();
+        private async void btnRefresh_Click(object? sender, EventArgs e)      => await RefreshStatusAsync();
+        private async void btnRepair_Click(object? sender, EventArgs e)        => await RepairAsync();
+        private async void btnRetrieve_Click(object? sender, EventArgs e)      => await RetrieveTunnelDetailsAsync();
+        private async void btnTunnelStatus_Click(object? sender, EventArgs e)  => await CheckTunnelStatusAsync();
+        private async void btnTestToken_Click(object? sender, EventArgs e)     => await TestTokenAsync();
+        private void btnOpenLogs_Click(object? sender, EventArgs e)             => OpenLogFolder();
+        private async void btnCreateTunnel_Click(object? sender, EventArgs e)  => await CreateTunnelAsync();
     }
 }
