@@ -17,47 +17,53 @@ namespace CloudflaredMonitor
 
         private void InitializeComponent()
         {
-            this.pnlSidebar       = new Panel();
-            this.oolioLogo        = new OolioLogoBrand();
-            this.btnCreateTunnel  = new ModernButton();
-            this.btnRefresh       = new ModernButton();
-            this.btnTunnelStatus  = new ModernButton();
-            this.btnRetrieve      = new ModernButton();
-            this.btnOpenLogs      = new ModernButton();
-            this.btnRepair        = new ModernButton();
-            this.chkReinstall     = new CheckBox();
-            this.lblVersion       = new Label();
-            this.tblMain          = new TableLayoutPanel();
-            this.pnlTokenCard     = new RoundedPanel();
-            this.lblTokenTitle    = new Label();
-            this.lblTokenHint     = new Label();
-            this.txtApiToken      = new TextBox();
-            this.chkShowToken     = new CheckBox();
-            this.btnTestToken     = new Button();
-            this.pnlStatusCard    = new RoundedPanel();
-            this.lblCardTitle     = new Label();
-            this.tblStatus        = new TableLayoutPanel();
-            this.lblServiceLabel  = new Label();
-            this.lblService       = new Label();
-            this.lblNameLabel     = new Label();
-            this.lblTunnelName    = new Label();
-            this.lblIdLabel       = new Label();
-            this.lblTunnelId      = new Label();
-            this.lblRemoteLabel   = new Label();
-            this.lblRemoteStatus  = new Label();
-            this.pnlIngressCard   = new RoundedPanel();
-            this.lblIngressTitle  = new Label();
-            this.lstIngress       = new ListView();
-            this.colCloud         = new ColumnHeader();
-            this.colLocal         = new ColumnHeader();
-            this.pnlLogCard       = new RoundedPanel();
-            this.lblLogTitle      = new Label();
-            this.txtLog           = new RichTextBox();
+            this.toolTip         = new ToolTip();
+            this.pnlSidebar      = new Panel();
+            this.oolioLogo       = new OolioLogoBrand();
+            this.btnCreateTunnel = new ModernButton();
+            this.btnRefresh      = new ModernButton();
+            this.btnTunnelStatus = new ModernButton();
+            this.btnRetrieve     = new ModernButton();
+            this.btnOpenLogs     = new ModernButton();
+            this.btnRepair       = new ModernButton();
+            this.chkReinstall    = new CheckBox();
+            this.lblVersion      = new Label();
+            this.tblMain         = new TableLayoutPanel();
+            this.pnlTokenCard    = new RoundedPanel();
+            this.lblTokenTitle   = new Label();
+            this.txtApiToken     = new TextBox();
+            this.chkShowToken    = new CheckBox();
+            this.btnTestToken    = new Button();
+            this.pnlStatusCard   = new RoundedPanel();
+            this.lblCardTitle    = new Label();
+            this.tblStatus       = new TableLayoutPanel();
+            this.lblServiceLabel = new Label();
+            this.lblService      = new Label();
+            this.lblNameLabel    = new Label();
+            this.lblTunnelName   = new Label();
+            this.lblIdLabel      = new Label();
+            this.lblTunnelId     = new Label();
+            this.lblRemoteLabel  = new Label();
+            this.lblRemoteStatus = new Label();
+            this.pnlIngressCard  = new RoundedPanel();
+            this.lblIngressTitle = new Label();
+            this.lstIngress      = new ListView();
+            this.colCloud        = new ColumnHeader();
+            this.colLocal        = new ColumnHeader();
+            this.pnlLogCard      = new RoundedPanel();
+            this.lblLogTitle     = new Label();
+            this.txtLog          = new RichTextBox();
 
             this.pnlSidebar.SuspendLayout();
             this.tblMain.SuspendLayout();
             this.SuspendLayout();
 
+            // ToolTip component - used for all hover text in the app
+            this.toolTip.AutoPopDelay = 8000;
+            this.toolTip.InitialDelay = 400;
+            this.toolTip.ReshowDelay = 200;
+
+            // Sidebar
             this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock = DockStyle.Left;
             this.pnlSidebar.Width = 224;
@@ -112,32 +118,29 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.chkReinstall);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
+            // TableLayoutPanel - uniform 10px gaps
             this.tblMain.Dock = DockStyle.Fill;
             this.tblMain.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding = new Padding(10, 10, 10, 10);
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  90));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  76));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 164));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 164));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
+            // Token card - no hint label, tooltip on title instead
             this.pnlTokenCard.Dock = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 10);
             this.lblTokenTitle.Text = "Cloudflare API Token";
             this.lblTokenTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblTokenTitle.Location = new System.Drawing.Point(14, 10);
-            this.lblTokenTitle.Size = new System.Drawing.Size(160, 18);
+            this.lblTokenTitle.Location = new System.Drawing.Point(14, 12);
+            this.lblTokenTitle.Size = new System.Drawing.Size(175, 18);
             this.lblTokenTitle.BackColor = System.Drawing.Color.Transparent;
-            this.lblTokenHint.Text = "ⓘ  Found in LastPass or HubSpot → Company Record → Network & Environment";
-            this.lblTokenHint.Font = new System.Drawing.Font("Segoe UI", 7.5f);
-            this.lblTokenHint.ForeColor = System.Drawing.Color.FromArgb(103, 58, 182);
-            this.lblTokenHint.Location = new System.Drawing.Point(178, 12);
-            this.lblTokenHint.Size = new System.Drawing.Size(400, 16);
-            this.lblTokenHint.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            this.lblTokenHint.BackColor = System.Drawing.Color.Transparent;
+            this.lblTokenTitle.Cursor = Cursors.Help;
+            this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
             this.txtApiToken.Location = new System.Drawing.Point(14, 36);
             this.txtApiToken.Size = new System.Drawing.Size(500, 24);
             this.txtApiToken.Anchor = AnchorStyles.Top | AnchorStyles.Left;
@@ -165,12 +168,12 @@ namespace CloudflaredMonitor
             this.btnTestToken.Region = RoundedRegion(100, 30, 4);
             this.btnTestToken.Click += new EventHandler(this.btnTestToken_Click);
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
-            this.pnlTokenCard.Controls.Add(this.lblTokenHint);
             this.pnlTokenCard.Controls.Add(this.txtApiToken);
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
+            // Status card
             this.pnlStatusCard.Dock = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -185,6 +188,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Location = new System.Drawing.Point(16, 40);
             this.tblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.tblStatus.Size = new System.Drawing.Size(600, 108);
+            this.tblStatus.BackColor = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount = 2;
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
@@ -210,6 +214,9 @@ namespace CloudflaredMonitor
             styleLabel(this.lblTunnelId,     "-",             false);
             styleLabel(this.lblRemoteLabel,  "Remote Status", true);
             styleLabel(this.lblRemoteStatus, "-",             false);
+            // Tooltips on status value labels
+            this.lblService.Cursor = Cursors.Help;
+            this.lblRemoteStatus.Cursor = Cursors.Help;
             this.tblStatus.Controls.Add(this.lblServiceLabel, 0, 0);
             this.tblStatus.Controls.Add(this.lblService,      1, 0);
             this.tblStatus.Controls.Add(this.lblNameLabel,    2, 0);
@@ -219,6 +226,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
+            // Ingress card
             this.pnlIngressCard.Dock = DockStyle.Fill;
             this.pnlIngressCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
@@ -248,6 +256,7 @@ namespace CloudflaredMonitor
             this.lstIngress.Columns.Add(this.colCloud);
             this.lstIngress.Columns.Add(this.colLocal);
 
+            // Log card
             this.pnlLogCard.Dock = DockStyle.Fill;
             this.pnlLogCard.Margin = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
@@ -270,6 +279,7 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap = false;
 
+            // Form
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode = AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1040, 700);
@@ -297,6 +307,7 @@ namespace CloudflaredMonitor
             return new System.Drawing.Region(path);
         }
 
+        private ToolTip          toolTip;
         private Panel            pnlSidebar;
         private OolioLogoBrand   oolioLogo;
         private ModernButton     btnCreateTunnel;
@@ -310,7 +321,6 @@ namespace CloudflaredMonitor
         private TableLayoutPanel tblMain;
         private RoundedPanel     pnlTokenCard;
         private Label            lblTokenTitle;
-        private Label            lblTokenHint;
         private TextBox          txtApiToken;
         private CheckBox         chkShowToken;
         private Button           btnTestToken;
