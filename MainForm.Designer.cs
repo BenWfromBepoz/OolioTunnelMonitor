@@ -27,7 +27,6 @@ namespace CloudflaredMonitor
             this.btnRepair        = new ModernButton();
             this.chkReinstall     = new CheckBox();
             this.lblVersion       = new Label();
-            // Main area uses a TableLayoutPanel for proper resize behaviour
             this.tblMain          = new TableLayoutPanel();
             this.pnlTokenCard     = new RoundedPanel();
             this.lblTokenTitle    = new Label();
@@ -124,9 +123,10 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.chkReinstall);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── Main TableLayoutPanel (4 rows, fills all remaining space) ────
-            // Row heights: token=90 fixed, status=164 fixed, ingress=164 fixed,
-            //              log=100% (fills remaining). All anchored to their cells.
+            // ── Main TableLayoutPanel ─────────────────────────────────────────
+            // Padding=10 on all sides = uniform outer gap matching sidebar spacing.
+            // Card margins: bottom=10 creates equal gaps BETWEEN cards.
+            // Last card (log) bottom margin=0 since outer padding handles it.
             this.tblMain.Dock = DockStyle.Fill;
             this.tblMain.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding = new Padding(10, 10, 10, 10);
@@ -140,7 +140,7 @@ namespace CloudflaredMonitor
 
             // ── Token card ───────────────────────────────────────────────────
             this.pnlTokenCard.Dock = DockStyle.Fill;
-            this.pnlTokenCard.Margin = new Padding(2, 2, 2, 4);
+            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 10);
 
             this.lblTokenTitle.Text = "Cloudflare API Token";
             this.lblTokenTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
@@ -195,7 +195,7 @@ namespace CloudflaredMonitor
 
             // ── Status card ──────────────────────────────────────────────────
             this.pnlStatusCard.Dock = DockStyle.Fill;
-            this.pnlStatusCard.Margin = new Padding(2, 0, 2, 4);
+            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 1);
@@ -248,7 +248,7 @@ namespace CloudflaredMonitor
 
             // ── Ingress card ─────────────────────────────────────────────────
             this.pnlIngressCard.Dock = DockStyle.Fill;
-            this.pnlIngressCard.Margin = new Padding(2, 0, 2, 4);
+            this.pnlIngressCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.lstIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 2);
@@ -280,8 +280,9 @@ namespace CloudflaredMonitor
             this.lstIngress.Columns.Add(this.colLocal);
 
             // ── Log card ─────────────────────────────────────────────────────
+            // Margin=0 on log card - outer tblMain padding handles the bottom/right gap.
             this.pnlLogCard.Dock = DockStyle.Fill;
-            this.pnlLogCard.Margin = new Padding(2, 0, 2, 2);
+            this.pnlLogCard.Margin = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
             this.pnlLogCard.Controls.Add(this.txtLog);
             this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
@@ -293,6 +294,7 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Size = new System.Drawing.Size(200, 22);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
 
+            // txtLog anchored to all 4 sides with right+bottom insets matching card padding
             this.txtLog.Location = new System.Drawing.Point(16, 40);
             this.txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.txtLog.Size = new System.Drawing.Size(600, 100);
@@ -316,6 +318,317 @@ namespace CloudflaredMonitor
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
 
+            this.pnlSidebar.ResumeLayout(false);
+            this.tblMain.ResumeLayout(false);
+            this.ResumeLayout(false);
+        }
+
+        private static System.Drawing.Region RoundedRegion(int w, int h, int r)
+        {
+            int d = r * 2;
+            var path = new GraphicsPath();
+            path.AddArc(0,     0,     d, d, 180, 90);
+            path.AddArc(w - d, 0,     d, d, 270, 90);
+            path.AddArc(w - d, h - d, d, d,   0, 90);
+            path.AddArc(0,     h - d, d, d,  90, 90);
+            path.CloseFigure();
+            return new System.Drawing.Region(path);
+        }
+
+        private Panel            pnlSidebar;
+        private OolioLogoBrand   oolioLogo;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+
+namespace CloudflaredMonitor
+{
+    public partial class MainForm : Form
+    {
+        private System.ComponentModel.IContainer components = null!;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null)) components.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.pnlSidebar       = new Panel();
+            this.oolioLogo        = new OolioLogoBrand();
+            this.btnCreateTunnel  = new ModernButton();
+            this.btnRefresh       = new ModernButton();
+            this.btnTunnelStatus  = new ModernButton();
+            this.btnRetrieve      = new ModernButton();
+            this.btnOpenLogs      = new ModernButton();
+            this.btnRepair        = new ModernButton();
+            this.chkReinstall     = new CheckBox();
+            this.lblVersion       = new Label();
+            this.tblMain          = new TableLayoutPanel();
+            this.pnlTokenCard     = new RoundedPanel();
+            this.lblTokenTitle    = new Label();
+            this.lblTokenHint     = new Label();
+            this.txtApiToken      = new TextBox();
+            this.chkShowToken     = new CheckBox();
+            this.btnTestToken     = new Button();
+            this.pnlStatusCard    = new RoundedPanel();
+            this.lblCardTitle     = new Label();
+            this.tblStatus        = new TableLayoutPanel();
+            this.lblServiceLabel  = new Label();
+            this.lblService       = new Label();
+            this.lblNameLabel     = new Label();
+            this.lblTunnelName    = new Label();
+            this.lblIdLabel       = new Label();
+            this.lblTunnelId      = new Label();
+            this.lblRemoteLabel   = new Label();
+            this.lblRemoteStatus  = new Label();
+            this.pnlIngressCard   = new RoundedPanel();
+            this.lblIngressTitle  = new Label();
+            this.lstIngress       = new ListView();
+            this.colCloud         = new ColumnHeader();
+            this.colLocal         = new ColumnHeader();
+            this.pnlLogCard       = new RoundedPanel();
+            this.lblLogTitle      = new Label();
+            this.txtLog           = new RichTextBox();
+
+            this.pnlSidebar.SuspendLayout();
+            this.tblMain.SuspendLayout();
+            this.SuspendLayout();
+
+            // Sidebar
+            this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
+            this.pnlSidebar.Dock = DockStyle.Left;
+            this.pnlSidebar.Width = 224;
+            this.oolioLogo.Location = new System.Drawing.Point(12, 12);
+            this.oolioLogo.Size = new System.Drawing.Size(200, 106);
+            this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
+            this.btnCreateTunnel.Text = "+  Install New Tunnel";
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
+            this.btnCreateTunnel.Size = new System.Drawing.Size(200, 40);
+            this.btnCreateTunnel.Click += new EventHandler(this.btnCreateTunnel_Click);
+            this.btnRefresh.Text = "⟳  Check Service Status";
+            this.btnRefresh.Location = new System.Drawing.Point(12, 178);
+            this.btnRefresh.Size = new System.Drawing.Size(200, 40);
+            this.btnRefresh.Click += new EventHandler(this.btnRefresh_Click);
+            this.btnTunnelStatus.Text = "○  Check Tunnel Status";
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 226);
+            this.btnTunnelStatus.Size = new System.Drawing.Size(200, 40);
+            this.btnTunnelStatus.Click += new EventHandler(this.btnTunnelStatus_Click);
+            this.btnRetrieve.Text = "↓  Retrieve Tunnel Details";
+            this.btnRetrieve.Location = new System.Drawing.Point(12, 274);
+            this.btnRetrieve.Size = new System.Drawing.Size(200, 40);
+            this.btnRetrieve.Click += new EventHandler(this.btnRetrieve_Click);
+            this.btnOpenLogs.Text = "≡  Open Logfile Folder";
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 322);
+            this.btnOpenLogs.Size = new System.Drawing.Size(200, 40);
+            this.btnOpenLogs.Click += new EventHandler(this.btnOpenLogs_Click);
+            this.btnRepair.Text = "⚙  Repair Tunnel";
+            this.btnRepair.Location = new System.Drawing.Point(12, 370);
+            this.btnRepair.Size = new System.Drawing.Size(200, 40);
+            this.btnRepair.Click += new EventHandler(this.btnRepair_Click);
+            this.chkReinstall.Text = "Reinstall MSI on repair";
+            this.chkReinstall.Font = new System.Drawing.Font("Segoe UI", 8.5f);
+            this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
+            this.chkReinstall.Location = new System.Drawing.Point(20, 416);
+            this.chkReinstall.Size = new System.Drawing.Size(196, 20);
+            this.chkReinstall.Checked = true;
+            this.chkReinstall.FlatStyle = FlatStyle.Flat;
+            this.lblVersion.Text = "v1.1.0.1";
+            this.lblVersion.Font = new System.Drawing.Font("Segoe UI", 7.5f);
+            this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(100, 115, 140);
+            this.lblVersion.Location = new System.Drawing.Point(14, 500);
+            this.lblVersion.Size = new System.Drawing.Size(196, 16);
+            this.lblVersion.BackColor = System.Drawing.Color.Transparent;
+            this.lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            this.pnlSidebar.Controls.Add(this.oolioLogo);
+            this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
+            this.pnlSidebar.Controls.Add(this.btnRefresh);
+            this.pnlSidebar.Controls.Add(this.btnTunnelStatus);
+            this.pnlSidebar.Controls.Add(this.btnRetrieve);
+            this.pnlSidebar.Controls.Add(this.btnOpenLogs);
+            this.pnlSidebar.Controls.Add(this.btnRepair);
+            this.pnlSidebar.Controls.Add(this.chkReinstall);
+            this.pnlSidebar.Controls.Add(this.lblVersion);
+
+            // Main TableLayoutPanel
+            // Padding 10px all sides = uniform outer gap.
+            // Each card has Margin bottom=10 to create equal gaps between cards.
+            // Log card margin=0 - outer padding handles the bottom and right gap.
+            this.tblMain.Dock = DockStyle.Fill;
+            this.tblMain.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            this.tblMain.Padding = new Padding(10, 10, 10, 10);
+            this.tblMain.ColumnCount = 1;
+            this.tblMain.RowCount = 4;
+            this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  90));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 164));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 164));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            // Token card
+            this.pnlTokenCard.Dock = DockStyle.Fill;
+            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 10);
+            this.lblTokenTitle.Text = "Cloudflare API Token";
+            this.lblTokenTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
+            this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.lblTokenTitle.Location = new System.Drawing.Point(14, 10);
+            this.lblTokenTitle.Size = new System.Drawing.Size(160, 18);
+            this.lblTokenTitle.BackColor = System.Drawing.Color.Transparent;
+            this.lblTokenHint.Text = "ⓘ  Found in LastPass or HubSpot → Company Record → Network & Environment";
+            this.lblTokenHint.Font = new System.Drawing.Font("Segoe UI", 7.5f);
+            this.lblTokenHint.ForeColor = System.Drawing.Color.FromArgb(103, 58, 182);
+            this.lblTokenHint.Location = new System.Drawing.Point(178, 12);
+            this.lblTokenHint.Size = new System.Drawing.Size(400, 16);
+            this.lblTokenHint.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            this.lblTokenHint.BackColor = System.Drawing.Color.Transparent;
+            this.txtApiToken.Location = new System.Drawing.Point(14, 36);
+            this.txtApiToken.Size = new System.Drawing.Size(500, 24);
+            this.txtApiToken.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            this.txtApiToken.UseSystemPasswordChar = true;
+            this.txtApiToken.Font = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.txtApiToken.BorderStyle = BorderStyle.FixedSingle;
+            this.txtApiToken.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.chkShowToken.Text = "Show";
+            this.chkShowToken.Font = new System.Drawing.Font("Segoe UI", 8f);
+            this.chkShowToken.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            this.chkShowToken.Location = new System.Drawing.Point(520, 38);
+            this.chkShowToken.Size = new System.Drawing.Size(52, 18);
+            this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
+            this.chkShowToken.FlatStyle = FlatStyle.Flat;
+            this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
+            this.btnTestToken.Text = "Test Token";
+            this.btnTestToken.Location = new System.Drawing.Point(578, 32);
+            this.btnTestToken.Size = new System.Drawing.Size(100, 30);
+            this.btnTestToken.FlatStyle = FlatStyle.Flat;
+            this.btnTestToken.BackColor = System.Drawing.Color.FromArgb(103, 58, 182);
+            this.btnTestToken.ForeColor = System.Drawing.Color.White;
+            this.btnTestToken.Font = new System.Drawing.Font("Segoe UI", 8.5f);
+            this.btnTestToken.FlatAppearance.BorderSize = 0;
+            this.btnTestToken.Cursor = Cursors.Hand;
+            this.btnTestToken.Region = RoundedRegion(100, 30, 4);
+            this.btnTestToken.Click += new EventHandler(this.btnTestToken_Click);
+            this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
+            this.pnlTokenCard.Controls.Add(this.lblTokenHint);
+            this.pnlTokenCard.Controls.Add(this.txtApiToken);
+            this.pnlTokenCard.Controls.Add(this.chkShowToken);
+            this.pnlTokenCard.Controls.Add(this.btnTestToken);
+            this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
+
+            // Status card
+            this.pnlStatusCard.Dock = DockStyle.Fill;
+            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
+            this.pnlStatusCard.Controls.Add(this.lblCardTitle);
+            this.pnlStatusCard.Controls.Add(this.tblStatus);
+            this.tblMain.Controls.Add(this.pnlStatusCard, 0, 1);
+            this.lblCardTitle.Text = "Tunnel Status";
+            this.lblCardTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblCardTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.lblCardTitle.Location = new System.Drawing.Point(16, 12);
+            this.lblCardTitle.Size = new System.Drawing.Size(200, 22);
+            this.lblCardTitle.BackColor = System.Drawing.Color.Transparent;
+            this.tblStatus.Location = new System.Drawing.Point(16, 40);
+            this.tblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.tblStatus.Size = new System.Drawing.Size(600, 108);
+            this.tblStatus.ColumnCount = 4;
+            this.tblStatus.RowCount = 2;
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            System.Action<Label, string, bool> styleLabel = (lbl, text, isKey) => {
+                lbl.Text = text;
+                lbl.Font = isKey ? new System.Drawing.Font("Segoe UI", 8.5f) : new System.Drawing.Font("Segoe UI Semibold", 9.5f, System.Drawing.FontStyle.Bold);
+                lbl.ForeColor = isKey ? System.Drawing.Color.FromArgb(71, 85, 105) : System.Drawing.Color.FromArgb(15, 23, 42);
+                lbl.Dock = DockStyle.Fill;
+                lbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+                lbl.AutoSize = false;
+                lbl.BackColor = System.Drawing.Color.Transparent;
+            };
+            styleLabel(this.lblServiceLabel, "Service",       true);
+            styleLabel(this.lblService,      "-",             false);
+            styleLabel(this.lblNameLabel,    "Tunnel Name",   true);
+            styleLabel(this.lblTunnelName,   "-",             false);
+            styleLabel(this.lblIdLabel,      "Tunnel ID",     true);
+            styleLabel(this.lblTunnelId,     "-",             false);
+            styleLabel(this.lblRemoteLabel,  "Remote Status", true);
+            styleLabel(this.lblRemoteStatus, "-",             false);
+            this.tblStatus.Controls.Add(this.lblServiceLabel, 0, 0);
+            this.tblStatus.Controls.Add(this.lblService,      1, 0);
+            this.tblStatus.Controls.Add(this.lblNameLabel,    2, 0);
+            this.tblStatus.Controls.Add(this.lblTunnelName,   3, 0);
+            this.tblStatus.Controls.Add(this.lblIdLabel,      0, 1);
+            this.tblStatus.Controls.Add(this.lblTunnelId,     1, 1);
+            this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
+            this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
+
+            // Ingress card
+            this.pnlIngressCard.Dock = DockStyle.Fill;
+            this.pnlIngressCard.Margin = new Padding(0, 0, 0, 10);
+            this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
+            this.pnlIngressCard.Controls.Add(this.lstIngress);
+            this.tblMain.Controls.Add(this.pnlIngressCard, 0, 2);
+            this.lblIngressTitle.Text = "Published Routes";
+            this.lblIngressTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.lblIngressTitle.Location = new System.Drawing.Point(16, 12);
+            this.lblIngressTitle.Size = new System.Drawing.Size(200, 22);
+            this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
+            this.colCloud.Text  = "Cloud Endpoint";
+            this.colCloud.Width = 420;
+            this.colLocal.Text  = "Local Endpoint";
+            this.colLocal.Width = 300;
+            this.lstIngress.Location = new System.Drawing.Point(16, 40);
+            this.lstIngress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.lstIngress.Size = new System.Drawing.Size(600, 108);
+            this.lstIngress.View = View.Details;
+            this.lstIngress.FullRowSelect = true;
+            this.lstIngress.GridLines = false;
+            this.lstIngress.BorderStyle = BorderStyle.None;
+            this.lstIngress.BackColor = System.Drawing.Color.White;
+            this.lstIngress.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            this.lstIngress.Font = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.lstIngress.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+            this.lstIngress.Columns.Add(this.colCloud);
+            this.lstIngress.Columns.Add(this.colLocal);
+
+            // Log card - margin 0, outer tblMain padding=10 gives the right/bottom gap
+            this.pnlLogCard.Dock = DockStyle.Fill;
+            this.pnlLogCard.Margin = new Padding(0, 0, 0, 0);
+            this.pnlLogCard.Controls.Add(this.lblLogTitle);
+            this.pnlLogCard.Controls.Add(this.txtLog);
+            this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
+            this.lblLogTitle.Text = "Activity Log";
+            this.lblLogTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblLogTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
+            this.lblLogTitle.Location = new System.Drawing.Point(16, 12);
+            this.lblLogTitle.Size = new System.Drawing.Size(200, 22);
+            this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
+            // txtLog anchored all 4 sides - right edge stops 16px from card edge = gap on right
+            this.txtLog.Location = new System.Drawing.Point(16, 40);
+            this.txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.txtLog.Size = new System.Drawing.Size(600, 100);
+            this.txtLog.ReadOnly = true;
+            this.txtLog.ScrollBars = RichTextBoxScrollBars.Vertical;
+            this.txtLog.Font = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.txtLog.BorderStyle = BorderStyle.None;
+            this.txtLog.BackColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            this.txtLog.ForeColor = System.Drawing.Color.FromArgb(203, 213, 225);
+            this.txtLog.WordWrap = false;
+
+            // Form
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
+            this.AutoScaleMode = AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(1040, 700);
+            this.MinimumSize = new System.Drawing.Size(860, 580);
+            this.Controls.Add(this.tblMain);
+            this.Controls.Add(this.pnlSidebar);
+            this.Name = "MainForm";
+            this.Text = "Oolio ZeroTrust Tunnel Monitor";
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
             this.pnlSidebar.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
             this.ResumeLayout(false);
