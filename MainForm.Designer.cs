@@ -113,30 +113,30 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.chkReinstall);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // Main TableLayoutPanel
+            // Main TableLayoutPanel - tighter: 8px padding, 6px between cards
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
-            this.tblMain.Padding     = new Padding(10, 10, 10, 10);
+            this.tblMain.Padding     = new Padding(8, 8, 8, 8);
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 152));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 140));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  60));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 130));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 118));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,  100));
 
-            // Token card
+            // Token card - compact
             this.pnlTokenCard.Dock   = DockStyle.Fill;
-            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 10);
+            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 6);
             this.lblTokenTitle.Text      = "Cloudflare API Token";
             this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblTokenTitle.Location  = new System.Drawing.Point(14, 8);
+            this.lblTokenTitle.Location  = new System.Drawing.Point(14, 7);
             this.lblTokenTitle.Size      = new System.Drawing.Size(175, 18);
             this.lblTokenTitle.BackColor = System.Drawing.Color.Transparent;
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
-            this.txtApiToken.Location              = new System.Drawing.Point(14, 30);
+            this.txtApiToken.Location              = new System.Drawing.Point(14, 28);
             this.txtApiToken.Size                  = new System.Drawing.Size(500, 24);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
             this.txtApiToken.UseSystemPasswordChar = true;
@@ -146,21 +146,22 @@ namespace CloudflaredMonitor
             this.chkShowToken.Text      = "Show";
             this.chkShowToken.Font      = new System.Drawing.Font("Segoe UI", 8f);
             this.chkShowToken.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            this.chkShowToken.Location  = new System.Drawing.Point(520, 32);
+            this.chkShowToken.Location  = new System.Drawing.Point(520, 30);
             this.chkShowToken.Size      = new System.Drawing.Size(52, 18);
             this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
+            // Test Token button: card=60px, button=26px -> y=(60-26)/2=17
             this.btnTestToken.Text                      = "Test Token";
-            this.btnTestToken.Location                  = new System.Drawing.Point(578, 20);
-            this.btnTestToken.Size                      = new System.Drawing.Size(100, 28);
+            this.btnTestToken.Location                  = new System.Drawing.Point(578, 17);
+            this.btnTestToken.Size                      = new System.Drawing.Size(100, 26);
             this.btnTestToken.FlatStyle                 = FlatStyle.Flat;
             this.btnTestToken.BackColor                 = System.Drawing.Color.FromArgb(103, 58, 182);
             this.btnTestToken.ForeColor                 = System.Drawing.Color.White;
             this.btnTestToken.Font                      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.btnTestToken.FlatAppearance.BorderSize = 0;
             this.btnTestToken.Cursor                    = Cursors.Hand;
-            this.btnTestToken.Region                    = RoundedRegion(100, 28, 4);
+            this.btnTestToken.Region                    = RoundedRegion(100, 26, 4);
             this.btnTestToken.Click                    += new EventHandler(this.btnTestToken_Click);
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
             this.pnlTokenCard.Controls.Add(this.txtApiToken);
@@ -168,21 +169,21 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
-            // Status card
+            // Status card - compact
             this.pnlStatusCard.Dock   = DockStyle.Fill;
-            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
+            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 6);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 1);
             this.lblCardTitle.Text      = "Tunnel Status";
-            this.lblCardTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblCardTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9.5f, System.Drawing.FontStyle.Bold);
             this.lblCardTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblCardTitle.Location  = new System.Drawing.Point(16, 10);
-            this.lblCardTitle.Size      = new System.Drawing.Size(200, 22);
+            this.lblCardTitle.Location  = new System.Drawing.Point(16, 8);
+            this.lblCardTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblCardTitle.BackColor = System.Drawing.Color.Transparent;
-            this.tblStatus.Location    = new System.Drawing.Point(16, 38);
+            this.tblStatus.Location    = new System.Drawing.Point(16, 32);
             this.tblStatus.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.tblStatus.Size        = new System.Drawing.Size(200, 100);
+            this.tblStatus.Size        = new System.Drawing.Size(200, 88);
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
@@ -194,7 +195,7 @@ namespace CloudflaredMonitor
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             System.Action<Label, string, bool> styleLabel = (lbl, text, isKey) => {
                 lbl.Text      = text;
-                lbl.Font      = isKey ? new System.Drawing.Font("Segoe UI", 8.5f) : new System.Drawing.Font("Segoe UI Semibold", 9.5f, System.Drawing.FontStyle.Bold);
+                lbl.Font      = isKey ? new System.Drawing.Font("Segoe UI", 8f) : new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
                 lbl.ForeColor = isKey ? System.Drawing.Color.FromArgb(100, 116, 139) : System.Drawing.Color.FromArgb(15, 23, 42);
                 lbl.Dock      = DockStyle.Fill;
                 lbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -220,20 +221,20 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // Ingress card - DataGridView with per-column header colours
+            // Ingress card - compact
             this.pnlIngressCard.Dock   = DockStyle.Fill;
-            this.pnlIngressCard.Margin = new Padding(0, 0, 0, 10);
+            this.pnlIngressCard.Margin = new Padding(0, 0, 0, 6);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 2);
             this.lblIngressTitle.Text      = "Published Routes";
-            this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9.5f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Location  = new System.Drawing.Point(16, 10);
-            this.lblIngressTitle.Size      = new System.Drawing.Size(200, 22);
+            this.lblIngressTitle.Location  = new System.Drawing.Point(16, 8);
+            this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
-            // Configure columns BEFORE adding to grid
+            // Columns defined before adding to grid
             this.colCloud.HeaderText   = "Cloud Endpoint";
             this.colCloud.Name         = "colCloud";
             this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -245,18 +246,17 @@ namespace CloudflaredMonitor
             this.colLocal.FillWeight   = 45;
             this.colLocal.ReadOnly     = true;
 
-            // Grid properties - EnableHeadersVisualStyles=false is required for custom header colours
-            this.dgvIngress.Location                = new System.Drawing.Point(16, 36);
-            this.dgvIngress.Anchor                  = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size                    = new System.Drawing.Size(200, 88);
-            this.dgvIngress.Font                    = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.dgvIngress.Location                  = new System.Drawing.Point(16, 32);
+            this.dgvIngress.Anchor                    = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.dgvIngress.Size                      = new System.Drawing.Size(200, 78);
+            this.dgvIngress.Font                      = new System.Drawing.Font("Cascadia Mono", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles = false;
             this.dgvIngress.ColumnHeadersBorderStyle  = DataGridViewHeaderBorderStyle.Single;
-            this.dgvIngress.ColumnHeadersHeight       = 28;
+            this.dgvIngress.ColumnHeadersHeight       = 24;
             this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
             this.dgvIngress.DefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(30, 41, 59);
-            this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(225, 216, 240);
             this.dgvIngress.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
             this.dgvIngress.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(249, 250, 251);
             this.dgvIngress.GridColor             = System.Drawing.Color.FromArgb(226, 232, 240);
@@ -270,22 +270,21 @@ namespace CloudflaredMonitor
             this.dgvIngress.AllowUserToResizeRows = false;
             this.dgvIngress.RowHeadersVisible     = false;
             this.dgvIngress.AutoSizeRowsMode      = DataGridViewAutoSizeRowsMode.None;
-            this.dgvIngress.RowTemplate.Height    = 24;
+            this.dgvIngress.RowTemplate.Height    = 22;
             this.dgvIngress.BackgroundColor       = System.Drawing.Color.White;
 
-            // Add columns to grid first
+            // Add columns to grid FIRST, then set header cell styles
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // Apply header cell styles AFTER columns are added to the grid
-            // Cloud Endpoint: light lavender (#ede9fe) background, deep purple (#4c1d95) text
-            this.dgvIngress.Columns["colCloud"].HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
+            // Cloud Endpoint: #e1d8f0 background, dark purple text
+            this.dgvIngress.Columns["colCloud"].HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(225, 216, 240);
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.ForeColor = System.Drawing.Color.FromArgb(76, 29, 149);
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.Font      = new System.Drawing.Font("Segoe UI", 8.5f, System.Drawing.FontStyle.Bold);
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
-            // Local Endpoint: light slate (#f1f5f9) background, charcoal (#334155) text
-            this.dgvIngress.Columns["colLocal"].HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            // Local Endpoint: #f0ebf8 background, charcoal text
+            this.dgvIngress.Columns["colLocal"].HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(240, 235, 248);
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.Font      = new System.Drawing.Font("Segoe UI", 8.5f, System.Drawing.FontStyle.Bold);
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
@@ -298,12 +297,12 @@ namespace CloudflaredMonitor
             this.pnlLogCard.Controls.Add(this.txtLog);
             this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
             this.lblLogTitle.Text      = "Activity Log";
-            this.lblLogTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblLogTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9.5f, System.Drawing.FontStyle.Bold);
             this.lblLogTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblLogTitle.Location  = new System.Drawing.Point(16, 10);
-            this.lblLogTitle.Size      = new System.Drawing.Size(200, 22);
+            this.lblLogTitle.Location  = new System.Drawing.Point(16, 8);
+            this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
-            this.txtLog.Location    = new System.Drawing.Point(16, 36);
+            this.txtLog.Location    = new System.Drawing.Point(16, 32);
             this.txtLog.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.txtLog.Size        = new System.Drawing.Size(200, 100);
             this.txtLog.ReadOnly    = true;
@@ -314,11 +313,11 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // Form - Shown event loads the log file after the window handle exists
+            // Form
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
-            this.MinimumSize         = new System.Drawing.Size(860, 580);
+            this.MinimumSize         = new System.Drawing.Size(860, 560);
             this.Controls.Add(this.tblMain);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
