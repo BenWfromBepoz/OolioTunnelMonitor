@@ -58,7 +58,23 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Pill badge label - draws a compact rounded pill, transparent background outside pill
+    // Shared rounded path helper
+    internal static class ShapeHelper
+    {
+        public static GraphicsPath RoundedPath(Rectangle r, int rad)
+        {
+            int d = rad * 2;
+            var p = new GraphicsPath();
+            p.AddArc(r.X,         r.Y,         d, d, 180, 90);
+            p.AddArc(r.Right - d, r.Y,         d, d, 270, 90);
+            p.AddArc(r.Right - d, r.Bottom - d, d, d,   0, 90);
+            p.AddArc(r.X,         r.Bottom - d, d, d,  90, 90);
+            p.CloseFigure();
+            return p;
+        }
+    }
+
+    // Pill badge - paints parent background first, then pill shape on top
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
@@ -75,14 +91,29 @@ namespace CloudflaredMonitor
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             BackColor = Color.Transparent;
-            ForeColor = Color.FromArgb(100, 116, 139);
             TextAlign = ContentAlignment.MiddleLeft;
             AutoSize  = false;
             Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
 
-        // Suppress all base background painting - we handle everything in OnPaint
-        protected override void OnPaintBackground(PaintEventArgs e) { }
+        // Paint parent background so the label surface matches the card's white background
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            if (Parent != null)
+            {
+                // Translate to our position within the parent and invoke parent paint
+                e.Graphics.TranslateTransform(-Left, -Top);
+                var clip = new Rectangle(Left, Top, Width, Height);
+                using var pea = new PaintEventArgs(e.Graphics, clip);
+                InvokePaintBackground(Parent, pea);
+                InvokePaint(Parent, pea);
+                e.Graphics.TranslateTransform(Left, Top);
+            }
+            else
+            {
+                e.Graphics.Clear(Color.White);
+            }
+        }
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -90,40 +121,81 @@ namespace CloudflaredMonitor
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
-            // Clear to transparent
-            g.Clear(Color.Transparent);
-
             bool hasPill = _pillColour != Color.Transparent && Text.Length > 0 && Text != "-";
 
             if (hasPill)
             {
-                // Size pill tightly around text
                 var sz  = g.MeasureString(Text, Font);
                 int pw  = (int)sz.Width  + 24;
                 int ph  = (int)sz.Height + 8;
-                int px  = 0; // left-aligned pill
                 int py  = (Height - ph) / 2;
-                var rect = new Rectangle(px, py, pw, ph);
+                var rect = new Rectangle(0, py, pw, ph);
                 using var fill = new SolidBrush(_pillColour);
-                using var path = PillPath(rect, PillRadius);
+                using var path = ShapeHelper.RoundedPath(rect, PillRadius);
                 g.FillPath(fill, path);
                 using var fg = new SolidBrush(Color.White);
                 g.DrawString(Text, Font, fg,
-                    new RectangleF(px, py, pw, ph),
+                    new RectangleF(0, py, pw, ph),
                     new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
             else
             {
-                // No pill - just grey text
                 using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
                 g.DrawString(Text, Font, fg,
                     new RectangleF(0, 0, Width, Height),
                     new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
             }
         }
+    }
 
-        private static GraphicsPath PillPath(Rectangle r, int rad)
-        { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+    // Pill-shaped button (used for Test Token) - same radius as PillLabel
+    internal sealed class PillButton : Button
+    {
+        private static readonly Color _normal = Color.FromArgb(103, 58, 182);
+        private static readonly Color _hover  = Color.FromArgb(124, 77, 211);
+        private const int Radius = 13;
+
+        public PillButton()
+        {
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            BackColor = _normal;
+            ForeColor = Color.White;
+            Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            Cursor    = Cursors.Hand;
+            TextAlign = ContentAlignment.MiddleCenter;
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+        }
+
+        protected override void OnMouseEnter(EventArgs e) { BackColor = _hover;  Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { BackColor = _normal; Invalidate(); base.OnMouseLeave(e); }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            if (Parent != null)
+            {
+                e.Graphics.TranslateTransform(-Left, -Top);
+                var clip = new Rectangle(Left, Top, Width, Height);
+                using var pea = new PaintEventArgs(e.Graphics, clip);
+                InvokePaintBackground(Parent, pea);
+                InvokePaint(Parent, pea);
+                e.Graphics.TranslateTransform(Left, Top);
+            }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            using var fill = new SolidBrush(BackColor);
+            using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+            g.FillPath(fill, path);
+            using var fg = new SolidBrush(ForeColor);
+            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+        }
     }
 
     internal sealed class ModernButton : Button
@@ -247,13 +319,11 @@ namespace CloudflaredMonitor
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            // Reapply header styles after Windows theming has settled
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
         }
 
-        // Force header colours after form is shown - Windows theme can override during init
         private void ApplyGridHeaderStyles()
         {
             dgvIngress.EnableHeadersVisualStyles = false;
@@ -269,8 +339,9 @@ namespace CloudflaredMonitor
             }
             if (cl != null)
             {
+                // Local Endpoint: match Cloud Endpoint purple text, light grey bg
                 cl.HeaderCell.Style.BackColor = Color.FromArgb(241, 245, 249);
-                cl.HeaderCell.Style.ForeColor = Color.FromArgb(51, 65, 85);
+                cl.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149);
                 cl.HeaderCell.Style.Font      = new Font("Segoe UI", 8.5f, FontStyle.Bold);
                 cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
                 cl.HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
@@ -334,12 +405,12 @@ namespace CloudflaredMonitor
         {
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
-            if (svc) return s == "running"                       ? Color.FromArgb(22, 163, 74)
-                       : s is "stopped" or "notinstalled"        ? Color.FromArgb(220, 38, 38)
-                                                                 : Color.FromArgb(217, 119, 6);
-            return s is "healthy" or "active" or "connected" or "reachable"  ? Color.FromArgb(22, 163, 74)
-                 : s is "inactive" or "degraded" or "down" or "unreachable"  ? Color.FromArgb(220, 38, 38)
-                                                                              : Color.FromArgb(217, 119, 6);
+            if (svc) return s == "running"                       ? Color.FromArgb(16, 140, 60)
+                       : s is "stopped" or "notinstalled"        ? Color.FromArgb(200, 30, 30)
+                                                                 : Color.FromArgb(180, 100, 0);
+            return s is "healthy" or "active" or "connected" or "reachable"  ? Color.FromArgb(16, 140, 60)
+                 : s is "inactive" or "degraded" or "down" or "unreachable"  ? Color.FromArgb(200, 30, 30)
+                                                                              : Color.FromArgb(180, 100, 0);
         }
 
         private static string ServiceTooltip(string? value) =>
@@ -634,11 +705,34 @@ namespace CloudflaredMonitor
             catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        private async void btnTunnelStatus_Click(object? sender, EventArgs e) => await CheckTunnelStatusAsync();
-        private async void btnTestToken_Click(object? sender, EventArgs e)     => await TestTokenAsync();
-        private void btnOpenLogs_Click(object? sender, EventArgs e)             => OpenLogFolder();
-        private void btnOpenConfig_Click(object? sender, EventArgs e)           => OpenConfigFolder();
-        private async void btnRepair_Click(object? sender, EventArgs e)         => await RepairAsync();
-        private async void btnCreateTunnel_Click(object? sender, EventArgs e)   => await CreateTunnelAsync();
+        public async Task CheckForUpdatesAsync(bool silent = false)
+        {
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                var json = await http.GetStringAsync(VersionJsonUrl);
+                using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
+                string latest = root.TryGetProperty("version", out var v) ? v.GetString() ?? AppVersion : AppVersion;
+                string url    = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "";
+                if (latest != AppVersion)
+                {
+                    LogInfo("Update available: v" + latest);
+                    if (MessageBox.Show(this, "New version v" + latest + " is available.\nOpen download page?",
+                        "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes
+                        && !string.IsNullOrWhiteSpace(url))
+                        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                else if (!silent) LogInfo("Up to date (v" + AppVersion + ")");
+            }
+            catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
+        }
+
+        private async void btnTunnelStatus_Click(object? sender, EventArgs e)   => await CheckTunnelStatusAsync();
+        private async void btnTestToken_Click(object? sender, EventArgs e)       => await TestTokenAsync();
+        private void btnOpenLogs_Click(object? sender, EventArgs e)               => OpenLogFolder();
+        private void btnOpenConfig_Click(object? sender, EventArgs e)             => OpenConfigFolder();
+        private async void btnRepair_Click(object? sender, EventArgs e)           => await RepairAsync();
+        private async void btnCreateTunnel_Click(object? sender, EventArgs e)     => await CreateTunnelAsync();
+        private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync();
     }
 }
