@@ -58,7 +58,6 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Pill-shaped label: draws a rounded rectangle filled with BackColor, white text centred
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 10;
@@ -77,21 +76,18 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            // Measure text to size the pill
             var sz   = g.MeasureString(Text, Font);
             int pw   = (int)sz.Width  + 20;
             int ph   = (int)sz.Height + 6;
             int px   = (Width  - pw) / 2;
             int py   = (Height - ph) / 2;
             var rect = new Rectangle(px, py, pw, ph);
-            // Draw filled pill only if we have a real colour (not transparent)
             if (BackColor != Color.Transparent && Text.Length > 0 && Text != "-")
             {
                 using var fill = new SolidBrush(BackColor);
                 using var path = PillPath(rect, PillRadius);
                 g.FillPath(fill, path);
             }
-            // Draw text
             using var fg = new SolidBrush(BackColor == Color.Transparent || Text == "-"
                 ? Color.FromArgb(100, 116, 139) : Color.White);
             g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
@@ -216,23 +212,23 @@ namespace CloudflaredMonitor
         {
             InitializeComponent();
             _exporter = new DiagnosticsExporter(_logger);
-            // Suppress DataGridView selection highlight via CellPainting
             dgvIngress.CellPainting += DgvIngress_CellPainting;
         }
 
-        // Override all cell painting to prevent any selection highlight
-        private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
+        // Use OnShown override instead of event handler - avoids any duplicate method issue
+        protected override void OnShown(EventArgs e)
         {
-            if (e.RowIndex < 0) return; // skip header
-            e.PaintBackground(e.ClipBounds, false); // false = don't paint selection
-            e.PaintContent(e.ClipBounds);
-            e.Handled = true;
+            base.OnShown(e);
+            _ = LoadTodaysLogAsync();
+            _ = CheckTunnelStatusAsync();
         }
 
-        private async void MainForm_Shown(object? sender, EventArgs e)
+        private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
         {
-            await LoadTodaysLogAsync();
-            await CheckTunnelStatusAsync();
+            if (e.RowIndex < 0) return;
+            e.PaintBackground(e.ClipBounds, false);
+            e.PaintContent(e.ClipBounds);
+            e.Handled = true;
         }
 
         private async Task LoadTodaysLogAsync()
@@ -279,15 +275,13 @@ namespace CloudflaredMonitor
             else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
         }
 
-        // Badge colours for pill background
         private static Color BadgeColour(string? v, bool svc = false)
         {
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
-            if (svc) return s == "running"      ? Color.FromArgb(22, 163, 74)
-                         : s == "stopped"       ? Color.FromArgb(220, 38, 38)
-                         : s == "notinstalled"  ? Color.FromArgb(220, 38, 38)
-                                                : Color.FromArgb(217, 119, 6);
+            if (svc) return s == "running"     ? Color.FromArgb(22, 163, 74)
+                       : s is "stopped" or "notinstalled" ? Color.FromArgb(220, 38, 38)
+                                                          : Color.FromArgb(217, 119, 6);
             return s is "healthy" or "active" or "connected" or "reachable"  ? Color.FromArgb(22, 163, 74)
                  : s is "inactive" or "degraded" or "down" or "unreachable"  ? Color.FromArgb(220, 38, 38)
                                                                               : Color.FromArgb(217, 119, 6);
@@ -310,7 +304,6 @@ namespace CloudflaredMonitor
                 _                                                     => "Tunnel remote status is unknown or not yet retrieved."
             };
 
-        // ApplyBadge sets the PillLabel colour and text - the PillLabel.OnPaint draws the pill
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         {
             lbl.Text      = text;
@@ -431,7 +424,7 @@ namespace CloudflaredMonitor
                     var tunnel = await api.GetTunnelAsync(tid, ctsR.Token);
                     LogInfo("Read access OK - Tunnel: " + (tunnel?.Name ?? tid));
                     try { using var ctsW = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tid, ctsW.Token); LogInfo("Write access OK - Token scope: READ + WRITE (suitable for Repair)"); }
-                    catch (Exception wEx) { if (wEx.Message.Contains("403")) LogWarn("Write access DENIED - READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission."); else LogWarn("Write access test inconclusive: " + wEx.Message); }
+                    catch (Exception wEx) { if (wEx.Message.Contains("403")) LogWarn("Write access DENIED - READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission."); else LogWarn("Write access inconclusive: " + wEx.Message); }
                 }
                 else LogInfo("Token appears valid. Run Check Tunnel Status to associate with a tunnel.");
             }
@@ -587,12 +580,11 @@ namespace CloudflaredMonitor
             catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        private async void MainForm_Shown(object? sender, EventArgs e)     { await LoadTodaysLogAsync(); await CheckTunnelStatusAsync(); }
         private async void btnTunnelStatus_Click(object? sender, EventArgs e) => await CheckTunnelStatusAsync();
-        private async void btnTestToken_Click(object? sender, EventArgs e)    => await TestTokenAsync();
-        private void btnOpenLogs_Click(object? sender, EventArgs e)            => OpenLogFolder();
-        private void btnOpenConfig_Click(object? sender, EventArgs e)          => OpenConfigFolder();
-        private async void btnRepair_Click(object? sender, EventArgs e)        => await RepairAsync();
-        private async void btnCreateTunnel_Click(object? sender, EventArgs e)  => await CreateTunnelAsync();
+        private async void btnTestToken_Click(object? sender, EventArgs e)     => await TestTokenAsync();
+        private void btnOpenLogs_Click(object? sender, EventArgs e)             => OpenLogFolder();
+        private void btnOpenConfig_Click(object? sender, EventArgs e)           => OpenConfigFolder();
+        private async void btnRepair_Click(object? sender, EventArgs e)         => await RepairAsync();
+        private async void btnCreateTunnel_Click(object? sender, EventArgs e)   => await CreateTunnelAsync();
     }
 }
