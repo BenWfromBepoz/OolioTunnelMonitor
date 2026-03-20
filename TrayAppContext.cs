@@ -1,4 +1,6 @@
 using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace CloudflaredMonitor
@@ -22,13 +24,32 @@ namespace CloudflaredMonitor
             _trayIcon = new NotifyIcon
             {
                 Text             = "Oolio ZeroTrust Tunnel Monitor",
-                Icon             = System.Drawing.SystemIcons.Shield,
+                Icon             = CreateTrayIcon(),
                 Visible          = true,
                 ContextMenuStrip = contextMenu
             };
 
             _trayIcon.DoubleClick += (_, _) => ShowMainForm();
-            _ = _mainForm.CheckTunnelStatusAsync();
+        }
+
+        // Two white hollow circles on a dark background - matches the OO in the Oolio logo
+        private static System.Drawing.Icon CreateTrayIcon()
+        {
+            using var bmp = new Bitmap(32, 32);
+            using var g   = Graphics.FromImage(bmp);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Dark background matching sidebar colour
+            g.Clear(Color.FromArgb(39, 46, 63));
+
+            using var pen = new Pen(Color.White, 3f);
+
+            // Left O: centre at (9, 16), radius 7
+            g.DrawEllipse(pen, 2, 9, 14, 14);
+            // Right O: centre at (23, 16), radius 7
+            g.DrawEllipse(pen, 16, 9, 14, 14);
+
+            return System.Drawing.Icon.FromHandle(bmp.GetHicon());
         }
 
         private void ShowMainForm()
