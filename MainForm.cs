@@ -58,41 +58,70 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // Pill badge label - draws a compact rounded pill, transparent background outside pill
     internal sealed class PillLabel : Label
     {
-        private const int PillRadius = 10;
+        private const int PillRadius = 9;
+        private Color _pillColour = Color.Transparent;
+
+        public Color PillColour
+        {
+            get => _pillColour;
+            set { _pillColour = value; Invalidate(); }
+        }
+
         public PillLabel()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             BackColor = Color.Transparent;
-            ForeColor = Color.White;
-            TextAlign = ContentAlignment.MiddleCenter;
+            ForeColor = Color.FromArgb(100, 116, 139);
+            TextAlign = ContentAlignment.MiddleLeft;
             AutoSize  = false;
             Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
+
+        // Suppress all base background painting - we handle everything in OnPaint
+        protected override void OnPaintBackground(PaintEventArgs e) { }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            var sz   = g.MeasureString(Text, Font);
-            int pw   = (int)sz.Width  + 20;
-            int ph   = (int)sz.Height + 6;
-            int px   = (Width  - pw) / 2;
-            int py   = (Height - ph) / 2;
-            var rect = new Rectangle(px, py, pw, ph);
-            if (BackColor != Color.Transparent && Text.Length > 0 && Text != "-")
+
+            // Clear to transparent
+            g.Clear(Color.Transparent);
+
+            bool hasPill = _pillColour != Color.Transparent && Text.Length > 0 && Text != "-";
+
+            if (hasPill)
             {
-                using var fill = new SolidBrush(BackColor);
+                // Size pill tightly around text
+                var sz  = g.MeasureString(Text, Font);
+                int pw  = (int)sz.Width  + 24;
+                int ph  = (int)sz.Height + 8;
+                int px  = 0; // left-aligned pill
+                int py  = (Height - ph) / 2;
+                var rect = new Rectangle(px, py, pw, ph);
+                using var fill = new SolidBrush(_pillColour);
                 using var path = PillPath(rect, PillRadius);
                 g.FillPath(fill, path);
+                using var fg = new SolidBrush(Color.White);
+                g.DrawString(Text, Font, fg,
+                    new RectangleF(px, py, pw, ph),
+                    new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
-            using var fg = new SolidBrush(BackColor == Color.Transparent || Text == "-"
-                ? Color.FromArgb(100, 116, 139) : Color.White);
-            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
-                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            else
+            {
+                // No pill - just grey text
+                using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
+                g.DrawString(Text, Font, fg,
+                    new RectangleF(0, 0, Width, Height),
+                    new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
+            }
         }
+
         private static GraphicsPath PillPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
@@ -215,12 +244,38 @@ namespace CloudflaredMonitor
             dgvIngress.CellPainting += DgvIngress_CellPainting;
         }
 
-        // Use OnShown override instead of event handler - avoids any duplicate method issue
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            // Reapply header styles after Windows theming has settled
+            ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
+        }
+
+        // Force header colours after form is shown - Windows theme can override during init
+        private void ApplyGridHeaderStyles()
+        {
+            dgvIngress.EnableHeadersVisualStyles = false;
+            var cc = dgvIngress.Columns["colCloud"];
+            var cl = dgvIngress.Columns["colLocal"];
+            if (cc != null)
+            {
+                cc.HeaderCell.Style.BackColor = Color.FromArgb(237, 233, 254);
+                cc.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149);
+                cc.HeaderCell.Style.Font      = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+                cc.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                cc.HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
+            }
+            if (cl != null)
+            {
+                cl.HeaderCell.Style.BackColor = Color.FromArgb(241, 245, 249);
+                cl.HeaderCell.Style.ForeColor = Color.FromArgb(51, 65, 85);
+                cl.HeaderCell.Style.Font      = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+                cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                cl.HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
+            }
+            dgvIngress.Invalidate();
         }
 
         private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
@@ -279,9 +334,9 @@ namespace CloudflaredMonitor
         {
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
-            if (svc) return s == "running"     ? Color.FromArgb(22, 163, 74)
-                       : s is "stopped" or "notinstalled" ? Color.FromArgb(220, 38, 38)
-                                                          : Color.FromArgb(217, 119, 6);
+            if (svc) return s == "running"                       ? Color.FromArgb(22, 163, 74)
+                       : s is "stopped" or "notinstalled"        ? Color.FromArgb(220, 38, 38)
+                                                                 : Color.FromArgb(217, 119, 6);
             return s is "healthy" or "active" or "connected" or "reachable"  ? Color.FromArgb(22, 163, 74)
                  : s is "inactive" or "degraded" or "down" or "unreachable"  ? Color.FromArgb(220, 38, 38)
                                                                               : Color.FromArgb(217, 119, 6);
@@ -306,10 +361,9 @@ namespace CloudflaredMonitor
 
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         {
-            lbl.Text      = text;
-            lbl.BackColor = BadgeColour(text, isService);
+            lbl.Text       = text;
+            lbl.PillColour = BadgeColour(text, isService);
             toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text));
-            lbl.Invalidate();
         }
 
         private string GetToken() => txtApiToken.Text.Trim();
