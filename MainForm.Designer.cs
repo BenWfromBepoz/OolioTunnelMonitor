@@ -36,12 +36,12 @@ namespace CloudflaredMonitor
             this.pnlStatusCard    = new RoundedPanel();
             this.lblCardTitle     = new Label();
             this.tblStatus        = new TableLayoutPanel();
-            this.lblServiceLabel  = new Label();
-            this.lblService       = new Label();
-            this.lblNameLabel     = new Label();
-            this.lblTunnelName    = new Label();
             this.lblIdLabel       = new Label();
             this.lblTunnelId      = new Label();
+            this.lblNameLabel     = new Label();
+            this.lblTunnelName    = new Label();
+            this.lblServiceLabel  = new Label();
+            this.lblService       = new Label();
             this.lblRemoteLabel   = new Label();
             this.lblRemoteStatus  = new Label();
             this.pnlIngressCard   = new RoundedPanel();
@@ -114,7 +114,6 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
             // Main TableLayoutPanel
-            // Status row reduced from 152 to 120 - tighter vertical space
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
@@ -122,8 +121,8 @@ namespace CloudflaredMonitor
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 140));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 108));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 136));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,  100));
 
             // Token card
@@ -169,7 +168,10 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
-            // Status card - tblStatus tighter: y=32, height=72 (was y=38, height=100)
+            // Status card
+            // Field layout: Row0=TunnelID(left) | Service(right)
+            //               Row1=TunnelName(left) | TunnelStatus(right)
+            // Status value labels will be styled as pills in ApplyBadge/MainForm.cs
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -178,46 +180,54 @@ namespace CloudflaredMonitor
             this.lblCardTitle.Text      = "Tunnel Status";
             this.lblCardTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblCardTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblCardTitle.Location  = new System.Drawing.Point(16, 8);
+            this.lblCardTitle.Location  = new System.Drawing.Point(16, 7);
             this.lblCardTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblCardTitle.BackColor = System.Drawing.Color.Transparent;
-            this.tblStatus.Location    = new System.Drawing.Point(16, 32);
+            this.tblStatus.Location    = new System.Drawing.Point(16, 30);
             this.tblStatus.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.tblStatus.Size        = new System.Drawing.Size(200, 72);
+            this.tblStatus.Size        = new System.Drawing.Size(200, 64);
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+            // Col0=key label, Col1=value (wide), Col2=key label, Col3=pill value
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  84));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   50));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  96));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             System.Action<Label, string, bool> styleLabel = (lbl, text, isKey) => {
                 lbl.Text      = text;
-                lbl.Font      = isKey ? new System.Drawing.Font("Segoe UI", 8.5f) : new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
+                lbl.Font      = isKey ? new System.Drawing.Font("Segoe UI", 8f) : new System.Drawing.Font("Segoe UI Semibold", 8.5f, System.Drawing.FontStyle.Bold);
                 lbl.ForeColor = isKey ? System.Drawing.Color.FromArgb(100, 116, 139) : System.Drawing.Color.FromArgb(15, 23, 42);
                 lbl.Dock      = DockStyle.Fill;
                 lbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
                 lbl.AutoSize  = false;
                 lbl.BackColor = System.Drawing.Color.Transparent;
             };
-            styleLabel(this.lblServiceLabel, "Service",       true);
-            styleLabel(this.lblService,      "-",             false);
-            styleLabel(this.lblNameLabel,    "Tunnel Name",   true);
-            styleLabel(this.lblTunnelName,   "-",             false);
+            // Key labels
             styleLabel(this.lblIdLabel,      "Tunnel ID",     true);
-            styleLabel(this.lblTunnelId,     "-",             false);
-            styleLabel(this.lblRemoteLabel,  "Tunnel Status", true);
-            styleLabel(this.lblRemoteStatus, "-",             false);
-            this.lblService.Cursor      = Cursors.Help;
-            this.lblRemoteStatus.Cursor = Cursors.Help;
-            this.tblStatus.Controls.Add(this.lblServiceLabel, 0, 0);
-            this.tblStatus.Controls.Add(this.lblService,      1, 0);
-            this.tblStatus.Controls.Add(this.lblNameLabel,    2, 0);
-            this.tblStatus.Controls.Add(this.lblTunnelName,   3, 0);
-            this.tblStatus.Controls.Add(this.lblIdLabel,      0, 1);
-            this.tblStatus.Controls.Add(this.lblTunnelId,     1, 1);
+            styleLabel(this.lblNameLabel,     "Tunnel Name",  true);
+            styleLabel(this.lblServiceLabel,  "Service",      true);
+            styleLabel(this.lblRemoteLabel,   "Tunnel Status",true);
+            // Value labels - pills styled in ApplyBadge
+            styleLabel(this.lblTunnelId,     "-",  false);
+            styleLabel(this.lblTunnelName,   "-",  false);
+            styleLabel(this.lblService,      "-",  false);
+            styleLabel(this.lblRemoteStatus, "-",  false);
+            // Service and tunnel status pills need centre alignment for pill look
+            this.lblService.TextAlign      = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblRemoteStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblService.Cursor         = Cursors.Help;
+            this.lblRemoteStatus.Cursor    = Cursors.Help;
+            // Row0: TunnelID | value | Service label | pill
+            this.tblStatus.Controls.Add(this.lblIdLabel,      0, 0);
+            this.tblStatus.Controls.Add(this.lblTunnelId,     1, 0);
+            this.tblStatus.Controls.Add(this.lblServiceLabel, 2, 0);
+            this.tblStatus.Controls.Add(this.lblService,      3, 0);
+            // Row1: TunnelName | value | TunnelStatus label | pill
+            this.tblStatus.Controls.Add(this.lblNameLabel,    0, 1);
+            this.tblStatus.Controls.Add(this.lblTunnelName,   1, 1);
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
@@ -230,11 +240,10 @@ namespace CloudflaredMonitor
             this.lblIngressTitle.Text      = "Published Routes";
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Location  = new System.Drawing.Point(16, 8);
+            this.lblIngressTitle.Location  = new System.Drawing.Point(16, 7);
             this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
-            // Columns
             this.colCloud.HeaderText   = "Cloud Endpoint";
             this.colCloud.Name         = "colCloud";
             this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -246,17 +255,17 @@ namespace CloudflaredMonitor
             this.colLocal.FillWeight   = 45;
             this.colLocal.ReadOnly     = true;
 
-            this.dgvIngress.Location   = new System.Drawing.Point(16, 32);
+            this.dgvIngress.Location   = new System.Drawing.Point(16, 30);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size       = new System.Drawing.Size(200, 92);
+            this.dgvIngress.Size       = new System.Drawing.Size(200, 90);
             this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
-            this.dgvIngress.EnableHeadersVisualStyles  = false;
-            this.dgvIngress.ColumnHeadersBorderStyle   = DataGridViewHeaderBorderStyle.Single;
-            this.dgvIngress.ColumnHeadersHeight        = 26;
-            this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.dgvIngress.EnableHeadersVisualStyles    = false;
+            // None = no border on header cells - eliminates the blue line/fill
+            this.dgvIngress.ColumnHeadersBorderStyle     = DataGridViewHeaderBorderStyle.None;
+            this.dgvIngress.ColumnHeadersHeight          = 26;
+            this.dgvIngress.ColumnHeadersHeightSizeMode  = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
             this.dgvIngress.DefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(30, 41, 59);
-            // No selection highlight - selected rows look identical to normal rows
             this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.White;
             this.dgvIngress.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
             this.dgvIngress.AlternatingRowsDefaultCellStyle.BackColor          = System.Drawing.Color.FromArgb(249, 250, 251);
@@ -277,8 +286,6 @@ namespace CloudflaredMonitor
             this.dgvIngress.BackgroundColor       = System.Drawing.Color.White;
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
-
-            // Apply per-column header styles after adding to grid
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.ForeColor = System.Drawing.Color.FromArgb(76, 29, 149);
             this.dgvIngress.Columns["colCloud"].HeaderCell.Style.Font      = new System.Drawing.Font("Segoe UI", 8.5f, System.Drawing.FontStyle.Bold);
@@ -290,7 +297,8 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
 
-            // Log card
+            // Log card - txtLog fills the full remaining area via Dock=Fill on the panel
+            // and Anchor=All on txtLog itself relative to the card
             this.pnlLogCard.Dock   = DockStyle.Fill;
             this.pnlLogCard.Margin = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
@@ -299,12 +307,13 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Text      = "Activity Log";
             this.lblLogTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblLogTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblLogTitle.Location  = new System.Drawing.Point(16, 8);
+            this.lblLogTitle.Location  = new System.Drawing.Point(16, 7);
             this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
-            this.txtLog.Location    = new System.Drawing.Point(16, 32);
+            // txtLog: starts at y=30 and anchors to all 4 sides of the card
+            this.txtLog.Location    = new System.Drawing.Point(16, 30);
             this.txtLog.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.txtLog.Size        = new System.Drawing.Size(200, 100);
+            this.txtLog.Size        = new System.Drawing.Size(400, 200);
             this.txtLog.ReadOnly    = true;
             this.txtLog.ScrollBars  = RichTextBoxScrollBars.Vertical;
             this.txtLog.Font        = new System.Drawing.Font("Cascadia Mono", 8.5f);
@@ -363,12 +372,12 @@ namespace CloudflaredMonitor
         private RoundedPanel     pnlStatusCard;
         private Label            lblCardTitle;
         private TableLayoutPanel tblStatus;
-        private Label            lblServiceLabel;
-        private Label            lblService;
-        private Label            lblNameLabel;
-        private Label            lblTunnelName;
         private Label            lblIdLabel;
         private Label            lblTunnelId;
+        private Label            lblNameLabel;
+        private Label            lblTunnelName;
+        private Label            lblServiceLabel;
+        private Label            lblService;
         private Label            lblRemoteLabel;
         private Label            lblRemoteStatus;
         private RoundedPanel     pnlIngressCard;
