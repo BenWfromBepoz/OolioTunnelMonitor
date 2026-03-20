@@ -58,6 +58,49 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // Pill-shaped label: draws a rounded rectangle filled with BackColor, white text centred
+    internal sealed class PillLabel : Label
+    {
+        private const int PillRadius = 10;
+        public PillLabel()
+        {
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+            BackColor = Color.Transparent;
+            ForeColor = Color.White;
+            TextAlign = ContentAlignment.MiddleCenter;
+            AutoSize  = false;
+            Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            // Measure text to size the pill
+            var sz   = g.MeasureString(Text, Font);
+            int pw   = (int)sz.Width  + 20;
+            int ph   = (int)sz.Height + 6;
+            int px   = (Width  - pw) / 2;
+            int py   = (Height - ph) / 2;
+            var rect = new Rectangle(px, py, pw, ph);
+            // Draw filled pill only if we have a real colour (not transparent)
+            if (BackColor != Color.Transparent && Text.Length > 0 && Text != "-")
+            {
+                using var fill = new SolidBrush(BackColor);
+                using var path = PillPath(rect, PillRadius);
+                g.FillPath(fill, path);
+            }
+            // Draw text
+            using var fg = new SolidBrush(BackColor == Color.Transparent || Text == "-"
+                ? Color.FromArgb(100, 116, 139) : Color.White);
+            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+        }
+        private static GraphicsPath PillPath(Rectangle r, int rad)
+        { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+    }
+
     internal sealed class ModernButton : Button
     {
         private static readonly Color _normal = Color.FromArgb(45, 52, 68);
@@ -118,13 +161,12 @@ namespace CloudflaredMonitor
         public static System.Drawing.Icon CreateOolioIcon()
         {
             using var bmp = new System.Drawing.Bitmap(32, 32); using var g = Graphics.FromImage(bmp);
-            g.SmoothingMode = SmoothingMode.AntiAlias; g.Clear(Color.Transparent);
-            using var brush = new SolidBrush(Color.FromArgb(103, 58, 182));
-            DrawD(g, brush, 1, 4, 13, 13, 4, 4); DrawD(g, brush, 15, 4, 13, 13, 4, 4);
+            g.SmoothingMode = SmoothingMode.AntiAlias; g.Clear(Color.FromArgb(39, 46, 63));
+            using var pen = new Pen(Color.White, 3f);
+            g.DrawEllipse(pen, 2, 9, 14, 14);
+            g.DrawEllipse(pen, 16, 9, 14, 14);
             return System.Drawing.Icon.FromHandle(bmp.GetHicon());
         }
-        private static void DrawD(Graphics g, Brush b, float ox, float oy, float ow, float oh, float ins, float hIns)
-        { using var p = new GraphicsPath(FillMode.Alternate); p.AddEllipse(ox, oy, ow, oh); p.AddEllipse(ox + ins, oy + hIns, ow - ins * 2, oh - hIns * 2); g.FillPath(b, p); }
     }
 
     internal sealed class IngressItem
@@ -174,6 +216,23 @@ namespace CloudflaredMonitor
         {
             InitializeComponent();
             _exporter = new DiagnosticsExporter(_logger);
+            // Suppress DataGridView selection highlight via CellPainting
+            dgvIngress.CellPainting += DgvIngress_CellPainting;
+        }
+
+        // Override all cell painting to prevent any selection highlight
+        private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex < 0) return; // skip header
+            e.PaintBackground(e.ClipBounds, false); // false = don't paint selection
+            e.PaintContent(e.ClipBounds);
+            e.Handled = true;
+        }
+
+        private async void MainForm_Shown(object? sender, EventArgs e)
+        {
+            await LoadTodaysLogAsync();
+            await CheckTunnelStatusAsync();
         }
 
         private async Task LoadTodaysLogAsync()
@@ -220,25 +279,18 @@ namespace CloudflaredMonitor
             else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
         }
 
-        // Pill colours: (background, foreground) for each status
-        private static (Color bg, Color fg) PillColours(string? v, bool svc)
+        // Badge colours for pill background
+        private static Color BadgeColour(string? v, bool svc = false)
         {
-            var s = (v ?? "").ToLowerInvariant();
-            if (svc)
-            {
-                if (s == "running")      return (Color.FromArgb(220, 252, 231), Color.FromArgb(21, 128, 61));   // green
-                if (s == "stopped")      return (Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28));    // red
-                if (s == "notinstalled") return (Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28));    // red
-                return (Color.FromArgb(241, 245, 249), Color.FromArgb(100, 116, 139));                           // grey
-            }
-            else
-            {
-                if (s is "healthy" or "active" or "connected" or "reachable")
-                    return (Color.FromArgb(220, 252, 231), Color.FromArgb(21, 128, 61));   // green
-                if (s is "inactive" or "degraded" or "down" or "unreachable")
-                    return (Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28));   // red
-                return (Color.FromArgb(241, 245, 249), Color.FromArgb(100, 116, 139));     // grey
-            }
+            if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
+            var s = v.ToLowerInvariant();
+            if (svc) return s == "running"      ? Color.FromArgb(22, 163, 74)
+                         : s == "stopped"       ? Color.FromArgb(220, 38, 38)
+                         : s == "notinstalled"  ? Color.FromArgb(220, 38, 38)
+                                                : Color.FromArgb(217, 119, 6);
+            return s is "healthy" or "active" or "connected" or "reachable"  ? Color.FromArgb(22, 163, 74)
+                 : s is "inactive" or "degraded" or "down" or "unreachable"  ? Color.FromArgb(220, 38, 38)
+                                                                              : Color.FromArgb(217, 119, 6);
         }
 
         private static string ServiceTooltip(string? value) =>
@@ -258,47 +310,13 @@ namespace CloudflaredMonitor
                 _                                                     => "Tunnel remote status is unknown or not yet retrieved."
             };
 
-        // ApplyBadge: plain text for ID/Name labels, pill style for Service/Status labels
-        private void ApplyBadge(Label lbl, string text, bool isService = false)
+        // ApplyBadge sets the PillLabel colour and text - the PillLabel.OnPaint draws the pill
+        private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         {
-            bool isPill = (lbl == lblService || lbl == lblRemoteStatus);
-            lbl.Text = text;
-
-            if (isPill && !string.IsNullOrWhiteSpace(text) && text != "-")
-            {
-                var (bg, fg) = PillColours(text, isService);
-                lbl.BackColor = bg;
-                lbl.ForeColor = fg;
-                lbl.Font      = new Font("Segoe UI Semibold", 7.5f, FontStyle.Bold);
-                // Apply rounded clipping region to create pill shape
-                // Use a safe size that fits within the label bounds
-                int pw = Math.Max(10, lbl.Width  - 8);
-                int ph = Math.Max(8,  lbl.Height - 6);
-                int px = 4; int py = 3;
-                using var path = new GraphicsPath();
-                int rad = ph / 2;
-                path.AddArc(px,          py,          rad * 2, ph, 180, 180);
-                path.AddArc(px + pw - rad * 2, py,   rad * 2, ph,   0, 180);
-                path.CloseFigure();
-                lbl.Region = new Region(path);
-            }
-            else if (isPill)
-            {
-                // Reset to plain for "-" or empty
-                lbl.BackColor = Color.Transparent;
-                lbl.ForeColor = Color.FromArgb(100, 116, 139);
-                lbl.Font      = new Font("Segoe UI", 8f);
-                lbl.Region    = null;
-            }
-            else
-            {
-                // Plain text label (Tunnel ID, Tunnel Name)
-                lbl.BackColor = Color.Transparent;
-                lbl.ForeColor = Color.FromArgb(15, 23, 42);
-                lbl.Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
-            }
-
+            lbl.Text      = text;
+            lbl.BackColor = BadgeColour(text, isService);
             toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text));
+            lbl.Invalidate();
         }
 
         private string GetToken() => txtApiToken.Text.Trim();
@@ -569,8 +587,7 @@ namespace CloudflaredMonitor
             catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        // Event handlers
-        private async void MainForm_Shown(object? sender, EventArgs e)       { await LoadTodaysLogAsync(); await CheckTunnelStatusAsync(); }
+        private async void MainForm_Shown(object? sender, EventArgs e)     { await LoadTodaysLogAsync(); await CheckTunnelStatusAsync(); }
         private async void btnTunnelStatus_Click(object? sender, EventArgs e) => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)    => await TestTokenAsync();
         private void btnOpenLogs_Click(object? sender, EventArgs e)            => OpenLogFolder();
