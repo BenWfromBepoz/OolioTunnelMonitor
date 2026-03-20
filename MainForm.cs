@@ -160,10 +160,6 @@ namespace CloudflaredMonitor
         private readonly DiagnosticsExporter       _exporter;
         private TunnelServiceStatus? _currentStatus;
         private readonly List<string> _uiLogs = new();
-        private static readonly Color _green = Color.FromArgb(22, 163, 74);
-        private static readonly Color _red   = Color.FromArgb(220, 38, 38);
-        private static readonly Color _amber = Color.FromArgb(217, 119, 6);
-        private static readonly Color _slate = Color.FromArgb(100, 116, 139);
         private const string AppVersion     = "1.1.0.2";
         private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/main/version.json";
 
@@ -224,13 +220,25 @@ namespace CloudflaredMonitor
             else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
         }
 
-        private static Color BadgeColour(string? v, bool svc = false)
+        // Pill colours: (background, foreground) for each status
+        private static (Color bg, Color fg) PillColours(string? v, bool svc)
         {
-            if (string.IsNullOrWhiteSpace(v) || v == "-") return _slate;
-            var s = v.ToLowerInvariant();
-            if (svc) return s == "running" ? _green : s == "stopped" ? _red : _amber;
-            return s is "healthy" or "active" or "connected" or "reachable" ? _green
-                 : s is "inactive" or "degraded" or "down" or "unreachable" ? _red : _slate;
+            var s = (v ?? "").ToLowerInvariant();
+            if (svc)
+            {
+                if (s == "running")      return (Color.FromArgb(220, 252, 231), Color.FromArgb(21, 128, 61));   // green
+                if (s == "stopped")      return (Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28));    // red
+                if (s == "notinstalled") return (Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28));    // red
+                return (Color.FromArgb(241, 245, 249), Color.FromArgb(100, 116, 139));                           // grey
+            }
+            else
+            {
+                if (s is "healthy" or "active" or "connected" or "reachable")
+                    return (Color.FromArgb(220, 252, 231), Color.FromArgb(21, 128, 61));   // green
+                if (s is "inactive" or "degraded" or "down" or "unreachable")
+                    return (Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28));   // red
+                return (Color.FromArgb(241, 245, 249), Color.FromArgb(100, 116, 139));     // grey
+            }
         }
 
         private static string ServiceTooltip(string? value) =>
@@ -250,10 +258,46 @@ namespace CloudflaredMonitor
                 _                                                     => "Tunnel remote status is unknown or not yet retrieved."
             };
 
+        // ApplyBadge: plain text for ID/Name labels, pill style for Service/Status labels
         private void ApplyBadge(Label lbl, string text, bool isService = false)
         {
-            lbl.Text      = text;
-            lbl.ForeColor = BadgeColour(text, isService);
+            bool isPill = (lbl == lblService || lbl == lblRemoteStatus);
+            lbl.Text = text;
+
+            if (isPill && !string.IsNullOrWhiteSpace(text) && text != "-")
+            {
+                var (bg, fg) = PillColours(text, isService);
+                lbl.BackColor = bg;
+                lbl.ForeColor = fg;
+                lbl.Font      = new Font("Segoe UI Semibold", 7.5f, FontStyle.Bold);
+                // Apply rounded clipping region to create pill shape
+                // Use a safe size that fits within the label bounds
+                int pw = Math.Max(10, lbl.Width  - 8);
+                int ph = Math.Max(8,  lbl.Height - 6);
+                int px = 4; int py = 3;
+                using var path = new GraphicsPath();
+                int rad = ph / 2;
+                path.AddArc(px,          py,          rad * 2, ph, 180, 180);
+                path.AddArc(px + pw - rad * 2, py,   rad * 2, ph,   0, 180);
+                path.CloseFigure();
+                lbl.Region = new Region(path);
+            }
+            else if (isPill)
+            {
+                // Reset to plain for "-" or empty
+                lbl.BackColor = Color.Transparent;
+                lbl.ForeColor = Color.FromArgb(100, 116, 139);
+                lbl.Font      = new Font("Segoe UI", 8f);
+                lbl.Region    = null;
+            }
+            else
+            {
+                // Plain text label (Tunnel ID, Tunnel Name)
+                lbl.BackColor = Color.Transparent;
+                lbl.ForeColor = Color.FromArgb(15, 23, 42);
+                lbl.Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            }
+
             toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text));
         }
 
@@ -525,8 +569,8 @@ namespace CloudflaredMonitor
             catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        // Event handlers - MainForm_Shown fires after the window handle exists (safe for async)
-        private async void MainForm_Shown(object? sender, EventArgs e)     { await LoadTodaysLogAsync(); await CheckTunnelStatusAsync(); }
+        // Event handlers
+        private async void MainForm_Shown(object? sender, EventArgs e)       { await LoadTodaysLogAsync(); await CheckTunnelStatusAsync(); }
         private async void btnTunnelStatus_Click(object? sender, EventArgs e) => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)    => await TestTokenAsync();
         private void btnOpenLogs_Click(object? sender, EventArgs e)            => OpenLogFolder();
