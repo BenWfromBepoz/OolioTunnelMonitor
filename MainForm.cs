@@ -180,13 +180,6 @@ namespace CloudflaredMonitor
             _exporter = new DiagnosticsExporter(_logger);
         }
 
-        // Shown fires once the form has a valid window handle - safe for async log load
-        private async void MainForm_Shown(object? sender, EventArgs e)
-        {
-            await LoadTodaysLogAsync();
-            await CheckTunnelStatusAsync();
-        }
-
         private async Task LoadTodaysLogAsync()
         {
             try
@@ -532,7 +525,7 @@ namespace CloudflaredMonitor
             catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
-        // Event handlers
+        // Event handlers - MainForm_Shown fires after the window handle exists (safe for async)
         private async void MainForm_Shown(object? sender, EventArgs e)     { await LoadTodaysLogAsync(); await CheckTunnelStatusAsync(); }
         private async void btnTunnelStatus_Click(object? sender, EventArgs e) => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)    => await TestTokenAsync();
