@@ -58,12 +58,10 @@ namespace CloudflaredMonitor
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).BeginInit();
             this.SuspendLayout();
 
-            // ToolTip
             this.toolTip.AutoPopDelay = 8000;
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
-            // Sidebar
             this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock  = DockStyle.Left;
             this.pnlSidebar.Width = 224;
@@ -113,7 +111,6 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.chkReinstall);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // Main TableLayoutPanel
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
@@ -125,7 +122,6 @@ namespace CloudflaredMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 140));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,  100));
 
-            // Token card
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 10);
             this.lblTokenTitle.Text      = "Cloudflare API Token";
@@ -151,7 +147,6 @@ namespace CloudflaredMonitor
             this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
-            // Test Token: size 100x28, radius 6 applied uniformly to all 4 corners
             this.btnTestToken.Text                      = "Test Token";
             this.btnTestToken.Location                  = new System.Drawing.Point(578, 20);
             this.btnTestToken.Size                      = new System.Drawing.Size(100, 28);
@@ -169,7 +164,6 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
-            // Status card
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -195,8 +189,7 @@ namespace CloudflaredMonitor
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             System.Action<Label, string, bool> styleLabel = (lbl, text, isKey) => {
                 lbl.Text      = text;
-                lbl.Font      = isKey ? new System.Drawing.Font("Segoe UI", 8.5f)
-                                      : new System.Drawing.Font("Segoe UI", 8.5f);
+                lbl.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
                 lbl.ForeColor = isKey ? System.Drawing.Color.FromArgb(100, 116, 139)
                                       : System.Drawing.Color.FromArgb(15, 23, 42);
                 lbl.Dock      = DockStyle.Fill;
@@ -210,7 +203,6 @@ namespace CloudflaredMonitor
             styleLabel(this.lblIdLabel,      "Tunnel ID",     true);
             styleLabel(this.lblTunnelId,     "-",             false);
             styleLabel(this.lblRemoteLabel,  "Tunnel Status", true);
-            // PillLabels - initialised by their own constructor, just set Dock and BackColor
             this.lblService.Dock      = DockStyle.Fill;
             this.lblService.BackColor = System.Drawing.Color.Transparent;
             this.lblService.Cursor    = Cursors.Help;
@@ -226,7 +218,6 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // Ingress card
             this.pnlIngressCard.Dock   = DockStyle.Fill;
             this.pnlIngressCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
@@ -289,7 +280,6 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
             this.dgvIngress.Columns["colLocal"].HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
 
-            // Log card - txtLog inset 16px from all card edges for uniform gap
             this.pnlLogCard.Dock   = DockStyle.Fill;
             this.pnlLogCard.Margin = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
@@ -301,7 +291,6 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Location  = new System.Drawing.Point(16, 8);
             this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
-            // Anchor all 4 sides with insets: Left=16, Top=32, Right=16 from right edge, Bottom=16 from bottom
             this.txtLog.Location    = new System.Drawing.Point(16, 32);
             this.txtLog.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.txtLog.Size        = new System.Drawing.Size(200, 100);
@@ -313,7 +302,6 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // Form
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
@@ -324,7 +312,6 @@ namespace CloudflaredMonitor
             this.Text          = "Oolio ZeroTrust Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor     = System.Drawing.Color.FromArgb(226, 232, 240);
-            this.Shown        += new EventHandler(this.MainForm_Shown);
 
             this.pnlSidebar.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
