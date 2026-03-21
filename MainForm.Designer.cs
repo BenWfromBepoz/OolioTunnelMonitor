@@ -106,16 +106,18 @@ namespace CloudflaredMonitor
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 410);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 400);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
+            // Version label anchored to bottom of sidebar
             this.lblVersion.Text      = "v1.1.0.2";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 454);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 630);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
+            this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
@@ -153,7 +155,7 @@ namespace CloudflaredMonitor
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
             this.txtApiToken.Location              = new System.Drawing.Point(14, 30);
-            this.txtApiToken.Size                  = new System.Drawing.Size(500, 24);
+            this.txtApiToken.Size                  = new System.Drawing.Size(490, 24);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
             this.txtApiToken.UseSystemPasswordChar = true;
             this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 8.5f);
@@ -163,16 +165,16 @@ namespace CloudflaredMonitor
             this.chkShowToken.Text      = "Show";
             this.chkShowToken.Font      = new System.Drawing.Font("Segoe UI", 8f);
             this.chkShowToken.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            this.chkShowToken.Location  = new System.Drawing.Point(520, 32);
+            this.chkShowToken.Location  = new System.Drawing.Point(510, 32);
             this.chkShowToken.Size      = new System.Drawing.Size(52, 18);
             this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
 
-            // PillButton for Test Token - no Region needed, draws its own rounded shape
+            // PillButton sits inside pnlTokenCard - its OnPaintBackground sees the white card
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(578, 19);
-            this.btnTestToken.Size     = new System.Drawing.Size(100, 30);
+            this.btnTestToken.Location = new System.Drawing.Point(568, 18);
+            this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
@@ -201,10 +203,11 @@ namespace CloudflaredMonitor
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
+            // Key label cols fixed, pill/value cols fixed at 140px to give pills consistent width
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   50));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   50));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,  100));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
@@ -271,10 +274,15 @@ namespace CloudflaredMonitor
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 92);
             this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
-            this.dgvIngress.EnableHeadersVisualStyles  = false;
-            this.dgvIngress.ColumnHeadersBorderStyle   = DataGridViewHeaderBorderStyle.Single;
-            this.dgvIngress.ColumnHeadersHeight        = 26;
+            this.dgvIngress.EnableHeadersVisualStyles   = false;
+            this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
+            this.dgvIngress.ColumnHeadersHeight         = 26;
             this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            // Prevent blue selection flash on header row
+            this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(76, 29, 149);
+            this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionBackColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor;
+            this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionForeColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor;
             this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
             this.dgvIngress.DefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(30, 41, 59);
             this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.White;
@@ -299,7 +307,6 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colLocal);
 
             // ── Log card ─────────────────────────────────────────────────────
-            // Use Padding on the card so txtLog never touches the clipped RoundedPanel edges
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Padding = new Padding(14, 34, 14, 14);
@@ -314,7 +321,6 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
 
-            // Dock=Fill inside the padded panel - stays within the rounded corners
             this.txtLog.Dock        = DockStyle.Fill;
             this.txtLog.ReadOnly    = true;
             this.txtLog.ScrollBars  = RichTextBoxScrollBars.Vertical;
