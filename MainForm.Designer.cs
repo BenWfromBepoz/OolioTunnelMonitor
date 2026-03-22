@@ -113,7 +113,7 @@ namespace CloudflaredMonitor
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
             // Version label at very bottom
-            this.lblVersion.Text      = "v" + "1.1.0.2";
+            this.lblVersion.Text      = "v1.1.0.2";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
             this.lblVersion.Location  = new System.Drawing.Point(14, 662);
@@ -185,8 +185,6 @@ namespace CloudflaredMonitor
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
             // ── Status card ──────────────────────────────────────────────────
-            // tblStatus columns match dgvIngress 55/45 split so left values align
-            // with cloud endpoint column, right values align with local endpoint column
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -206,13 +204,12 @@ namespace CloudflaredMonitor
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
-            // Key cols 90px, value cols split 55%/45% matching dgvIngress column widths
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   55));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   45));
-            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
+            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
 
             System.Action<Label, string, bool> styleLabel = (lbl, text, isKey) => {
                 lbl.Text      = text;
@@ -238,12 +235,15 @@ namespace CloudflaredMonitor
             this.lblRemoteStatus.BackColor = System.Drawing.Color.Transparent;
             this.lblRemoteStatus.Cursor    = Cursors.Help;
 
-            this.tblStatus.Controls.Add(this.lblServiceLabel, 0, 0);
-            this.tblStatus.Controls.Add(this.lblService,      1, 0);
-            this.tblStatus.Controls.Add(this.lblNameLabel,    2, 0);
-            this.tblStatus.Controls.Add(this.lblTunnelName,   3, 0);
-            this.tblStatus.Controls.Add(this.lblIdLabel,      0, 1);
-            this.tblStatus.Controls.Add(this.lblTunnelId,     1, 1);
+            // Layout as per your arrangement:
+            // Row 0: Tunnel ID (col 0) | value (col 1) | Service label (col 2) | pill (col 3)
+            // Row 1: Tunnel Name (col 0) | value (col 1) | Tunnel Status label (col 2) | pill (col 3)
+            this.tblStatus.Controls.Add(this.lblIdLabel,      0, 0);
+            this.tblStatus.Controls.Add(this.lblTunnelId,     1, 0);
+            this.tblStatus.Controls.Add(this.lblServiceLabel, 2, 0);
+            this.tblStatus.Controls.Add(this.lblService,      3, 0);
+            this.tblStatus.Controls.Add(this.lblNameLabel,    0, 1);
+            this.tblStatus.Controls.Add(this.lblTunnelName,   1, 1);
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
