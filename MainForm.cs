@@ -16,46 +16,40 @@ namespace CloudflaredMonitor
 {
     internal sealed class OolioLogoBrand : Control
     {
-        private const string Subtitle = "ZeroTrust Tunnel Monitor";
+        private static readonly Image _logo = LoadLogo();
+
+        private static Image LoadLogo()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            var stream = asm.GetManifestResourceStream(
+                "CloudflaredMonitor.Resources.OolioWhite.png");
+            return stream != null
+                ? Image.FromStream(stream)
+                : new Bitmap(1, 1);
+        }
+
         public OolioLogoBrand()
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+            SetStyle(ControlStyles.SupportsTransparentBackColor |
+                     ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.UserPaint, true);
             BackColor = Color.Transparent;
         }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            const int r = 10;
-            using var bgPath  = RRP(new Rectangle(0, 0, Width - 1, Height - 1), r);
-            using var bgBrush = new SolidBrush(Color.FromArgb(241, 245, 249));
-            g.FillPath(bgBrush, bgPath);
+            var rect = new Rectangle(10, 10, Width - 20, Height - 40);
+            g.DrawImage(_logo, rect);
             using var subFont = new Font("Segoe UI", 9f);
-            int subH = (int)g.MeasureString(Subtitle, subFont).Height + 6;
-            const int padX = 10, padTop = 8;
-            float logoH = Height - padTop - subH - 4, logoW = Width - padX * 2;
-            float scale = Math.Min(logoW / 926f, logoH / 242f);
-            g.TranslateTransform(padX, padTop + (logoH - 242f * scale) / 2f);
-            g.ScaleTransform(scale, scale);
-            using var brush = new SolidBrush(Color.FromArgb(103, 58, 182));
-            DrawDonut(g, brush, 684, 0, 242, 242, 80, 81, 80);
-            DrawRect(g, brush, 594, 0, 80, 242);
-            DrawRect(g, brush, 414, 0, 70, 242);
-            DrawRect(g, brush, 494, 172, 90, 70);
-            DrawDonut(g, brush, 160, 0, 244, 242, 80, 81, 80);
-            DrawDonut(g, brush, 0, 0, 242, 242, 80, 81, 80);
-            g.ResetTransform();
-            using var sb2 = new SolidBrush(Color.FromArgb(80, 95, 115));
-            g.DrawString(Subtitle, subFont, sb2, new RectangleF(0, Height - subH - 2, Width, subH),
+            using var sb = new SolidBrush(Color.FromArgb(180, 190, 210));
+            g.DrawString("ZeroTrust Tunnel Monitor", subFont, sb,
+                new RectangleF(0, Height - 26, Width, 22),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
-        private static void DrawDonut(Graphics g, Brush b, float ox, float oy, float ow, float oh, float ins, float hx, float hy)
-        { using var p = new GraphicsPath(FillMode.Alternate); p.AddEllipse(ox, oy, ow, oh); p.AddEllipse(ox + hx, oy + hy, ow - ins * 2, oh - ins * 2); g.FillPath(b, p); }
-        private static void DrawRect(Graphics g, Brush b, float x, float y, float w, float h) => g.FillRectangle(b, x, y, w, h);
-        private static GraphicsPath RRP(Rectangle r, int rad)
-        { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
     internal static class ShapeHelper
@@ -141,7 +135,6 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Gradient + gloss pill button
     internal sealed class PillButton : Button
     {
         private const int Radius = 13;
@@ -185,8 +178,6 @@ namespace CloudflaredMonitor
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
 
-            // Diagonal gradient: lighter top-left to deeper bottom-right
-            // Brightens slightly on hover
             var topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220);
             var botCol = _hovered ? Color.FromArgb(90,  50, 160)  : Color.FromArgb(75,  40, 140);
             using var grad = new LinearGradientBrush(
@@ -194,7 +185,6 @@ namespace CloudflaredMonitor
                 topCol, botCol);
             g.FillPath(grad, path);
 
-            // Gloss overlay: semi-transparent white fade on top half
             if (Height > 4)
             {
                 var glossRect = new Rectangle(0, 0, Width, Height / 2);
@@ -208,7 +198,6 @@ namespace CloudflaredMonitor
                 g.ResetClip();
             }
 
-            // Text
             using var fg = new SolidBrush(Color.White);
             g.DrawString(Text, Font, fg,
                 new RectangleF(0, 0, Width, Height),
