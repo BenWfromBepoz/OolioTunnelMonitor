@@ -14,7 +14,7 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // Logo panel: white rounded card + real logo image + subtitle
+    // Purple logo on white card - uses Oolio Primary.png embedded as Oolio.png
     internal sealed class OolioLogoBrand : Control
     {
         private static readonly Image _logo = LoadLogo();
@@ -22,9 +22,11 @@ namespace CloudflaredMonitor
 
         private static Image LoadLogo()
         {
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-            var stream = asm.GetManifestResourceStream("CloudflaredMonitor.Resources.OolioWhite.png");
-            return stream != null ? Image.FromStream(stream) : new Bitmap(1, 1);
+            var asm  = System.Reflection.Assembly.GetExecutingAssembly();
+            var name = "CloudflaredMonitor.Resources.Oolio.png";
+            using var stream = asm.GetManifestResourceStream(name);
+            if (stream == null) throw new Exception("Embedded resource not found: " + name);
+            return Image.FromStream(stream);
         }
 
         public OolioLogoBrand()
@@ -39,32 +41,54 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 
-            // White rounded card background (same style as RoundedPanel)
+            var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
+
+            // Subtle drop shadow
             for (int i = 3; i >= 1; i--)
             {
-                using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
-                using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius);
+                using var sb = new SolidBrush(Color.FromArgb(35, 0, 0, 0));
+                using var sp = Rounded(bounds, Radius, i);
                 g.FillPath(sb, sp);
             }
-            using var wb = new SolidBrush(Color.FromArgb(39, 46, 63)); // match sidebar
-            using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
-            g.FillPath(wb, wp);
 
-            // Logo image inset, leaving room for subtitle
-            var rect = new Rectangle(10, 8, Width - 20, Height - 38);
-            g.DrawImage(_logo, rect);
+            // White card
+            using (var path = Rounded(bounds, Radius, 0))
+            using (var brush = new SolidBrush(Color.White))
+                g.FillPath(brush, path);
+
+            // Logo - centred, aspect-ratio correct
+            var logoRect = new Rectangle(12, 10, Width - 24, Height - 42);
+            DrawImageCentered(g, _logo, logoRect);
 
             // Subtitle
             using var subFont = new Font("Segoe UI", 8.5f);
-            using var sb2 = new SolidBrush(Color.FromArgb(148, 163, 184));
+            using var sb2 = new SolidBrush(Color.FromArgb(100, 116, 139));
             g.DrawString("ZeroTrust Tunnel Monitor", subFont, sb2,
                 new RectangleF(0, Height - 26, Width, 22),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
 
-        private static GraphicsPath RRP(Rectangle r, int rad)
-        { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+        private static void DrawImageCentered(Graphics g, Image img, Rectangle rect)
+        {
+            float scale = Math.Min(rect.Width / (float)img.Width, rect.Height / (float)img.Height);
+            int w = (int)(img.Width * scale), h = (int)(img.Height * scale);
+            g.DrawImage(img, new Rectangle(rect.X + (rect.Width - w) / 2, rect.Y + (rect.Height - h) / 2, w, h));
+        }
+
+        private static GraphicsPath Rounded(Rectangle r, int radius, int inset)
+        {
+            var rect = new Rectangle(r.X + inset, r.Y + inset, r.Width - inset * 2, r.Height - inset * 2);
+            int d = radius * 2;
+            var p = new GraphicsPath();
+            p.AddArc(rect.X,         rect.Y,          d, d, 180, 90);
+            p.AddArc(rect.Right - d, rect.Y,          d, d, 270, 90);
+            p.AddArc(rect.Right - d, rect.Bottom - d, d, d,   0, 90);
+            p.AddArc(rect.X,         rect.Bottom - d, d, d,  90, 90);
+            p.CloseFigure();
+            return p;
+        }
     }
 
     internal static class ShapeHelper
@@ -73,7 +97,7 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Gradient pill badge - same gloss treatment as PillButton
+    // Gradient pill badge
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
@@ -97,7 +121,6 @@ namespace CloudflaredMonitor
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
-            // Paint white (card bg) - simpler and avoids artefacts from sibling controls
             e.Graphics.Clear(Color.White);
         }
 
@@ -112,50 +135,36 @@ namespace CloudflaredMonitor
             if (hasPill)
             {
                 var sz   = g.MeasureString(Text, Font);
-                int pw   = (int)sz.Width  + 24;
-                int ph   = (int)sz.Height + 8;
+                int pw   = (int)sz.Width + 24, ph = (int)sz.Height + 8;
                 int py   = (Height - ph) / 2;
                 var rect = new Rectangle(0, py, pw, ph);
 
-                // Gradient fill - lighten top, darken bottom
-                var light = Lighten(_pillColour, 40);
-                var dark  = Darken(_pillColour, 30);
                 using var grad = new LinearGradientBrush(
                     new Point(0, py), new Point(0, py + ph),
-                    light, dark);
+                    Lighten(_pillColour, 40), Darken(_pillColour, 30));
                 using var path = ShapeHelper.RoundedPath(rect, PillRadius);
                 g.FillPath(grad, path);
 
-                // Gloss
                 var glossRect = new Rectangle(0, py, pw, ph / 2);
-                using var gloss = new LinearGradientBrush(
-                    glossRect,
-                    Color.FromArgb(70, Color.White),
-                    Color.FromArgb(0, Color.White),
+                using var gloss = new LinearGradientBrush(glossRect,
+                    Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White),
                     LinearGradientMode.Vertical);
-                g.SetClip(path);
-                g.FillRectangle(gloss, glossRect);
-                g.ResetClip();
+                g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
 
                 using var fg = new SolidBrush(Color.White);
-                g.DrawString(Text, Font, fg,
-                    new RectangleF(0, py, pw, ph),
+                g.DrawString(Text, Font, fg, new RectangleF(0, py, pw, ph),
                     new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
             else
             {
                 using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
-                g.DrawString(Text, Font, fg,
-                    new RectangleF(0, 0, Width, Height),
+                g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
                     new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
             }
         }
 
-        // Lighten/darken helpers for gradient
-        private static Color Lighten(Color c, int amount) =>
-            Color.FromArgb(c.A, Math.Min(255, c.R + amount), Math.Min(255, c.G + amount), Math.Min(255, c.B + amount));
-        private static Color Darken(Color c, int amount) =>
-            Color.FromArgb(c.A, Math.Max(0, c.R - amount), Math.Max(0, c.G - amount), Math.Max(0, c.B - amount));
+        private static Color Lighten(Color c, int a) => Color.FromArgb(c.A, Math.Min(255, c.R + a), Math.Min(255, c.G + a), Math.Min(255, c.B + a));
+        private static Color Darken(Color c, int a)  => Color.FromArgb(c.A, Math.Max(0, c.R - a),   Math.Max(0, c.G - a),   Math.Max(0, c.B - a));
     }
 
     // Gradient + gloss pill button
@@ -166,13 +175,10 @@ namespace CloudflaredMonitor
 
         public PillButton()
         {
-            FlatStyle = FlatStyle.Flat;
-            FlatAppearance.BorderSize = 0;
-            BackColor = Color.Transparent;
-            ForeColor = Color.White;
-            Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
-            Cursor    = Cursors.Hand;
-            TextAlign = ContentAlignment.MiddleCenter;
+            FlatStyle = FlatStyle.Flat; FlatAppearance.BorderSize = 0;
+            BackColor = Color.Transparent; ForeColor = Color.White;
+            Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
@@ -180,44 +186,27 @@ namespace CloudflaredMonitor
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
 
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            // Always paint card white - avoids bleed from sibling controls
-            e.Graphics.Clear(Color.White);
-        }
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode     = SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
-
             var topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220);
             var botCol = _hovered ? Color.FromArgb(90,  50, 160)  : Color.FromArgb(75,  40, 140);
-            using var grad = new LinearGradientBrush(
-                new Point(0, 0), new Point(Width, Height),
-                topCol, botCol);
+            using var grad = new LinearGradientBrush(new Point(0, 0), new Point(Width, Height), topCol, botCol);
             g.FillPath(grad, path);
-
             if (Height > 4)
             {
-                var glossRect = new Rectangle(0, 0, Width, Height / 2);
-                using var gloss = new LinearGradientBrush(
-                    glossRect,
-                    Color.FromArgb(80, Color.White),
-                    Color.FromArgb(0,  Color.White),
-                    LinearGradientMode.Vertical);
-                g.SetClip(path);
-                g.FillRectangle(gloss, glossRect);
-                g.ResetClip();
+                var gr = new Rectangle(0, 0, Width, Height / 2);
+                using var gloss = new LinearGradientBrush(gr, Color.FromArgb(80, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
+                g.SetClip(path); g.FillRectangle(gloss, gr); g.ResetClip();
             }
-
             using var fg = new SolidBrush(Color.White);
-            g.DrawString(Text, Font, fg,
-                new RectangleF(0, 0, Width, Height),
+            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
@@ -269,9 +258,7 @@ namespace CloudflaredMonitor
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             for (int i = 3; i >= 1; i--)
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
-            using var wb = new SolidBrush(Color.White);
-            using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
-            g.FillPath(wb, wp);
+            using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
         }
         private static GraphicsPath RRP(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
@@ -328,8 +315,7 @@ namespace CloudflaredMonitor
         private static string TunnelDetailsDir =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                 "Bepoz", "CloudflaredMonitor", "tunnel-details");
-        private static string TunnelDetailsPath(string id) =>
-            Path.Combine(TunnelDetailsDir, id + ".json");
+        private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
         public MainForm()
         {
@@ -351,32 +337,13 @@ namespace CloudflaredMonitor
             dgvIngress.EnableHeadersVisualStyles = false;
             var cc = dgvIngress.Columns["colCloud"];
             var cl = dgvIngress.Columns["colLocal"];
-            if (cc != null)
-            {
-                cc.HeaderCell.Style.BackColor = Color.FromArgb(237, 233, 254);
-                cc.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149);
-                cc.HeaderCell.Style.Font      = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-                cc.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
-                cc.HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
-            }
-            if (cl != null)
-            {
-                cl.HeaderCell.Style.BackColor = Color.FromArgb(241, 245, 249);
-                cl.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149);
-                cl.HeaderCell.Style.Font      = new Font("Segoe UI", 8.5f, FontStyle.Bold);
-                cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
-                cl.HeaderCell.Style.Padding   = new Padding(6, 0, 0, 0);
-            }
+            if (cc != null) { cc.HeaderCell.Style.BackColor = Color.FromArgb(237, 233, 254); cc.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149); cc.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cc.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cc.HeaderCell.Style.Padding = new Padding(6, 0, 0, 0); }
+            if (cl != null) { cl.HeaderCell.Style.BackColor = Color.FromArgb(241, 245, 249); cl.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149); cl.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cl.HeaderCell.Style.Padding = new Padding(6, 0, 0, 0); }
             dgvIngress.Invalidate();
         }
 
         private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-            e.PaintBackground(e.ClipBounds, false);
-            e.PaintContent(e.ClipBounds);
-            e.Handled = true;
-        }
+        { if (e.RowIndex < 0) return; e.PaintBackground(e.ClipBounds, false); e.PaintContent(e.ClipBounds); e.Handled = true; }
 
         private async Task LoadTodaysLogAsync()
         {
@@ -386,19 +353,13 @@ namespace CloudflaredMonitor
                 if (!File.Exists(logPath)) return;
                 var lines = await File.ReadAllLinesAsync(logPath);
                 if (IsDisposed) return;
-                if (txtLog.InvokeRequired)
-                    txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.Lines = lines; ScrollLogToEnd(); } });
+                if (txtLog.InvokeRequired) txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.Lines = lines; ScrollLogToEnd(); } });
                 else { txtLog.Lines = lines; ScrollLogToEnd(); }
             }
             catch { }
         }
 
-        private void ScrollLogToEnd()
-        {
-            if (IsDisposed) return;
-            txtLog.SelectionStart = txtLog.TextLength;
-            txtLog.ScrollToCaret();
-        }
+        private void ScrollLogToEnd() { if (IsDisposed) return; txtLog.SelectionStart = txtLog.TextLength; txtLog.ScrollToCaret(); }
 
         private static string Ts() => DateTime.Now.ToString("yy-MM-dd | HH:mm:ss");
 
@@ -417,8 +378,7 @@ namespace CloudflaredMonitor
             string line = Ts() + " " + message;
             _uiLogs.Add(line);
             if (IsDisposed) return;
-            if (txtLog.InvokeRequired)
-                txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); } });
+            if (txtLog.InvokeRequired) txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); } });
             else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
         }
 
@@ -426,62 +386,28 @@ namespace CloudflaredMonitor
         {
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
-            if (svc) return s == "running"                ? Color.FromArgb(16, 140, 60)
-                       : s is "stopped" or "notinstalled" ? Color.FromArgb(200, 30, 30)
-                                                          : Color.FromArgb(180, 100, 0);
+            if (svc) return s == "running" ? Color.FromArgb(16, 140, 60) : s is "stopped" or "notinstalled" ? Color.FromArgb(200, 30, 30) : Color.FromArgb(180, 100, 0);
             return s is "healthy" or "active" or "connected" or "reachable" ? Color.FromArgb(16, 140, 60)
-                 : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200, 30, 30)
-                                                                             : Color.FromArgb(180, 100, 0);
+                 : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200, 30, 30) : Color.FromArgb(180, 100, 0);
         }
 
-        private static string ServiceTooltip(string? value) =>
-            (value ?? "").ToLowerInvariant() switch
-            {
-                "running"      => "The local Cloudflared service is installed and running.",
-                "notinstalled" => "The Cloudflared service is not installed. Use Repair Tunnel or install a new tunnel.",
-                "stopped"      => "The Cloudflared service is installed but not running. Use Repair Tunnel to re-initiate it.",
-                _              => "Cloudflared service state is unknown."
-            };
+        private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
+        { "running" => "The local Cloudflared service is installed and running.", "notinstalled" => "The Cloudflared service is not installed. Use Repair Tunnel or install a new tunnel.", "stopped" => "The Cloudflared service is installed but not running. Use Repair Tunnel to re-initiate it.", _ => "Cloudflared service state is unknown." };
 
-        private static string RemoteTooltip(string? value) =>
-            (value ?? "").ToLowerInvariant() switch
-            {
-                "healthy" or "active" or "connected" or "reachable" => "URL endpoints are reachable — the tunnel is fully operational.",
-                "inactive" or "degraded" or "down" or "unreachable" => "URL endpoints are not reachable. Use Repair Tunnel or install a new tunnel.",
-                _                                                     => "Tunnel remote status is unknown or not yet retrieved."
-            };
+        private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
+        { "healthy" or "active" or "connected" or "reachable" => "URL endpoints are reachable — the tunnel is fully operational.", "inactive" or "degraded" or "down" or "unreachable" => "URL endpoints are not reachable. Use Repair Tunnel or install a new tunnel.", _ => "Tunnel remote status is unknown or not yet retrieved." };
 
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
-        {
-            lbl.Text       = text;
-            lbl.PillColour = BadgeColour(text, isService);
-            toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text));
-        }
+        { lbl.Text = text; lbl.PillColour = BadgeColour(text, isService); toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text)); }
 
         private string GetToken() => txtApiToken.Text.Trim();
         private bool   HasToken() => !string.IsNullOrWhiteSpace(txtApiToken.Text);
 
         private void PopulateIngress(IEnumerable<IngressItem> items)
-        {
-            dgvIngress.Rows.Clear();
-            foreach (var item in items)
-            {
-                if (item.IsCatchAll) continue;
-                dgvIngress.Rows.Add(item.CloudEndpoint, item.LocalEndpoint);
-            }
-        }
+        { dgvIngress.Rows.Clear(); foreach (var item in items) { if (item.IsCatchAll) continue; dgvIngress.Rows.Add(item.CloudEndpoint, item.LocalEndpoint); } }
 
-        public void OpenLogFolder()
-        {
-            try { Process.Start("explorer.exe", _logger.LogDirectory); }
-            catch (Exception ex) { LogError("Could not open log folder", ex); }
-        }
-
-        public void OpenConfigFolder()
-        {
-            try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); }
-            catch (Exception ex) { LogError("Could not open config folder", ex); }
-        }
+        public void OpenLogFolder() { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
+        public void OpenConfigFolder() { try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); } catch (Exception ex) { LogError("Could not open config folder", ex); } }
 
         private async Task SaveTunnelDetailsAsync(string tunnelId, string? tunnelName, string? status, List<CfIngressRule> ingressRules)
         {
@@ -497,8 +423,7 @@ namespace CloudflaredMonitor
         {
             try
             {
-                var json = await File.ReadAllTextAsync(jsonPath);
-                using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
+                var json = await File.ReadAllTextAsync(jsonPath); using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
                 if (root.TryGetProperty("TunnelName", out var tn)) lblTunnelName.Text = tn.GetString() ?? "-";
                 if (root.TryGetProperty("Status",     out var st)) ApplyBadge(lblRemoteStatus, st.GetString() ?? "-");
                 if (root.TryGetProperty("Routes", out var routes))
@@ -521,8 +446,7 @@ namespace CloudflaredMonitor
         {
             try
             {
-                var jp = TunnelDetailsPath(tunnelId);
-                if (!File.Exists(jp)) return null;
+                var jp = TunnelDetailsPath(tunnelId); if (!File.Exists(jp)) return null;
                 using var doc = JsonDocument.Parse(File.ReadAllText(jp)); var root = doc.RootElement;
                 if (!root.TryGetProperty("Routes", out var routes)) return null;
                 foreach (var route in routes.EnumerateArray())
@@ -547,8 +471,7 @@ namespace CloudflaredMonitor
             if (!_serviceManager.IsInstalled()) { status.ServiceState = "NotInstalled"; status.DiagnosticsNote = "Cloudflared service is not installed."; return status; }
             status.ServiceState = _serviceManager.GetStatusText();
             var imagePath = TunnelDiscovery.TryGetServiceImagePath(); var token = TunnelDiscovery.TryExtractTokenFromImagePath(imagePath); var tunnelId = TunnelDiscovery.TryDecodeTunnelIdFromToken(token);
-            status.TunnelId = tunnelId;
-            if (tunnelId == null) status.DiagnosticsNote = "Could not decode tunnel ID from service command line.";
+            status.TunnelId = tunnelId; if (tunnelId == null) status.DiagnosticsNote = "Could not decode tunnel ID from service command line.";
             return status;
         }
 
@@ -565,8 +488,7 @@ namespace CloudflaredMonitor
                 if (tid != null)
                 {
                     using var ctsR = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                    var tunnel = await api.GetTunnelAsync(tid, ctsR.Token);
-                    LogInfo("Read access OK - Tunnel: " + (tunnel?.Name ?? tid));
+                    var tunnel = await api.GetTunnelAsync(tid, ctsR.Token); LogInfo("Read access OK - Tunnel: " + (tunnel?.Name ?? tid));
                     try { using var ctsW = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tid, ctsW.Token); LogInfo("Write access OK - Token scope: READ + WRITE (suitable for Repair)"); }
                     catch (Exception wEx) { if (wEx.Message.Contains("403")) LogWarn("Write access DENIED - READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission."); else LogWarn("Write access inconclusive: " + wEx.Message); }
                 }
@@ -619,9 +541,9 @@ namespace CloudflaredMonitor
                     var tunnel = await api.GetTunnelAsync(tid, cts1.Token);
                     if (tunnel != null) { lblTunnelName.Text = tunnel.Name ?? "-"; ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-"); LogInfo("Tunnel: " + tunnel.Name + "  Status: " + tunnel.Status); }
                     using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                    var config  = await api.GetTunnelConfigAsync(tid, cts2.Token);
+                    var config = await api.GetTunnelConfigAsync(tid, cts2.Token);
                     var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
-                    var items   = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
+                    var items = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
                     PopulateIngress(items); await SaveTunnelDetailsAsync(tid, tunnel?.Name, tunnel?.Status, ingress);
                     LogInfo("Tunnel details refreshed and saved (" + items.Count + " route(s)).");
                 }
