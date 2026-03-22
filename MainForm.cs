@@ -58,15 +58,14 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Shared rounded path helper
     internal static class ShapeHelper
     {
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         {
             int d = rad * 2;
             var p = new GraphicsPath();
-            p.AddArc(r.X,         r.Y,         d, d, 180, 90);
-            p.AddArc(r.Right - d, r.Y,         d, d, 270, 90);
+            p.AddArc(r.X,         r.Y,          d, d, 180, 90);
+            p.AddArc(r.Right - d, r.Y,          d, d, 270, 90);
             p.AddArc(r.Right - d, r.Bottom - d, d, d,   0, 90);
             p.AddArc(r.X,         r.Bottom - d, d, d,  90, 90);
             p.CloseFigure();
@@ -74,7 +73,6 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Pill badge - paints parent background first, then pill shape on top
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
@@ -96,12 +94,10 @@ namespace CloudflaredMonitor
             Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
 
-        // Paint parent background so the label surface matches the card's white background
         protected override void OnPaintBackground(PaintEventArgs e)
         {
             if (Parent != null)
             {
-                // Translate to our position within the parent and invoke parent paint
                 e.Graphics.TranslateTransform(-Left, -Top);
                 var clip = new Rectangle(Left, Top, Width, Height);
                 using var pea = new PaintEventArgs(e.Graphics, clip);
@@ -109,10 +105,7 @@ namespace CloudflaredMonitor
                 InvokePaint(Parent, pea);
                 e.Graphics.TranslateTransform(Left, Top);
             }
-            else
-            {
-                e.Graphics.Clear(Color.White);
-            }
+            else { e.Graphics.Clear(Color.White); }
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -125,10 +118,10 @@ namespace CloudflaredMonitor
 
             if (hasPill)
             {
-                var sz  = g.MeasureString(Text, Font);
-                int pw  = (int)sz.Width  + 24;
-                int ph  = (int)sz.Height + 8;
-                int py  = (Height - ph) / 2;
+                var sz   = g.MeasureString(Text, Font);
+                int pw   = (int)sz.Width  + 24;
+                int ph   = (int)sz.Height + 8;
+                int py   = (Height - ph) / 2;
                 var rect = new Rectangle(0, py, pw, ph);
                 using var fill = new SolidBrush(_pillColour);
                 using var path = ShapeHelper.RoundedPath(rect, PillRadius);
@@ -148,18 +141,17 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Pill-shaped button (used for Test Token) - same radius as PillLabel
+    // Gradient + gloss pill button
     internal sealed class PillButton : Button
     {
-        private static readonly Color _normal = Color.FromArgb(103, 58, 182);
-        private static readonly Color _hover  = Color.FromArgb(124, 77, 211);
         private const int Radius = 13;
+        private bool _hovered;
 
         public PillButton()
         {
             FlatStyle = FlatStyle.Flat;
             FlatAppearance.BorderSize = 0;
-            BackColor = _normal;
+            BackColor = Color.Transparent;
             ForeColor = Color.White;
             Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor    = Cursors.Hand;
@@ -168,8 +160,8 @@ namespace CloudflaredMonitor
                      ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
 
-        protected override void OnMouseEnter(EventArgs e) { BackColor = _hover;  Invalidate(); base.OnMouseEnter(e); }
-        protected override void OnMouseLeave(EventArgs e) { BackColor = _normal; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
@@ -187,13 +179,39 @@ namespace CloudflaredMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            using var fill = new SolidBrush(BackColor);
-            using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
-            g.FillPath(fill, path);
-            using var fg = new SolidBrush(ForeColor);
-            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
+
+            var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
+            using var path = ShapeHelper.RoundedPath(bounds, Radius);
+
+            // Diagonal gradient: lighter top-left to deeper bottom-right
+            // Brightens slightly on hover
+            var topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220);
+            var botCol = _hovered ? Color.FromArgb(90,  50, 160)  : Color.FromArgb(75,  40, 140);
+            using var grad = new LinearGradientBrush(
+                new Point(0, 0), new Point(Width, Height),
+                topCol, botCol);
+            g.FillPath(grad, path);
+
+            // Gloss overlay: semi-transparent white fade on top half
+            if (Height > 4)
+            {
+                var glossRect = new Rectangle(0, 0, Width, Height / 2);
+                using var gloss = new LinearGradientBrush(
+                    glossRect,
+                    Color.FromArgb(80, Color.White),
+                    Color.FromArgb(0,  Color.White),
+                    LinearGradientMode.Vertical);
+                g.SetClip(path);
+                g.FillRectangle(gloss, glossRect);
+                g.ResetClip();
+            }
+
+            // Text
+            using var fg = new SolidBrush(Color.White);
+            g.DrawString(Text, Font, fg,
+                new RectangleF(0, 0, Width, Height),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
@@ -339,7 +357,6 @@ namespace CloudflaredMonitor
             }
             if (cl != null)
             {
-                // Local Endpoint: match Cloud Endpoint purple text, light grey bg
                 cl.HeaderCell.Style.BackColor = Color.FromArgb(241, 245, 249);
                 cl.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149);
                 cl.HeaderCell.Style.Font      = new Font("Segoe UI", 8.5f, FontStyle.Bold);
@@ -405,9 +422,9 @@ namespace CloudflaredMonitor
         {
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
-            if (svc) return s == "running"                       ? Color.FromArgb(16, 140, 60)
-                       : s is "stopped" or "notinstalled"        ? Color.FromArgb(200, 30, 30)
-                                                                 : Color.FromArgb(180, 100, 0);
+            if (svc) return s == "running"                  ? Color.FromArgb(16, 140, 60)
+                       : s is "stopped" or "notinstalled"   ? Color.FromArgb(200, 30, 30)
+                                                            : Color.FromArgb(180, 100, 0);
             return s is "healthy" or "active" or "connected" or "reachable"  ? Color.FromArgb(16, 140, 60)
                  : s is "inactive" or "degraded" or "down" or "unreachable"  ? Color.FromArgb(200, 30, 30)
                                                                               : Color.FromArgb(180, 100, 0);
