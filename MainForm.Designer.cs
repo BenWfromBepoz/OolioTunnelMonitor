@@ -105,16 +105,18 @@ namespace CloudflaredMonitor
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
+            // Check for Updates anchored to bottom of sidebar
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 400);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 620);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
+            this.btnCheckUpdates.Anchor   = AnchorStyles.Bottom | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
-            // Version label anchored to bottom of sidebar
-            this.lblVersion.Text      = "v1.1.0.2";
+            // Version label at very bottom
+            this.lblVersion.Text      = "v" + "1.1.0.2";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 630);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 662);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -171,7 +173,6 @@ namespace CloudflaredMonitor
             this.chkShowToken.FlatStyle = FlatStyle.Flat;
             this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
 
-            // PillButton sits inside pnlTokenCard - its OnPaintBackground sees the white card
             this.btnTestToken.Text     = "Test Token";
             this.btnTestToken.Location = new System.Drawing.Point(568, 18);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
@@ -184,6 +185,8 @@ namespace CloudflaredMonitor
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
             // ── Status card ──────────────────────────────────────────────────
+            // tblStatus columns match dgvIngress 55/45 split so left values align
+            // with cloud endpoint column, right values align with local endpoint column
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -203,11 +206,11 @@ namespace CloudflaredMonitor
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
-            // Key label cols fixed, pill/value cols fixed at 140px to give pills consistent width
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,  100));
+            // Key cols 90px, value cols split 55%/45% matching dgvIngress column widths
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   55));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,   45));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
@@ -278,9 +281,8 @@ namespace CloudflaredMonitor
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
             this.dgvIngress.ColumnHeadersHeight         = 26;
             this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            // Prevent blue selection flash on header row
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(76, 29, 149);
+            this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor          = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(76, 29, 149);
             this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionBackColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor;
             this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionForeColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor;
             this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
