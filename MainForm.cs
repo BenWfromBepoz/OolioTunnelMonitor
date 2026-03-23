@@ -79,6 +79,49 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    /// <summary>
+    ///  Paints an inverse corner curve at the top-right of the sidebar,
+    ///  creating the illusion that the sidebar curves into the content area.
+    ///  The radius matches the RoundedPanel card radius (20px for a slightly
+    ///  larger feel as requested).
+    /// </summary>
+    internal sealed class SidebarCorner : Control
+    {
+        private const int R = 20; // corner radius - slightly larger than card radius
+        private static readonly Color _sidebarColour = Color.FromArgb(39, 46, 63);
+        private static readonly Color _pageBg        = Color.FromArgb(226, 232, 240);
+
+        public SidebarCorner()
+        {
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+            BackColor = Color.Transparent;
+            Size = new Size(R, R);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Fill the whole square with sidebar colour (background)
+            g.Clear(_sidebarColour);
+
+            // Draw a quarter-circle filled with the page background colour in the
+            // top-right corner. This "cuts out" the corner, leaving the sidebar
+            // colour only in the bottom-left quadrant — creating an inner curve.
+            using var path = new GraphicsPath();
+            // Arc from 270° (top) to 0° (right) = top-right quarter circle
+            // We draw the full "pie" shape: arc + lines back to top-right corner
+            path.AddArc(0, 0, R * 2, R * 2, 270, -90); // quarter arc, counter-clockwise
+            path.AddLine(0, 0, 0, 0); // close
+            path.CloseFigure();
+
+            using var bgBrush = new SolidBrush(_pageBg);
+            g.FillPath(bgBrush, path);
+        }
+    }
+
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
@@ -194,13 +237,10 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Fix: OnPaint clears to parent background colour first so card corners
-    // appear rounded against the grey tblMain background without needing Region clipping.
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
         private readonly System.Windows.Forms.Timer _resizeTimer;
-        // The grey background of tblMain that should show in the card corners
         private static readonly Color _pageBg = Color.FromArgb(226, 232, 240);
 
         public RoundedPanel()
@@ -211,25 +251,18 @@ namespace CloudflaredMonitor
             _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
             _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); Invalidate(); };
         }
-
         protected override void OnResize(EventArgs e) { base.OnResize(e); _resizeTimer.Stop(); _resizeTimer.Start(); }
-
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            // Fill entire rectangle with parent bg so corners look transparent
             g.Clear(_pageBg);
-            // Subtle shadow
             for (int i = 3; i >= 1; i--)
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
-            // White rounded card
             using var wb = new SolidBrush(Color.White);
             using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
             g.FillPath(wb, wp);
         }
-
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
-
         private static GraphicsPath RRP(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
@@ -293,7 +326,17 @@ namespace CloudflaredMonitor
             _exporter = new DiagnosticsExporter(_logger);
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
+
+            // Add inner curve corner overlay to sidebar top-right
+            var corner = new SidebarCorner();
+            corner.Location = new Point(pnlSidebar.Width - SidebarCorner_R, 0);
+            corner.Anchor   = AnchorStyles.Top | AnchorStyles.Right;
+            pnlSidebar.Controls.Add(corner);
+            corner.BringToFront();
         }
+
+        // Expose the corner radius so Designer can use it
+        private const int SidebarCorner_R = 20;
 
         protected override void OnShown(EventArgs e)
         {
