@@ -79,75 +79,6 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    /// <summary>
-    ///  Paints an inverse corner at the sidebar/content join.
-    ///  Added to the FORM (not pnlSidebar) so it is not clipped.
-    ///  Position: x = pnlSidebar.Width (right edge of sidebar), y = 0.
-    ///  This places the control straddling the join: the left half is over
-    ///  the sidebar, the right half is over the content area.
-    ///  OnPaint fills the whole square with sidebar colour then cuts a
-    ///  quarter-circle of page-background colour from the top-right quadrant,
-    ///  giving the illusion of an inner curve.
-    /// </summary>
-    internal sealed class SidebarCorner : Control
-    {
-        public const int R = 20;
-    
-        private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
-    
-        public SidebarCorner()
-        {
-            SetStyle(
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.UserPaint |
-                ControlStyles.ResizeRedraw,
-                true
-            );
-    
-            BackColor = Color.Transparent;
-            Size = new Size(R, R);
-        }
-    
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-    
-            using var full = new GraphicsPath();
-            full.AddRectangle(new Rectangle(0, 0, Width, Height));
-    
-            using var cutout = new GraphicsPath();
-    
-            // Arc centered bottom-right
-            cutout.AddArc(-R, -R, R * 2, R * 2, 180, -90);
-    
-            // Close the quarter shape cleanly
-            cutout.AddLine(0, 0, R, 0);
-            cutout.AddLine(R, 0, R, R);
-            cutout.CloseFigure();
-    
-            // Subtract cutout from full rectangle
-            var region = new Region(full);
-            region.Exclude(cutout);
-    
-            this.Region = region;
-        }
-    
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            // Prevent default background painting
-        }
-    
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-    
-            // Fill remaining visible region (sidebar color)
-            using var brush = new SolidBrush(_sidebar);
-            g.FillRectangle(brush, ClientRectangle);
-        }
-    }
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
@@ -205,15 +136,14 @@ namespace CloudflaredMonitor
             Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.Opaque, true);
+                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnPaintBackground(PaintEventArgs e) { } // Do nothing
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.Clear(Parent?.BackColor ?? Color.White);
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
@@ -352,16 +282,6 @@ namespace CloudflaredMonitor
             _exporter = new DiagnosticsExporter(_logger);
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
-
-            // Fix 1: SidebarCorner on the FORM at x=pnlSidebar.Width (right edge of sidebar).
-            // This straddles the sidebar/content join: left half over sidebar, right half
-            // over content. The quarter-circle cutout faces top-right, making the sidebar
-            // appear to curve into the content area.
-            var corner = new SidebarCorner();
-            corner.Location = new Point(pnlSidebar.Width, 0);
-            corner.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
-            this.Controls.Add(corner);
-            corner.BringToFront();
         }
 
         protected override void OnShown(EventArgs e)
