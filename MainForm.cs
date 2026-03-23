@@ -289,35 +289,25 @@ namespace CloudflaredMonitor
         private void ShowStandardView()
         {
             if (_installViewActive && _pnlInstall != null)
-            {
-                tblMain.Visible     = true;
-                _pnlInstall.Visible = false;
-                _installViewActive  = false;
-            }
+            { tblMain.Visible = true; _pnlInstall.Visible = false; _installViewActive = false; }
         }
 
         private void ShowInstallView()
         {
             if (_installViewActive) return;
             if (_pnlInstall == null) _pnlInstall = BuildInstallPanel();
-            tblMain.Visible     = false;
-            _pnlInstall.Visible = true;
-            _installViewActive  = true;
+            tblMain.Visible = false; _pnlInstall.Visible = true; _installViewActive = true;
         }
 
         private Panel BuildInstallPanel()
         {
             var pnl = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(226, 232, 240), Visible = false };
-            Controls.Add(pnl);
-            pnl.BringToFront();
-            pnlSidebar.BringToFront();
-
+            Controls.Add(pnl); pnl.BringToFront(); pnlSidebar.BringToFront();
             var card = new RoundedPanel { Dock = DockStyle.None, Location = new Point(20, 20) };
             card.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            card.Size   = new Size(pnl.Width - 40, pnl.Height - 40);
+            card.Size = new Size(pnl.Width - 40, pnl.Height - 40);
             pnl.Controls.Add(card);
             pnl.Resize += (_, _) => { card.Size = new Size(pnl.Width - 40, pnl.Height - 40); };
-
             var title     = new Label { Text = "Install New Tunnel", Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(24, 20), Size = new Size(500, 30), BackColor = Color.Transparent };
             var lblName   = new Label { Text = "Tunnel Name", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(100,116,139), Location = new Point(24, 70), AutoSize = true, BackColor = Color.Transparent };
             var txtName   = new TextBox { Location = new Point(24, 92), Size = new Size(400, 28), Font = new Font("Segoe UI", 9.5f), BorderStyle = BorderStyle.FixedSingle };
@@ -328,7 +318,6 @@ namespace CloudflaredMonitor
             var btnCancel  = new Button { Text = "Cancel", Location = new Point(174, 344), Size = new Size(90, 34), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(226,232,240), ForeColor = Color.FromArgb(71,85,105), Font = new Font("Segoe UI", 9f), Cursor = Cursors.Hand };
             btnCancel.FlatAppearance.BorderColor = Color.FromArgb(200, 210, 220);
             btnCancel.Click += (_, _) => ShowStandardView();
-
             btnInstall.Click += async (_, _) =>
             {
                 if (!HasToken()) { lblStatus.Text = "Enter an API token first."; lblStatus.ForeColor = Color.FromArgb(200,30,30); return; }
@@ -345,17 +334,10 @@ namespace CloudflaredMonitor
                 }
                 btnInstall.Enabled = false;
                 lblStatus.Text = "Creating tunnel..."; lblStatus.ForeColor = Color.FromArgb(100,116,139);
-                try
-                {
-                    await CreateTunnelFromSpecAsync(tunnelName, routes);
-                    lblStatus.Text = "Tunnel created successfully!"; lblStatus.ForeColor = Color.FromArgb(16,140,60);
-                    await Task.Delay(1500);
-                    ShowStandardView();
-                }
+                try { await CreateTunnelFromSpecAsync(tunnelName, routes); lblStatus.Text = "Tunnel created!"; lblStatus.ForeColor = Color.FromArgb(16,140,60); await Task.Delay(1500); ShowStandardView(); }
                 catch (Exception ex) { lblStatus.Text = "Error: " + ex.Message; lblStatus.ForeColor = Color.FromArgb(200,30,30); }
                 finally { btnInstall.Enabled = true; }
             };
-
             card.Controls.Add(title); card.Controls.Add(lblName); card.Controls.Add(txtName);
             card.Controls.Add(lblRoutes); card.Controls.Add(txtRoutes);
             card.Controls.Add(lblStatus); card.Controls.Add(btnInstall); card.Controls.Add(btnCancel);
@@ -411,11 +393,17 @@ namespace CloudflaredMonitor
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
             if (svc) return s == "running" ? Color.FromArgb(16,140,60) : s is "stopped" or "notinstalled" ? Color.FromArgb(200,30,30) : Color.FromArgb(180,100,0);
-            return s is "healthy" or "active" or "connected" or "reachable" ? Color.FromArgb(16,140,60)
-                 : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200,30,30) : Color.FromArgb(180,100,0);
+            return s is "healthy" or "active" or "connected" or "reachable" or "tunnel ok" ? Color.FromArgb(16,140,60)
+                 : s is "inactive" or "degraded" or "down" or "unreachable"               ? Color.FromArgb(200,30,30)
+                                                                                           : Color.FromArgb(180,100,0);
         }
         private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
-        private static string RemoteTooltip(string? v)  => (v ?? "").ToLowerInvariant() switch { "healthy" or "active" or "connected" or "reachable" => "Tunnel is reachable.", "inactive" or "degraded" or "down" or "unreachable" => "Tunnel is not reachable.", _ => "Status unknown." };
+        private static string RemoteTooltip(string? v)  => (v ?? "").ToLowerInvariant() switch
+        {
+            "healthy" or "active" or "connected" or "reachable" or "tunnel ok" => "Tunnel is reachable — Cloudflare is forwarding requests.",
+            "inactive" or "degraded" or "down" or "unreachable"                 => "Tunnel is not reachable.",
+            _                                                                     => "Status unknown."
+        };
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         { lbl.Text = text; lbl.PillColour = BadgeColour(text, isService); toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text)); }
 
@@ -517,13 +505,6 @@ namespace CloudflaredMonitor
             finally { btnTestToken.Enabled = true; }
         }
 
-        // ── Check Tunnel Status ───────────────────────────────────────────────
-        // Logic:
-        //   1. Always: check local Windows service state + decode tunnel ID
-        //   2. No token: load cached JSON if available, then HTTP ping endpoints
-        //      - advise token missing, show what we can from ping
-        //   3. Token present: call Cloudflare API for authoritative status + config,
-        //      update UI, save JSON - no HTTP ping needed (API is the source of truth)
         public async Task CheckTunnelStatusAsync()
         {
             ShowStandardView();
@@ -531,123 +512,119 @@ namespace CloudflaredMonitor
             dgvIngress.Rows.Clear();
             try
             {
-                // Step 1: local service check
+                // Step 1: always check local Windows service
                 LogInfo("Checking local service...");
                 var localStatus = GetLocalStatus();
                 _currentStatus = localStatus;
                 ApplyBadge(lblService, localStatus.ServiceState, isService: true);
                 lblTunnelId.Text = localStatus.TunnelId ?? "-";
-
-                if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote))
-                    LogInfo(localStatus.DiagnosticsNote!);
+                if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote)) LogInfo(localStatus.DiagnosticsNote!);
 
                 if (localStatus.ServiceState == "NotInstalled")
-                {
-                    ApplyBadge(lblRemoteStatus, "-");
-                    lblTunnelName.Text = "-";
-                    LogWarn("Service not installed. Use Install New Tunnel or Repair Tunnel.");
-                    return;
-                }
-
+                { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed. Use Install New Tunnel or Repair Tunnel."); return; }
                 if (localStatus.ServiceState != "Running")
-                {
-                    LogWarn("Service installed but not running. Use Repair Tunnel.");
-                    return;
-                }
+                { LogWarn("Service installed but not running. Use Repair Tunnel."); return; }
 
                 LogInfo("Local service is running.");
                 var tid = localStatus.TunnelId;
 
                 if (!HasToken())
                 {
-                    // ── No token path: ping + cached JSON ──────────────────────
-                    LogWarn("No API token provided. Falling back to HTTP endpoint check.");
-                    LogInfo("For authoritative tunnel status, ingress config and auto-save, add an API token in the field above.");
+                    // ── No token: load cache + HTTP endpoint check ─────────────
+                    LogWarn("No API token — running HTTP endpoint check only.");
+                    LogInfo("Add a token above for authoritative Cloudflare API status, route config and auto-save.");
 
-                    // Load cached JSON so routes are still displayed
                     if (tid != null)
                     {
                         var jp = TunnelDetailsPath(tid);
-                        if (File.Exists(jp))
-                        {
-                            await LoadTunnelDetailsFromJsonAsync(jp);
-                            LogInfo("Loaded cached tunnel details from last API check.");
-                        }
-                        else
-                        {
-                            LogInfo("No cached tunnel details found. Add an API token and re-run for full details.");
-                        }
+                        if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details (from last API check)."); }
+                        else LogInfo("No cached details. Add an API token and re-run for full config.");
                     }
 
-                    // HTTP ping the first endpoint
                     var endpointUrl = tid != null ? GetFirstEndpointUrl(tid) : null;
                     if (endpointUrl != null)
                     {
-                        LogInfo("HTTP check: GET " + endpointUrl + " ...");
+                        LogInfo("HTTP check: GET " + endpointUrl);
                         try
                         {
                             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                             http.DefaultRequestHeaders.Add("User-Agent", "CloudflaredMonitor/1.2");
                             var resp = await http.GetAsync(endpointUrl, HttpCompletionOption.ResponseHeadersRead);
-                            int code = (int)resp.StatusCode;
-                            string server = resp.Headers.Contains("Server") ? string.Join(",", resp.Headers.GetValues("Server")) : "unknown";
-                            string cfRay  = resp.Headers.Contains("CF-RAY") ? string.Join(",", resp.Headers.GetValues("CF-RAY")) : null!;
+                            int    code   = (int)resp.StatusCode;
+                            bool   hasCf  = resp.Headers.Contains("CF-RAY") || resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare"));
+                            string cfRay  = resp.Headers.Contains("CF-RAY")  ? resp.Headers.GetValues("CF-RAY").First()  : "";
+                            string server = resp.Headers.Contains("Server")   ? resp.Headers.GetValues("Server").First()  : "unknown";
 
-                            if (code >= 200 && code < 500)
+                            // Any response that reached Cloudflare means the tunnel is working.
+                            // CF-RAY header or Server: cloudflare confirms Cloudflare handled it.
+                            // 502 specifically = tunnel OK, origin service (localhost) is down.
+                            if (hasCf)
                             {
-                                // 2xx–4xx: Cloudflare accepted and forwarded the request
+                                ApplyBadge(lblRemoteStatus, "Tunnel OK");
+                                LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")");
+                                if (code == 502)
+                                    LogWarn("  502 Bad Gateway — tunnel is working, but the origin service at the local endpoint is not responding.");
+                                else if (code == 503)
+                                    LogWarn("  503 Service Unavailable — tunnel is working, but the origin service is temporarily unavailable.");
+                                else if (code >= 200 && code < 300)
+                                    LogInfo("  " + code + " — origin service is also responding normally.");
+                                else
+                                    LogInfo("  " + code + " — origin service returned this status (tunnel itself is fine).");
+                            }
+                            else if (code >= 200 && code < 500)
+                            {
+                                // Got a response but no CF headers - still reachable
                                 ApplyBadge(lblRemoteStatus, "Reachable");
-                                LogInfo("HTTP " + code + " — tunnel is reachable. Server: " + server + (cfRay != null ? " | CF-RAY: " + cfRay : ""));
-                                if (code == 502 || code == 503)
-                                    LogWarn("  HTTP " + code + " means the tunnel is working but the origin service (local endpoint) may be down or starting.");
+                                LogInfo("HTTP " + code + " — endpoint responded. Server: " + server);
                             }
                             else
                             {
                                 ApplyBadge(lblRemoteStatus, "Unreachable");
-                                LogWarn("HTTP " + code + " — tunnel may not be functioning correctly. Server: " + server);
+                                LogWarn("HTTP " + code + " — endpoint may not be functioning. Server: " + server);
                             }
                         }
-                        catch (Exception pingEx)
+                        catch (HttpRequestException hrEx)
                         {
                             ApplyBadge(lblRemoteStatus, "Unreachable");
-                            LogWarn("HTTP check failed: " + pingEx.Message);
-                            LogWarn("  This may indicate a DNS or network issue, not necessarily a tunnel problem.");
+                            LogWarn("HTTP check failed: " + hrEx.Message);
+                            LogWarn("  Could not reach " + endpointUrl + " — check DNS or network connectivity.");
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            ApplyBadge(lblRemoteStatus, "Unreachable");
+                            LogWarn("HTTP check timed out after 10s — endpoint did not respond.");
                         }
                     }
                     else
                     {
-                        LogInfo("No endpoint URL available to ping. Add an API token for full details.");
+                        LogInfo("No endpoint URL available. Add an API token to fetch route config.");
                     }
 
-                    LogInfo("Check complete (limited — no API token). Add a token above for authoritative status.");
+                    LogInfo("Check complete (no API token — limited detail).");
                     return;
                 }
 
-                // ── Token path: full Cloudflare API check ──────────────────────
-                LogInfo("API token found — querying Cloudflare API for authoritative status...");
+                // ── Token present: Cloudflare API is source of truth ───────────
+                LogInfo("API token found — querying Cloudflare...");
                 var api = new CloudflareApi(GetToken());
 
-                // Get tunnel details
                 using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var tunnel = await api.GetTunnelAsync(tid!, cts1.Token);
                 if (tunnel != null)
                 {
                     lblTunnelName.Text = tunnel.Name ?? "-";
                     ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-");
-                    LogInfo("Tunnel: " + tunnel.Name + "  |  API Status: " + tunnel.Status);
+                    LogInfo("Tunnel: " + tunnel.Name + "  |  API status: " + tunnel.Status);
                 }
 
-                // Get ingress config
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var config  = await api.GetTunnelConfigAsync(tid!, cts2.Token);
                 var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
                 var items   = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service))
                                      .Where(i => i != null).Cast<IngressItem>().ToList();
                 PopulateIngress(items);
-
-                // Save to JSON for offline use
                 await SaveTunnelDetailsAsync(tid!, tunnel?.Name, tunnel?.Status, ingress);
-                LogInfo("Tunnel details refreshed and saved (" + items.Count + " route(s)).");
+                LogInfo("Saved " + items.Count + " route(s) to cache.");
                 LogInfo("Check complete.");
             }
             catch (Exception ex) { LogError("Check failed", ex); }
@@ -663,11 +640,9 @@ namespace CloudflaredMonitor
             if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
             LogInfo("Tunnel created: " + tunnel.Name + " (" + tunnel.Id + ")");
             using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            await api.PutTunnelConfigAsync(tunnel.Id, routes, cts2.Token);
-            LogInfo("Configured " + routes.Count + " route(s).");
+            await api.PutTunnelConfigAsync(tunnel.Id, routes, cts2.Token); LogInfo("Configured " + routes.Count + " route(s).");
             await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", routes);
-            LogInfo("Fetching tunnel token...");
-            using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            LogInfo("Fetching tunnel token..."); using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("API returned empty token.");
             LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
             var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
@@ -675,8 +650,7 @@ namespace CloudflaredMonitor
             LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
             var exe = _installer.FindCloudflaredExeOrThrow();
             LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
-            _serviceManager.StartService(); LogInfo("Installation complete.");
-            await CheckTunnelStatusAsync();
+            _serviceManager.StartService(); LogInfo("Installation complete."); await CheckTunnelStatusAsync();
         }
 
         public async Task RepairAsync()
