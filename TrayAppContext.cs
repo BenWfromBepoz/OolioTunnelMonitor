@@ -59,7 +59,7 @@ namespace CloudflaredMonitor
             using var g   = Graphics.FromImage(bmp);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Color.FromArgb(39, 46, 63));
-            using var pen = new Pen(Color.White, 3f);
+            using var pen = new Pen(Color.White, 8f);
             g.DrawEllipse(pen, 2,  9, 14, 14);
             g.DrawEllipse(pen, 16, 9, 14, 14);
             return System.Drawing.Icon.FromHandle(bmp.GetHicon());
