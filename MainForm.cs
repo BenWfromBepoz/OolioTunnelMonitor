@@ -79,20 +79,12 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // ── Pill label ────────────────────────────────────────────────────────────
-    // Gradient colours per semantic state, diagonal (top-left → bottom-right)
-    // matching the PillButton paint style. Gloss overlay on top half.
-    //
-    //  Green  (125,230,135) → (90,200,100)   running / reachable / healthy
-    //  Red    (230,135,125) → (200, 80, 70)  stopped / unreachable
-    //  Amber  (240,230, 90) → (230,180, 50)  degraded / unknown
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
         private const int PillWidth  = 150;
         private Color _pillColour = Color.Transparent;
         public Color PillColour { get => _pillColour; set { _pillColour = value; Invalidate(); } }
-
         public PillLabel()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
@@ -100,15 +92,12 @@ namespace CloudflaredMonitor
             BackColor = Color.Transparent; TextAlign = ContentAlignment.MiddleLeft;
             AutoSize = false; Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
-
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
-
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
             bool hasPill = _pillColour != Color.Transparent && Text.Length > 0 && Text != "-";
             if (!hasPill)
             {
@@ -117,44 +106,21 @@ namespace CloudflaredMonitor
                     new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
                 return;
             }
-
-            int pw = PillWidth;
-            int ph = (int)g.MeasureString(Text, Font).Height + 8;
-            int py = (Height - ph) / 2;
+            int pw = PillWidth, ph = (int)g.MeasureString(Text, Font).Height + 8, py = (Height - ph) / 2;
             var rect = new Rectangle(0, py, pw, ph);
-
-            // Choose explicit gradient colours based on the semantic colour bucket
-            // so the pill always looks crisp regardless of background.
             Color topCol, botCol;
             var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
-            if (gC > r && gC > b)           // green family
-            { topCol = Color.FromArgb(125, 230, 135); botCol = Color.FromArgb(90, 200, 100); }
-            else if (r > gC && r > b)       // red family
-            { topCol = Color.FromArgb(230, 135, 125); botCol = Color.FromArgb(200, 80, 70); }
-            else                            // amber / other
-            { topCol = Color.FromArgb(240, 230, 90);  botCol = Color.FromArgb(230, 180, 50); }
-
-            // Diagonal gradient (top-left → bottom-right) matching PillButton
-            using var grad = new LinearGradientBrush(
-                new Point(0, py), new Point(pw, py + ph), topCol, botCol);
+            if (gC > r && gC > b)      { topCol = Color.FromArgb(125, 230, 135); botCol = Color.FromArgb(90,  200, 100); }
+            else if (r > gC && r > b)  { topCol = Color.FromArgb(230, 135, 125); botCol = Color.FromArgb(200,  80,  70); }
+            else                       { topCol = Color.FromArgb(240, 230,  90);  botCol = Color.FromArgb(230, 180,  50); }
+            using var grad = new LinearGradientBrush(new Point(0, py), new Point(pw, py + ph), topCol, botCol);
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
             g.FillPath(grad, path);
-
-            // Gloss overlay on top half (identical to PillButton)
             var glossRect = new Rectangle(0, py, pw, ph / 2);
-            using var gloss = new LinearGradientBrush(
-                glossRect,
-                Color.FromArgb(80, Color.White),
-                Color.FromArgb(0,  Color.White),
-                LinearGradientMode.Vertical);
-            g.SetClip(path);
-            g.FillRectangle(gloss, glossRect);
-            g.ResetClip();
-
-            // Text centred inside pill
-            using var fgBrush = new SolidBrush(Color.White);
-            g.DrawString(Text, Font, fgBrush,
-                new RectangleF(0, py, pw, ph),
+            using var gloss = new LinearGradientBrush(glossRect, Color.FromArgb(80, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
+            g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
+            using var fgB = new SolidBrush(Color.White);
+            g.DrawString(Text, Font, fgB, new RectangleF(0, py, pw, ph),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
@@ -228,17 +194,48 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── RoundedPanel ──────────────────────────────────────────────────────────
+    // Fix: debounce Region recalc using a Timer so it only fires after the
+    // resize interaction settles (eliminates flicker/glitch during drag-resize).
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
+        private readonly System.Windows.Forms.Timer _resizeTimer;
+
         public RoundedPanel()
         {
             DoubleBuffered = true; ResizeRedraw = true;
-            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer, true);
             BackColor = Color.White;
+
+            // Debounce: wait 50ms after last resize event before updating Region
+            _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
+            _resizeTimer.Tick += (_, _) =>
+            {
+                _resizeTimer.Stop();
+                ApplyRegion();
+                Invalidate();
+            };
         }
+
+        private void ApplyRegion()
+        {
+            if (Width > 0 && Height > 0)
+            {
+                using var p = RRP(new Rectangle(0, 0, Width, Height), Radius);
+                Region = new Region(p);
+            }
+        }
+
         protected override void OnResize(EventArgs e)
-        { base.OnResize(e); if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); } }
+        {
+            base.OnResize(e);
+            // Restart the debounce timer on every resize event
+            _resizeTimer.Stop();
+            _resizeTimer.Start();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -246,6 +243,13 @@ namespace CloudflaredMonitor
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
             using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) _resizeTimer.Dispose();
+            base.Dispose(disposing);
+        }
+
         private static GraphicsPath RRP(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
@@ -435,11 +439,7 @@ namespace CloudflaredMonitor
         }
         private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
         private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
-        {
-            "healthy" or "active" or "connected" or "reachable" or "tunnel ok" => "Tunnel is reachable — Cloudflare is forwarding requests.",
-            "inactive" or "degraded" or "down" or "unreachable"                 => "Tunnel is not reachable.",
-            _                                                                     => "Status unknown."
-        };
+        { "healthy" or "active" or "connected" or "reachable" or "tunnel ok" => "Tunnel is reachable.", "inactive" or "degraded" or "down" or "unreachable" => "Tunnel is not reachable.", _ => "Status unknown." };
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         { lbl.Text = text; lbl.PillColour = BadgeColour(text, isService); toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text)); }
 
@@ -544,33 +544,25 @@ namespace CloudflaredMonitor
         public async Task CheckTunnelStatusAsync()
         {
             ShowStandardView();
-            btnTunnelStatus.Enabled = false;
-            dgvIngress.Rows.Clear();
+            btnTunnelStatus.Enabled = false; dgvIngress.Rows.Clear();
             try
             {
                 LogInfo("Checking local service...");
-                var localStatus = GetLocalStatus();
-                _currentStatus = localStatus;
+                var localStatus = GetLocalStatus(); _currentStatus = localStatus;
                 ApplyBadge(lblService, localStatus.ServiceState, isService: true);
                 lblTunnelId.Text = localStatus.TunnelId ?? "-";
                 if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote)) LogInfo(localStatus.DiagnosticsNote!);
                 if (localStatus.ServiceState == "NotInstalled")
-                { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed. Use Install New Tunnel or Repair Tunnel."); return; }
+                { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed."); return; }
                 if (localStatus.ServiceState != "Running")
                 { LogWarn("Service installed but not running. Use Repair Tunnel."); return; }
                 LogInfo("Local service is running.");
                 var tid = localStatus.TunnelId;
-
                 if (!HasToken())
                 {
                     LogWarn("No API token — running HTTP endpoint check only.");
                     LogInfo("Add a token above for authoritative Cloudflare API status, route config and auto-save.");
-                    if (tid != null)
-                    {
-                        var jp = TunnelDetailsPath(tid);
-                        if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details (from last API check)."); }
-                        else LogInfo("No cached details. Add an API token and re-run for full config.");
-                    }
+                    if (tid != null) { var jp = TunnelDetailsPath(tid); if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details."); } else LogInfo("No cached details. Add an API token and re-run."); }
                     var endpointUrl = tid != null ? GetFirstEndpointUrl(tid) : null;
                     if (endpointUrl != null)
                     {
@@ -581,41 +573,38 @@ namespace CloudflaredMonitor
                             http.DefaultRequestHeaders.Add("User-Agent", "CloudflaredMonitor/1.2");
                             var resp = await http.GetAsync(endpointUrl, HttpCompletionOption.ResponseHeadersRead);
                             int  code  = (int)resp.StatusCode;
-                            bool hasCf = resp.Headers.Contains("CF-RAY") ||
-                                         (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
+                            bool hasCf = resp.Headers.Contains("CF-RAY") || (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
                             string cfRay  = resp.Headers.Contains("CF-RAY")  ? resp.Headers.GetValues("CF-RAY").First()  : "";
                             string server = resp.Headers.Contains("Server")   ? resp.Headers.GetValues("Server").First()  : "unknown";
                             if (hasCf)
                             {
                                 ApplyBadge(lblRemoteStatus, "Tunnel OK");
                                 LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")");
-                                if (code == 502) LogWarn("  502 Bad Gateway — tunnel is working, but the origin service at the local endpoint is not responding.");
-                                else if (code == 503) LogWarn("  503 Service Unavailable — tunnel is working, but the origin service is temporarily unavailable.");
-                                else if (code >= 200 && code < 300) LogInfo("  " + code + " — origin service is also responding normally.");
+                                if (code == 502) LogWarn("  502 — tunnel working, origin service not responding.");
+                                else if (code == 503) LogWarn("  503 — tunnel working, origin temporarily unavailable.");
+                                else if (code >= 200 && code < 300) LogInfo("  " + code + " — origin also responding normally.");
                                 else LogInfo("  " + code + " — origin returned this status (tunnel itself is fine).");
                             }
                             else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " — endpoint responded. Server: " + server); }
-                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " — endpoint may not be functioning. Server: " + server); }
+                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " — endpoint may not be functioning."); }
                         }
-                        catch (HttpRequestException hrEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check failed: " + hrEx.Message); LogWarn("  Could not reach " + endpointUrl + " — check DNS or network."); }
+                        catch (HttpRequestException hrEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check failed: " + hrEx.Message); }
                         catch (TaskCanceledException)    { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check timed out after 10s."); }
                     }
                     else LogInfo("No endpoint URL available. Add an API token to fetch route config.");
                     LogInfo("Check complete (no API token — limited detail).");
                     return;
                 }
-
                 LogInfo("API token found — querying Cloudflare...");
                 var api = new CloudflareApi(GetToken());
                 using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var tunnel = await api.GetTunnelAsync(tid!, cts1.Token);
                 if (tunnel != null) { lblTunnelName.Text = tunnel.Name ?? "-"; ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-"); LogInfo("Tunnel: " + tunnel.Name + "  |  API status: " + tunnel.Status); }
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                var config  = await api.GetTunnelConfigAsync(tid!, cts2.Token);
+                var config = await api.GetTunnelConfigAsync(tid!, cts2.Token);
                 var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
-                var items   = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
-                PopulateIngress(items);
-                await SaveTunnelDetailsAsync(tid!, tunnel?.Name, tunnel?.Status, ingress);
+                var items = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
+                PopulateIngress(items); await SaveTunnelDetailsAsync(tid!, tunnel?.Name, tunnel?.Status, ingress);
                 LogInfo("Saved " + items.Count + " route(s) to cache.");
                 LogInfo("Check complete.");
             }
@@ -630,15 +619,15 @@ namespace CloudflaredMonitor
             using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             var tunnel = await api.CreateTunnelAsync(tunnelName, cts1.Token);
             if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
-            LogInfo("Tunnel created: " + tunnel.Name + " (" + tunnel.Id + ")");
+            LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
             using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             await api.PutTunnelConfigAsync(tunnel.Id, routes, cts2.Token); LogInfo("Configured " + routes.Count + " route(s).");
             await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", routes);
-            LogInfo("Fetching tunnel token..."); using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("API returned empty token.");
+            using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("Empty token.");
             LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
             var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
-            LogInfo("Uninstalling existing..."); await Task.Run(() => _installer.UninstallExistingMsi());
+            await Task.Run(() => _installer.UninstallExistingMsi());
             LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
             var exe = _installer.FindCloudflaredExeOrThrow();
             LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
@@ -661,24 +650,20 @@ namespace CloudflaredMonitor
                     if (Directory.Exists(TunnelDetailsDir))
                     {
                         var files = Directory.GetFiles(TunnelDetailsDir, "*.json");
-                        if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached tunnel ID: " + tid); }
+                        if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached ID: " + tid); }
                         else if (files.Length > 1) { LogWarn("Multiple cached tunnels. Run Check Tunnel Status first."); return; }
                     }
                 }
                 if (tid == null) { LogError("No tunnel ID found."); return; }
                 LogInfo("Repairing " + tid + "...");
-                LogInfo("Step 1/8  Stopping..."); _serviceManager.StopServiceBestEffort();
-                LogInfo("Step 2/8  Killing processes..."); _serviceManager.KillCloudflaredProcess();
-                LogInfo("Step 3/8  Removing from SCM..."); _serviceManager.DeleteService();
-                LogInfo("Step 4/8  Uninstalling MSI..."); await Task.Run(() => _installer.UninstallExistingMsi()); LogInfo("          Done.");
-                LogInfo("Step 5/8  Downloading MSI...");
+                _serviceManager.StopServiceBestEffort(); _serviceManager.KillCloudflaredProcess(); _serviceManager.DeleteService();
+                await Task.Run(() => _installer.UninstallExistingMsi());
                 string msiPath; using (var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(5))) msiPath = await _installer.DownloadMsiAsync(dlc.Token);
-                LogInfo("          Installing..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { } LogInfo("          Done.");
-                LogInfo("Step 6/8  Locating exe..."); var exe = _installer.FindCloudflaredExeOrThrow(); LogInfo("          " + exe);
-                LogInfo("Step 7/8  Getting token...");
+                await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
+                var exe = _installer.FindCloudflaredExeOrThrow();
                 string newToken; using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                     newToken = await api.GetTunnelTokenAsync(tid, cts.Token) ?? throw new InvalidOperationException("Empty token.");
-                LogInfo("Step 8/8  Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
+                await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
                 _serviceManager.StartService(); LogInfo("Repair complete."); await CheckTunnelStatusAsync();
             }
             catch (Exception ex) { LogError("Repair failed", ex); }
