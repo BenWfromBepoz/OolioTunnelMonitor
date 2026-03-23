@@ -88,8 +88,8 @@ namespace CloudflaredMonitor
     internal sealed class SidebarCorner : Control
     {
         private const int R = 20; // corner radius - slightly larger than card radius
-        private static readonly Color _sidebarColour = Color.FromArgb(39, 46, 63);
-        private static readonly Color _pageBg        = Color.FromArgb(226, 232, 240);
+        private static readonly Color _sidebarColour = Color.FromArgb(226, 232, 240);
+        private static readonly Color _pageBg        = Color.FromArgb(39, 46, 63);
 
         public SidebarCorner()
         {
