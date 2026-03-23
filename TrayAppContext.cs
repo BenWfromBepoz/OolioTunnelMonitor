@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace CloudflaredMonitor
@@ -9,8 +10,9 @@ namespace CloudflaredMonitor
     {
         private readonly NotifyIcon _trayIcon;
         private readonly MainForm   _mainForm;
+        private readonly Thread     _showWindowThread;
 
-        public TrayAppContext()
+        public TrayAppContext(bool startMinimised = false)
         {
             _mainForm = new MainForm();
 
@@ -28,27 +30,38 @@ namespace CloudflaredMonitor
                 Visible          = true,
                 ContextMenuStrip = contextMenu
             };
-
             _trayIcon.DoubleClick += (_, _) => ShowMainForm();
+
+            if (!startMinimised)
+                ShowMainForm();
+
+            // Background thread listens for a second instance signalling us to show
+            _showWindowThread = new Thread(() =>
+            {
+                try
+                {
+                    using var evt = new EventWaitHandle(false, EventResetMode.AutoReset, "CloudflaredMonitor_ShowWindow");
+                    while (true)
+                    {
+                        evt.WaitOne();
+                        if (_mainForm.IsDisposed) break;
+                        _mainForm.BeginInvoke(ShowMainForm);
+                    }
+                }
+                catch { }
+            }) { IsBackground = true, Name = "ShowWindowListener" };
+            _showWindowThread.Start();
         }
 
-        // Two white hollow circles on a dark background - matches the OO in the Oolio logo
         private static System.Drawing.Icon CreateTrayIcon()
         {
-            using var bmp = new Bitmap(32, 32);
+            using var bmp = new System.Drawing.Bitmap(32, 32);
             using var g   = Graphics.FromImage(bmp);
             g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            // Dark background matching sidebar colour
             g.Clear(Color.FromArgb(39, 46, 63));
-
             using var pen = new Pen(Color.White, 3f);
-
-            // Left O: centre at (9, 16), radius 7
-            g.DrawEllipse(pen, 2, 9, 14, 14);
-            // Right O: centre at (23, 16), radius 7
+            g.DrawEllipse(pen, 2,  9, 14, 14);
             g.DrawEllipse(pen, 16, 9, 14, 14);
-
             return System.Drawing.Icon.FromHandle(bmp.GetHicon());
         }
 
@@ -63,6 +76,7 @@ namespace CloudflaredMonitor
             {
                 _mainForm.Show();
                 _mainForm.WindowState = FormWindowState.Normal;
+                _mainForm.Activate();
             }
         }
 
