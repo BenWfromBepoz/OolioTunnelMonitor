@@ -17,16 +17,19 @@ namespace CloudflaredMonitor
     // Purple logo on white card - uses Oolio Primary.png embedded as Oolio.png
     internal sealed class OolioLogoBrand : Control
     {
-        private static readonly Image _logo = LoadLogo();
+        private static readonly Image? _logo = LoadLogo();
         private const int Radius = 10;
 
-        private static Image LoadLogo()
+        private static Image? LoadLogo()
         {
-            var asm  = System.Reflection.Assembly.GetExecutingAssembly();
-            var name = "CloudflaredMonitor.Resources.Oolio.png";
-            using var stream = asm.GetManifestResourceStream(name);
-            if (stream == null) throw new Exception("Embedded resource not found: " + name);
-            return Image.FromStream(stream);
+            try
+            {
+                var asm    = System.Reflection.Assembly.GetExecutingAssembly();
+                var name   = "CloudflaredMonitor.Resources.Oolio.png";
+                var stream = asm.GetManifestResourceStream(name);
+                return stream != null ? Image.FromStream(stream) : null;
+            }
+            catch { return null; }
         }
 
         public OolioLogoBrand()
@@ -45,7 +48,7 @@ namespace CloudflaredMonitor
 
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
 
-            // Subtle drop shadow
+            // Shadow
             for (int i = 3; i >= 1; i--)
             {
                 using var sb = new SolidBrush(Color.FromArgb(35, 0, 0, 0));
@@ -58,9 +61,22 @@ namespace CloudflaredMonitor
             using (var brush = new SolidBrush(Color.White))
                 g.FillPath(brush, path);
 
-            // Logo - centred, aspect-ratio correct
-            var logoRect = new Rectangle(12, 10, Width - 24, Height - 42);
-            DrawImageCentered(g, _logo, logoRect);
+            if (_logo != null)
+            {
+                // Logo centred, aspect-ratio correct
+                var logoRect = new Rectangle(12, 10, Width - 24, Height - 42);
+                float scale = Math.Min(logoRect.Width / (float)_logo.Width, logoRect.Height / (float)_logo.Height);
+                int w = (int)(_logo.Width * scale), h = (int)(_logo.Height * scale);
+                g.DrawImage(_logo, new Rectangle(logoRect.X + (logoRect.Width - w) / 2, logoRect.Y + (logoRect.Height - h) / 2, w, h));
+            }
+            else
+            {
+                // Fallback: show purple text if image not loaded
+                using var f = new Font("Segoe UI", 18f, FontStyle.Bold);
+                using var b = new SolidBrush(Color.FromArgb(103, 58, 182));
+                g.DrawString("oolio", f, b, new RectangleF(0, 0, Width, Height - 26),
+                    new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            }
 
             // Subtitle
             using var subFont = new Font("Segoe UI", 8.5f);
@@ -68,13 +84,6 @@ namespace CloudflaredMonitor
             g.DrawString("ZeroTrust Tunnel Monitor", subFont, sb2,
                 new RectangleF(0, Height - 26, Width, 22),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-        }
-
-        private static void DrawImageCentered(Graphics g, Image img, Rectangle rect)
-        {
-            float scale = Math.Min(rect.Width / (float)img.Width, rect.Height / (float)img.Height);
-            int w = (int)(img.Width * scale), h = (int)(img.Height * scale);
-            g.DrawImage(img, new Rectangle(rect.X + (rect.Width - w) / 2, rect.Y + (rect.Height - h) / 2, w, h));
         }
 
         private static GraphicsPath Rounded(Rectangle r, int radius, int inset)
@@ -97,10 +106,11 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Gradient pill badge
+    // Fixed-width pill badge, left-aligned, text centred inside pill
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
+        private const int PillWidth  = 150; // fixed pill width
         private Color _pillColour = Color.Transparent;
 
         public Color PillColour
@@ -119,10 +129,7 @@ namespace CloudflaredMonitor
             Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
 
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            e.Graphics.Clear(Color.White);
-        }
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -134,31 +141,37 @@ namespace CloudflaredMonitor
 
             if (hasPill)
             {
-                var sz   = g.MeasureString(Text, Font);
-                int pw   = (int)sz.Width + 24, ph = (int)sz.Height + 8;
+                // Fixed width pill, left-aligned in cell
+                int pw   = PillWidth;
+                int ph   = (int)g.MeasureString(Text, Font).Height + 8;
                 int py   = (Height - ph) / 2;
                 var rect = new Rectangle(0, py, pw, ph);
 
+                // Gradient fill
                 using var grad = new LinearGradientBrush(
                     new Point(0, py), new Point(0, py + ph),
                     Lighten(_pillColour, 40), Darken(_pillColour, 30));
                 using var path = ShapeHelper.RoundedPath(rect, PillRadius);
                 g.FillPath(grad, path);
 
+                // Gloss
                 var glossRect = new Rectangle(0, py, pw, ph / 2);
                 using var gloss = new LinearGradientBrush(glossRect,
                     Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White),
                     LinearGradientMode.Vertical);
                 g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
 
+                // Text centred inside the pill
                 using var fg = new SolidBrush(Color.White);
-                g.DrawString(Text, Font, fg, new RectangleF(0, py, pw, ph),
+                g.DrawString(Text, Font, fg,
+                    new RectangleF(0, py, pw, ph),
                     new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
             else
             {
                 using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
-                g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
+                g.DrawString(Text, Font, fg,
+                    new RectangleF(0, 0, Width, Height),
                     new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
             }
         }
@@ -186,12 +199,19 @@ namespace CloudflaredMonitor
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
 
-        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
+        // Paint the parent card's white background - walks up to first non-transparent parent
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            Control? p = Parent;
+            while (p != null && p.BackColor == Color.Transparent)
+                p = p.Parent;
+            e.Graphics.Clear(p?.BackColor ?? Color.White);
+        }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
@@ -249,7 +269,7 @@ namespace CloudflaredMonitor
         {
             DoubleBuffered = true; ResizeRedraw = true;
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-            BackColor = Color.Transparent;
+            BackColor = Color.White; // explicit white so PillButton parent-walk finds it
         }
         protected override void OnResize(EventArgs e)
         { base.OnResize(e); if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); } }
@@ -349,8 +369,7 @@ namespace CloudflaredMonitor
         {
             try
             {
-                var logPath = _logger.LogFilePath;
-                if (!File.Exists(logPath)) return;
+                var logPath = _logger.LogFilePath; if (!File.Exists(logPath)) return;
                 var lines = await File.ReadAllLinesAsync(logPath);
                 if (IsDisposed) return;
                 if (txtLog.InvokeRequired) txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.Lines = lines; ScrollLogToEnd(); } });
@@ -360,9 +379,7 @@ namespace CloudflaredMonitor
         }
 
         private void ScrollLogToEnd() { if (IsDisposed) return; txtLog.SelectionStart = txtLog.TextLength; txtLog.ScrollToCaret(); }
-
         private static string Ts() => DateTime.Now.ToString("yy-MM-dd | HH:mm:ss");
-
         private void LogInfo(string m) { AppendLog(m); _logger.Info(m); }
         private void LogWarn(string m) { AppendLog("WARN: " + m); _logger.Warn(m); }
         private void LogError(string m, Exception? ex = null)
@@ -375,8 +392,7 @@ namespace CloudflaredMonitor
         }
         private void AppendLog(string message)
         {
-            string line = Ts() + " " + message;
-            _uiLogs.Add(line);
+            string line = Ts() + " " + message; _uiLogs.Add(line);
             if (IsDisposed) return;
             if (txtLog.InvokeRequired) txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); } });
             else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
@@ -390,12 +406,10 @@ namespace CloudflaredMonitor
             return s is "healthy" or "active" or "connected" or "reachable" ? Color.FromArgb(16, 140, 60)
                  : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200, 30, 30) : Color.FromArgb(180, 100, 0);
         }
-
         private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
-        { "running" => "The local Cloudflared service is installed and running.", "notinstalled" => "The Cloudflared service is not installed. Use Repair Tunnel or install a new tunnel.", "stopped" => "The Cloudflared service is installed but not running. Use Repair Tunnel to re-initiate it.", _ => "Cloudflared service state is unknown." };
-
+        { "running" => "The local Cloudflared service is installed and running.", "notinstalled" => "The Cloudflared service is not installed.", "stopped" => "The Cloudflared service is installed but not running.", _ => "Cloudflared service state is unknown." };
         private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
-        { "healthy" or "active" or "connected" or "reachable" => "URL endpoints are reachable — the tunnel is fully operational.", "inactive" or "degraded" or "down" or "unreachable" => "URL endpoints are not reachable. Use Repair Tunnel or install a new tunnel.", _ => "Tunnel remote status is unknown or not yet retrieved." };
+        { "healthy" or "active" or "connected" or "reachable" => "URL endpoints are reachable — the tunnel is fully operational.", "inactive" or "degraded" or "down" or "unreachable" => "URL endpoints are not reachable.", _ => "Tunnel remote status is unknown." };
 
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         { lbl.Text = text; lbl.PillColour = BadgeColour(text, isService); toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text)); }
@@ -611,21 +625,21 @@ namespace CloudflaredMonitor
                 }
                 if (tid == null) { LogError("No tunnel ID found. Run Check Tunnel Status or install a new tunnel first."); return; }
                 LogInfo("Starting repair for tunnel " + tid + "...");
-                LogInfo("Step 1/8  Stopping cloudflared service..."); _serviceManager.StopServiceBestEffort();
-                LogInfo("Step 2/8  Force-killing cloudflared.exe processes..."); _serviceManager.KillCloudflaredProcess();
-                LogInfo("Step 3/8  Removing service from SCM..."); _serviceManager.DeleteService();
-                LogInfo("Step 4/8  Uninstalling existing cloudflared MSI..."); await Task.Run(() => _installer.UninstallExistingMsi()); LogInfo("          Uninstall complete (or no existing install found).");
-                LogInfo("Step 5/8  Downloading latest cloudflared MSI...");
+                LogInfo("Step 1/8  Stopping..."); _serviceManager.StopServiceBestEffort();
+                LogInfo("Step 2/8  Killing processes..."); _serviceManager.KillCloudflaredProcess();
+                LogInfo("Step 3/8  Removing from SCM..."); _serviceManager.DeleteService();
+                LogInfo("Step 4/8  Uninstalling MSI..."); await Task.Run(() => _installer.UninstallExistingMsi()); LogInfo("          Done.");
+                LogInfo("Step 5/8  Downloading MSI...");
                 string msiPath; using (var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(5))) msiPath = await _installer.DownloadMsiAsync(dlc.Token);
-                LogInfo("          Installing MSI (may take up to 90 seconds)..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { } LogInfo("          MSI installed successfully.");
-                LogInfo("Step 6/8  Locating cloudflared executable..."); var exe = _installer.FindCloudflaredExeOrThrow(); LogInfo("          Found: " + exe);
-                LogInfo("Step 7/8  Requesting fresh tunnel token...");
+                LogInfo("          Installing..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { } LogInfo("          Done.");
+                LogInfo("Step 6/8  Locating exe..."); var exe = _installer.FindCloudflaredExeOrThrow(); LogInfo("          " + exe);
+                LogInfo("Step 7/8  Getting token...");
                 string newToken; using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                     newToken = await api.GetTunnelTokenAsync(tid, cts.Token) ?? throw new InvalidOperationException("API returned empty token.");
-                LogInfo("          Token received.");
-                LogInfo("Step 8/8  Installing cloudflared Windows service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
+                LogInfo("          Done.");
+                LogInfo("Step 8/8  Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
                 _serviceManager.StartService(); LogInfo("          Service started.");
-                LogInfo("Repair complete. Running status refresh..."); await CheckTunnelStatusAsync();
+                LogInfo("Repair complete."); await CheckTunnelStatusAsync();
             }
             catch (Exception ex) { LogError("Repair failed", ex); }
             finally { btnRepair.Enabled = true; }
