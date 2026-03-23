@@ -99,7 +99,7 @@ namespace CloudflaredMonitor
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
-            BackColor = Color.Transparent;
+            BackColor = _sidebar;
             Size      = new Size(R, R);
         }
 
@@ -107,10 +107,10 @@ namespace CloudflaredMonitor
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(_sidebar);
+            g.Clear(Color.Transparent);
             // Quarter-circle in top-left quadrant filled with sidebar color
             using var path = new GraphicsPath();
-            path.AddArc(-R, -R, R * 2, R * 2, 180, -90);
+            path.AddArc(0, 0, R * 2, R * 2, 270, -90);
             path.AddLine(0, 0, 0, 0);
             path.CloseFigure();
             using var brush = new SolidBrush(_pageBg);
