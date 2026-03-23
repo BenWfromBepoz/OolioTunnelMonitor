@@ -8,6 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>CloudflaredMonitor</RootNamespace>
+    <AssemblyName>TunnelMonitor</AssemblyName>
+    <Product>TunnelMonitor</Product>
     <Version>1.2.0.1</Version>
     <AssemblyVersion>1.2.0.1</AssemblyVersion>
     <FileVersion>1.2.0.1</FileVersion>
