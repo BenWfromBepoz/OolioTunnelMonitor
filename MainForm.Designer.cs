@@ -129,7 +129,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── Main layout ── item 3: card margins doubled to 8px
+            // ── Main layout ──────────────────────────────────────────────────
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
@@ -142,8 +142,9 @@ namespace CloudflaredMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ──────────────────────────────────────────────────
-            this.pnlStatusCard.Dock   = DockStyle.Fill;
-            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
+            this.pnlStatusCard.Dock    = DockStyle.Fill;
+            this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
+            this.pnlStatusCard.Padding = new Padding(16, 6, 16, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -200,10 +201,10 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ── item 2: padding gives grid breathing room
+            // ── Ingress card ── fix 3: padding keeps dgv inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(14, 12, 14, 12);
+            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -211,7 +212,7 @@ namespace CloudflaredMonitor
             this.lblIngressTitle.Text      = "Published Routes";
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Location  = new System.Drawing.Point(14, 8);
+            this.lblIngressTitle.Location  = new System.Drawing.Point(12, 8);
             this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
@@ -227,8 +228,8 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            // Anchored inside padded card - 14px inset each side, 32px from top for title
-            this.dgvIngress.Location   = new System.Drawing.Point(14, 32);
+            // Fix 3: dgvIngress anchored with inset so it never reaches card corners
+            this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
             this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
@@ -304,10 +305,10 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
-            // ── Log card ─────────────────────────────────────────────────────
+            // ── Log card ── fix 3: padding keeps txtLog inside rounded corners
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
-            this.pnlLogCard.Padding = new Padding(14, 30, 14, 14);
+            this.pnlLogCard.Padding = new Padding(12, 30, 12, 12);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
             this.pnlLogCard.Controls.Add(this.txtLog);
             this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
@@ -319,6 +320,7 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
 
+            // Fix 3: txtLog uses Dock=Fill so it respects card Padding - keeps it off corners
             this.txtLog.Dock        = DockStyle.Fill;
             this.txtLog.ReadOnly    = true;
             this.txtLog.ScrollBars  = RichTextBoxScrollBars.Vertical;
@@ -328,11 +330,11 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form ─────────────────────────────────────────────────────────
+            // ── Form ── fix 1: wider minimum size
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
-            this.MinimumSize         = new System.Drawing.Size(860, 580);
+            this.MinimumSize         = new System.Drawing.Size(1000, 600);
             this.Controls.Add(this.tblMain);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
