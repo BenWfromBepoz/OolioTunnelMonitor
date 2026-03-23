@@ -21,28 +21,32 @@ namespace CloudflaredMonitor
         }
 
         // ── Icon loading ──────────────────────────────────────────────────────
-        private static Icon LoadIcoFromResource(string resourceName)
+        /// <summary>
+        ///  Loads an embedded .ico and requests a specific pixel size.
+        ///  Windows picks the closest match from the multi-resolution container.
+        /// </summary>
+        private static Icon LoadIcoFromResource(string resourceName, int size)
         {
             try
             {
                 var asm    = System.Reflection.Assembly.GetExecutingAssembly();
                 var stream = asm.GetManifestResourceStream(resourceName);
-                if (stream != null) return new Icon(stream);
+                if (stream != null) return new Icon(stream, size, size);
             }
             catch { }
-            return FallbackIcon();
+            return FallbackIcon(size);
         }
 
-        private static Icon FallbackIcon()
+        private static Icon FallbackIcon(int size)
         {
-            using var bmp   = new System.Drawing.Bitmap(32, 32);
+            using var bmp   = new System.Drawing.Bitmap(size, size);
             using var g     = Graphics.FromImage(bmp);
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             using var brush = new SolidBrush(Color.FromArgb(103, 58, 182));
-            g.FillEllipse(brush, 1, 1, 30, 30);
-            using var font = new Font("Segoe UI", 14f, FontStyle.Bold, GraphicsUnit.Pixel);
+            g.FillEllipse(brush, 1, 1, size - 2, size - 2);
+            using var font = new Font("Segoe UI", size * 0.4f, FontStyle.Bold, GraphicsUnit.Pixel);
             using var wb   = new SolidBrush(Color.White);
-            g.DrawString("O", font, wb, new RectangleF(0, 0, 32, 32),
+            g.DrawString("O", font, wb, new RectangleF(0, 0, size, size),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             return Icon.FromHandle(bmp.GetHicon());
         }
@@ -50,13 +54,13 @@ namespace CloudflaredMonitor
         // ── Fields ────────────────────────────────────────────────────────────
         private readonly NotifyIcon _trayIcon;
         private readonly MainForm   _mainForm;
-        private readonly Icon       _trayIco;
-        private readonly Icon       _taskbarIco;
+        private readonly Icon       _trayIco;     // 16px - system tray
+        private readonly Icon       _taskbarIco;  // 48px - taskbar + title bar
 
         public TrayAppContext(bool startMinimised = false)
         {
-            _trayIco    = LoadIcoFromResource("CloudflaredMonitor.Resources.IconTray.ico");
-            _taskbarIco = LoadIcoFromResource("CloudflaredMonitor.Resources.IconTaskbar.ico");
+            _trayIco    = LoadIcoFromResource("CloudflaredMonitor.Resources.IconTray.ico",    16);
+            _taskbarIco = LoadIcoFromResource("CloudflaredMonitor.Resources.IconTaskbar.ico", 48);
 
             _mainForm      = new MainForm();
             _mainForm.Icon = _taskbarIco;
@@ -79,7 +83,6 @@ namespace CloudflaredMonitor
             };
             _trayIcon.DoubleClick += (_, _) => ShowMainForm();
 
-            // EventWaitHandle name matches Program.cs mutex/signal name
             var evt = new EventWaitHandle(false, EventResetMode.AutoReset, "TunnelMonitor_ShowWindow");
             var t   = new Thread(() => { while (true) { evt.WaitOne(); ShowMainForm(); } })
             { IsBackground = true, Name = "ShowWindowListener" };
