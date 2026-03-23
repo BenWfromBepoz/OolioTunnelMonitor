@@ -14,7 +14,7 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // Purple logo on white card - uses Oolio Primary.png embedded as Oolio.png
+    // ── Logo brand ────────────────────────────────────────────────────────────
     internal sealed class OolioLogoBrand : Control
     {
         private static readonly Image? _logo = LoadLogo();
@@ -24,9 +24,8 @@ namespace CloudflaredMonitor
         {
             try
             {
-                var asm    = System.Reflection.Assembly.GetExecutingAssembly();
-                var name   = "CloudflaredMonitor.Resources.Oolio.png";
-                var stream = asm.GetManifestResourceStream(name);
+                var stream = System.Reflection.Assembly.GetExecutingAssembly()
+                    .GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
                 return stream != null ? Image.FromStream(stream) : null;
             }
             catch { return null; }
@@ -45,133 +44,88 @@ namespace CloudflaredMonitor
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
-
-            // Shadow
             for (int i = 3; i >= 1; i--)
-            {
-                using var sb = new SolidBrush(Color.FromArgb(35, 0, 0, 0));
-                using var sp = Rounded(bounds, Radius, i);
-                g.FillPath(sb, sp);
-            }
-
-            // White card
-            using (var path = Rounded(bounds, Radius, 0))
-            using (var brush = new SolidBrush(Color.White))
-                g.FillPath(brush, path);
-
+            { using var sb = new SolidBrush(Color.FromArgb(35, 0, 0, 0)); using var sp = Rnd(bounds, Radius, i); g.FillPath(sb, sp); }
+            using (var path = Rnd(bounds, Radius, 0)) using (var b = new SolidBrush(Color.White)) g.FillPath(b, path);
             if (_logo != null)
             {
-                // Logo centred, aspect-ratio correct
-                var logoRect = new Rectangle(12, 10, Width - 24, Height - 42);
-                float scale = Math.Min(logoRect.Width / (float)_logo.Width, logoRect.Height / (float)_logo.Height);
-                int w = (int)(_logo.Width * scale), h = (int)(_logo.Height * scale);
-                g.DrawImage(_logo, new Rectangle(logoRect.X + (logoRect.Width - w) / 2, logoRect.Y + (logoRect.Height - h) / 2, w, h));
+                var lr = new Rectangle(12, 10, Width - 24, Height - 42);
+                float sc = Math.Min(lr.Width / (float)_logo.Width, lr.Height / (float)_logo.Height);
+                int w = (int)(_logo.Width * sc), h = (int)(_logo.Height * sc);
+                g.DrawImage(_logo, new Rectangle(lr.X + (lr.Width - w) / 2, lr.Y + (lr.Height - h) / 2, w, h));
             }
             else
             {
-                // Fallback: show purple text if image not loaded
                 using var f = new Font("Segoe UI", 18f, FontStyle.Bold);
                 using var b = new SolidBrush(Color.FromArgb(103, 58, 182));
                 g.DrawString("oolio", f, b, new RectangleF(0, 0, Width, Height - 26),
                     new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
-
-            // Subtitle
-            using var subFont = new Font("Segoe UI", 8.5f);
+            using var sf = new Font("Segoe UI", 8.5f);
             using var sb2 = new SolidBrush(Color.FromArgb(100, 116, 139));
-            g.DrawString("ZeroTrust Tunnel Monitor", subFont, sb2,
-                new RectangleF(0, Height - 26, Width, 22),
+            g.DrawString("ZeroTrust Tunnel Monitor", sf, sb2, new RectangleF(0, Height - 26, Width, 22),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
 
-        private static GraphicsPath Rounded(Rectangle r, int radius, int inset)
+        private static GraphicsPath Rnd(Rectangle r, int radius, int inset)
         {
             var rect = new Rectangle(r.X + inset, r.Y + inset, r.Width - inset * 2, r.Height - inset * 2);
-            int d = radius * 2;
-            var p = new GraphicsPath();
-            p.AddArc(rect.X,         rect.Y,          d, d, 180, 90);
-            p.AddArc(rect.Right - d, rect.Y,          d, d, 270, 90);
-            p.AddArc(rect.Right - d, rect.Bottom - d, d, d,   0, 90);
-            p.AddArc(rect.X,         rect.Bottom - d, d, d,  90, 90);
-            p.CloseFigure();
-            return p;
+            int d = radius * 2; var p = new GraphicsPath();
+            p.AddArc(rect.X, rect.Y, d, d, 180, 90); p.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            p.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90); p.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            p.CloseFigure(); return p;
         }
     }
 
+    // ── Shape helper ─────────────────────────────────────────────────────────
     internal static class ShapeHelper
     {
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Fixed-width pill badge, left-aligned, text centred inside pill
+    // ── Pill label ───────────────────────────────────────────────────────────
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
-        private const int PillWidth  = 150; // fixed pill width
+        private const int PillWidth  = 150;
         private Color _pillColour = Color.Transparent;
-
-        public Color PillColour
-        {
-            get => _pillColour;
-            set { _pillColour = value; Invalidate(); }
-        }
+        public Color PillColour { get => _pillColour; set { _pillColour = value; Invalidate(); } }
 
         public PillLabel()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
-            BackColor = Color.Transparent;
-            TextAlign = ContentAlignment.MiddleLeft;
-            AutoSize  = false;
-            Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            BackColor = Color.Transparent; TextAlign = ContentAlignment.MiddleLeft;
+            AutoSize = false; Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
 
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics;
-            g.SmoothingMode     = SmoothingMode.AntiAlias;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
             bool hasPill = _pillColour != Color.Transparent && Text.Length > 0 && Text != "-";
-
             if (hasPill)
             {
-                // Fixed width pill, left-aligned in cell
-                int pw   = PillWidth;
-                int ph   = (int)g.MeasureString(Text, Font).Height + 8;
-                int py   = (Height - ph) / 2;
+                int pw = PillWidth, ph = (int)g.MeasureString(Text, Font).Height + 8, py = (Height - ph) / 2;
                 var rect = new Rectangle(0, py, pw, ph);
-
-                // Gradient fill
-                using var grad = new LinearGradientBrush(
-                    new Point(0, py), new Point(0, py + ph),
-                    Lighten(_pillColour, 40), Darken(_pillColour, 30));
+                using var grad = new LinearGradientBrush(new Point(0, py), new Point(0, py + ph), Lighten(_pillColour, 40), Darken(_pillColour, 30));
                 using var path = ShapeHelper.RoundedPath(rect, PillRadius);
                 g.FillPath(grad, path);
-
-                // Gloss
-                var glossRect = new Rectangle(0, py, pw, ph / 2);
-                using var gloss = new LinearGradientBrush(glossRect,
-                    Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White),
-                    LinearGradientMode.Vertical);
-                g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
-
-                // Text centred inside the pill
+                var gr2 = new Rectangle(0, py, pw, ph / 2);
+                using var gloss = new LinearGradientBrush(gr2, Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
+                g.SetClip(path); g.FillRectangle(gloss, gr2); g.ResetClip();
                 using var fg = new SolidBrush(Color.White);
-                g.DrawString(Text, Font, fg,
-                    new RectangleF(0, py, pw, ph),
+                g.DrawString(Text, Font, fg, new RectangleF(0, py, pw, ph),
                     new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
             else
             {
                 using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
-                g.DrawString(Text, Font, fg,
-                    new RectangleF(0, 0, Width, Height),
+                g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
                     new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
             }
         }
@@ -180,7 +134,7 @@ namespace CloudflaredMonitor
         private static Color Darken(Color c, int a)  => Color.FromArgb(c.A, Math.Max(0, c.R - a),   Math.Max(0, c.G - a),   Math.Max(0, c.B - a));
     }
 
-    // Gradient + gloss pill button
+    // ── Pill button ──────────────────────────────────────────────────────────
     internal sealed class PillButton : Button
     {
         private const int Radius = 13;
@@ -199,19 +153,12 @@ namespace CloudflaredMonitor
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
 
-        // Paint the parent card's white background - walks up to first non-transparent parent
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            Control? p = Parent;
-            while (p != null && p.BackColor == Color.Transparent)
-                p = p.Parent;
-            e.Graphics.Clear(p?.BackColor ?? Color.White);
-        }
+        // Fix: always paint solid white - no parent walking which caused black corners
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics;
-            g.SmoothingMode     = SmoothingMode.AntiAlias;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
@@ -231,6 +178,7 @@ namespace CloudflaredMonitor
         }
     }
 
+    // ── Sidebar button ───────────────────────────────────────────────────────
     internal sealed class ModernButton : Button
     {
         private static readonly Color _normal = Color.FromArgb(45, 52, 68);
@@ -262,6 +210,7 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── Rounded card panel ───────────────────────────────────────────────────
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
@@ -269,7 +218,7 @@ namespace CloudflaredMonitor
         {
             DoubleBuffered = true; ResizeRedraw = true;
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-            BackColor = Color.White; // explicit white so PillButton parent-walk finds it
+            BackColor = Color.White;
         }
         protected override void OnResize(EventArgs e)
         { base.OnResize(e); if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); } }
@@ -284,6 +233,7 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── Tray icon ────────────────────────────────────────────────────────────
     internal static class TrayIconGenerator
     {
         public static System.Drawing.Icon CreateOolioIcon()
@@ -296,6 +246,7 @@ namespace CloudflaredMonitor
         }
     }
 
+    // ── Ingress models ───────────────────────────────────────────────────────
     internal sealed class IngressItem
     {
         public string CloudEndpoint { get; }
@@ -321,6 +272,7 @@ namespace CloudflaredMonitor
         }
     }
 
+    // ── Main form ────────────────────────────────────────────────────────────
     public partial class MainForm : Form
     {
         private readonly CloudflaredServiceManager _serviceManager = new();
@@ -329,7 +281,7 @@ namespace CloudflaredMonitor
         private readonly DiagnosticsExporter       _exporter;
         private TunnelServiceStatus? _currentStatus;
         private readonly List<string> _uiLogs = new();
-        private const string AppVersion     = "1.1.0.2";
+        private const string AppVersion     = "1.2.0.1";
         private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/main/version.json";
 
         private static string TunnelDetailsDir =>
@@ -337,11 +289,17 @@ namespace CloudflaredMonitor
                 "Bepoz", "CloudflaredMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
+        // ── Install view controls (built dynamically) ─────────────────────
+        private Panel?   _pnlInstall;
+        private bool     _installViewActive;
+
         public MainForm()
         {
             InitializeComponent();
             _exporter = new DiagnosticsExporter(_logger);
             dgvIngress.CellPainting += DgvIngress_CellPainting;
+            // Hide form on close - keep running in tray
+            this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
         }
 
         protected override void OnShown(EventArgs e)
@@ -352,19 +310,136 @@ namespace CloudflaredMonitor
             _ = CheckTunnelStatusAsync();
         }
 
+        // ── View switching ────────────────────────────────────────────────
+
+        private void ShowStandardView()
+        {
+            if (_installViewActive && _pnlInstall != null)
+            {
+                tblMain.Visible  = true;
+                _pnlInstall.Visible = false;
+                _installViewActive = false;
+            }
+        }
+
+        private void ShowInstallView()
+        {
+            if (_installViewActive) return;
+
+            // Build install panel lazily
+            if (_pnlInstall == null)
+                _pnlInstall = BuildInstallPanel();
+
+            tblMain.Visible     = false;
+            _pnlInstall.Visible = true;
+            _installViewActive  = true;
+        }
+
+        private Panel BuildInstallPanel()
+        {
+            var pnl = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(226, 232, 240), Visible = false };
+            Controls.Add(pnl);
+            pnl.BringToFront();
+            // Keep sidebar in front
+            pnlSidebar.BringToFront();
+
+            // Inner card
+            var card = new RoundedPanel { Dock = DockStyle.None, Location = new Point(20, 20) };
+            card.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            card.Size   = new Size(pnl.Width - 40, pnl.Height - 40);
+            pnl.Controls.Add(card);
+            pnl.Resize += (_, _) => { card.Size = new Size(pnl.Width - 40, pnl.Height - 40); };
+
+            var title = new Label
+            {
+                Text      = "Install New Tunnel",
+                Font      = new Font("Segoe UI Semibold", 13f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Location  = new Point(24, 20),
+                Size      = new Size(500, 30),
+                BackColor = Color.Transparent
+            };
+
+            var lblName = new Label { Text = "Tunnel Name", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(100,116,139), Location = new Point(24, 70), AutoSize = true, BackColor = Color.Transparent };
+            var txtName = new TextBox { Location = new Point(24, 92), Size = new Size(400, 28), Font = new Font("Segoe UI", 9.5f), BorderStyle = BorderStyle.FixedSingle };
+
+            var lblRoutes = new Label { Text = "Ingress Routes  (one per line: hostname=service, e.g. app.example.com=http://localhost:8080)", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(100,116,139), Location = new Point(24, 134), AutoSize = true, BackColor = Color.Transparent };
+            var txtRoutes = new TextBox { Location = new Point(24, 156), Size = new Size(600, 140), Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Cascadia Mono", 8.5f), BorderStyle = BorderStyle.FixedSingle };
+
+            var lblStatus = new Label { Location = new Point(24, 314), Size = new Size(700, 18), Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100,116,139), BackColor = Color.Transparent };
+
+            var btnInstall = new PillButton { Text = "Install Tunnel", Location = new Point(24, 344), Size = new Size(140, 34) };
+            var btnCancel  = new Button
+            {
+                Text = "Cancel", Location = new Point(174, 344), Size = new Size(90, 34),
+                FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(226,232,240),
+                ForeColor = Color.FromArgb(71,85,105), Font = new Font("Segoe UI", 9f), Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(200, 210, 220);
+
+            btnCancel.Click += (_, _) => ShowStandardView();
+
+            btnInstall.Click += async (_, _) =>
+            {
+                if (!HasToken()) { lblStatus.Text = "Enter an API token first."; lblStatus.ForeColor = Color.FromArgb(200,30,30); return; }
+                string tunnelName = txtName.Text.Trim();
+                if (string.IsNullOrEmpty(tunnelName)) { lblStatus.Text = "Tunnel name is required."; lblStatus.ForeColor = Color.FromArgb(200,30,30); return; }
+
+                var routes = new List<CfIngressRule>();
+                foreach (var line in txtRoutes.Lines)
+                {
+                    var trimmed = line.Trim();
+                    if (string.IsNullOrEmpty(trimmed)) continue;
+                    var eqIdx = trimmed.IndexOf('=');
+                    if (eqIdx < 0) continue;
+                    var hostname = trimmed[..eqIdx].Trim();
+                    var service  = trimmed[(eqIdx + 1)..].Trim();
+                    if (!string.IsNullOrEmpty(hostname) && !string.IsNullOrEmpty(service))
+                        routes.Add(new CfIngressRule { Hostname = hostname, Service = service });
+                }
+
+                btnInstall.Enabled = false;
+                lblStatus.Text = "Creating tunnel..."; lblStatus.ForeColor = Color.FromArgb(100,116,139);
+
+                var spec = new CreateTunnelSpec { TunnelName = tunnelName, Routes = routes.Select(r => new RouteSpec { Hostname = r.Hostname ?? "", Service = r.Service ?? "" }).ToList() };
+                try
+                {
+                    await CreateTunnelFromSpecAsync(spec);
+                    lblStatus.Text = "Tunnel created successfully!"; lblStatus.ForeColor = Color.FromArgb(16,140,60);
+                    await Task.Delay(1500);
+                    ShowStandardView();
+                }
+                catch (Exception ex) { lblStatus.Text = "Error: " + ex.Message; lblStatus.ForeColor = Color.FromArgb(200,30,30); }
+                finally { btnInstall.Enabled = true; }
+            };
+
+            card.Controls.Add(title);
+            card.Controls.Add(lblName);
+            card.Controls.Add(txtName);
+            card.Controls.Add(lblRoutes);
+            card.Controls.Add(txtRoutes);
+            card.Controls.Add(lblStatus);
+            card.Controls.Add(btnInstall);
+            card.Controls.Add(btnCancel);
+
+            return pnl;
+        }
+
+        // ── Grid header colours ───────────────────────────────────────────
         private void ApplyGridHeaderStyles()
         {
             dgvIngress.EnableHeadersVisualStyles = false;
             var cc = dgvIngress.Columns["colCloud"];
             var cl = dgvIngress.Columns["colLocal"];
-            if (cc != null) { cc.HeaderCell.Style.BackColor = Color.FromArgb(237, 233, 254); cc.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149); cc.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cc.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cc.HeaderCell.Style.Padding = new Padding(6, 0, 0, 0); }
-            if (cl != null) { cl.HeaderCell.Style.BackColor = Color.FromArgb(241, 245, 249); cl.HeaderCell.Style.ForeColor = Color.FromArgb(76, 29, 149); cl.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cl.HeaderCell.Style.Padding = new Padding(6, 0, 0, 0); }
+            if (cc != null) { cc.HeaderCell.Style.BackColor = Color.FromArgb(237,233,254); cc.HeaderCell.Style.ForeColor = Color.FromArgb(76,29,149); cc.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cc.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cc.HeaderCell.Style.Padding = new Padding(6,0,0,0); }
+            if (cl != null) { cl.HeaderCell.Style.BackColor = Color.FromArgb(241,245,249); cl.HeaderCell.Style.ForeColor = Color.FromArgb(76,29,149); cl.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cl.HeaderCell.Style.Padding = new Padding(6,0,0,0); }
             dgvIngress.Invalidate();
         }
 
         private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e)
         { if (e.RowIndex < 0) return; e.PaintBackground(e.ClipBounds, false); e.PaintContent(e.ClipBounds); e.Handled = true; }
 
+        // ── Logging ───────────────────────────────────────────────────────
         private async Task LoadTodaysLogAsync()
         {
             try
@@ -386,7 +461,7 @@ namespace CloudflaredMonitor
         {
             string detail = ex == null ? m : m + " - " + ex.Message;
             if (ex != null && ex.Message.Contains("403") && ex.Message.Contains("10000"))
-                detail += " | TOKEN SCOPE: Needs 'Cloudflare Tunnel:Edit' permission for Repair.";
+                detail += " | TOKEN SCOPE: Needs 'Cloudflare Tunnel:Edit' permission.";
             AppendLog("ERROR: " + detail);
             if (ex == null) _logger.Error(m); else _logger.Error(m, ex);
         }
@@ -398,19 +473,17 @@ namespace CloudflaredMonitor
             else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
         }
 
+        // ── Badge colours ─────────────────────────────────────────────────
         private static Color BadgeColour(string? v, bool svc = false)
         {
             if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent;
             var s = v.ToLowerInvariant();
-            if (svc) return s == "running" ? Color.FromArgb(16, 140, 60) : s is "stopped" or "notinstalled" ? Color.FromArgb(200, 30, 30) : Color.FromArgb(180, 100, 0);
-            return s is "healthy" or "active" or "connected" or "reachable" ? Color.FromArgb(16, 140, 60)
-                 : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200, 30, 30) : Color.FromArgb(180, 100, 0);
+            if (svc) return s == "running" ? Color.FromArgb(16,140,60) : s is "stopped" or "notinstalled" ? Color.FromArgb(200,30,30) : Color.FromArgb(180,100,0);
+            return s is "healthy" or "active" or "connected" or "reachable" ? Color.FromArgb(16,140,60)
+                 : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200,30,30) : Color.FromArgb(180,100,0);
         }
-        private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
-        { "running" => "The local Cloudflared service is installed and running.", "notinstalled" => "The Cloudflared service is not installed.", "stopped" => "The Cloudflared service is installed but not running.", _ => "Cloudflared service state is unknown." };
-        private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
-        { "healthy" or "active" or "connected" or "reachable" => "URL endpoints are reachable — the tunnel is fully operational.", "inactive" or "degraded" or "down" or "unreachable" => "URL endpoints are not reachable.", _ => "Tunnel remote status is unknown." };
-
+        private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
+        private static string RemoteTooltip(string? v)  => (v ?? "").ToLowerInvariant() switch { "healthy" or "active" or "connected" or "reachable" => "Tunnel is reachable.", "inactive" or "degraded" or "down" or "unreachable" => "Tunnel is not reachable.", _ => "Status unknown." };
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
         { lbl.Text = text; lbl.PillColour = BadgeColour(text, isService); toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text)); }
 
@@ -420,7 +493,7 @@ namespace CloudflaredMonitor
         private void PopulateIngress(IEnumerable<IngressItem> items)
         { dgvIngress.Rows.Clear(); foreach (var item in items) { if (item.IsCatchAll) continue; dgvIngress.Rows.Add(item.CloudEndpoint, item.LocalEndpoint); } }
 
-        public void OpenLogFolder() { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
+        public void OpenLogFolder()    { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
         public void OpenConfigFolder() { try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); } catch (Exception ex) { LogError("Could not open config folder", ex); } }
 
         private async Task SaveTunnelDetailsAsync(string tunnelId, string? tunnelName, string? status, List<CfIngressRule> ingressRules)
@@ -439,7 +512,7 @@ namespace CloudflaredMonitor
             {
                 var json = await File.ReadAllTextAsync(jsonPath); using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
                 if (root.TryGetProperty("TunnelName", out var tn)) lblTunnelName.Text = tn.GetString() ?? "-";
-                if (root.TryGetProperty("Status",     out var st)) ApplyBadge(lblRemoteStatus, st.GetString() ?? "-");
+                if (root.TryGetProperty("Status", out var st)) ApplyBadge(lblRemoteStatus, st.GetString() ?? "-");
                 if (root.TryGetProperty("Routes", out var routes))
                 {
                     var items = new List<IngressItem>();
@@ -465,7 +538,7 @@ namespace CloudflaredMonitor
                 if (!root.TryGetProperty("Routes", out var routes)) return null;
                 foreach (var route in routes.EnumerateArray())
                 {
-                    string svc  = route.TryGetProperty("Service",  out var sp) ? sp.GetString() ?? "" : "";
+                    string svc = route.TryGetProperty("Service", out var sp) ? sp.GetString() ?? "" : "";
                     if (svc.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase)) continue;
                     string host = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "" : "";
                     string path = route.TryGetProperty("Path",     out var pp) ? pp.GetString() ?? "" : "";
@@ -489,6 +562,7 @@ namespace CloudflaredMonitor
             return status;
         }
 
+        // ── Token test ────────────────────────────────────────────────────
         public async Task TestTokenAsync()
         {
             if (!HasToken()) { LogWarn("No API token entered."); return; }
@@ -497,23 +571,25 @@ namespace CloudflaredMonitor
             {
                 var api = new CloudflareApi(GetToken()); var tid = _currentStatus?.TunnelId;
                 using var ctsV = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                try { var v = await api.VerifyTokenAsync(ctsV.Token); LogInfo("Token status: " + (v?.Status ?? "unknown") + (v?.ExpiresOn != null ? " | Expires: " + v.ExpiresOn : " | No expiry")); }
-                catch (Exception vEx) { LogWarn("Could not verify via /user/tokens/verify: " + vEx.Message); }
+                try { var v = await api.VerifyTokenAsync(ctsV.Token); LogInfo("Token: " + (v?.Status ?? "unknown") + (v?.ExpiresOn != null ? " | Expires: " + v.ExpiresOn : "")); }
+                catch (Exception vEx) { LogWarn("Could not verify token: " + vEx.Message); }
                 if (tid != null)
                 {
                     using var ctsR = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                    var tunnel = await api.GetTunnelAsync(tid, ctsR.Token); LogInfo("Read access OK - Tunnel: " + (tunnel?.Name ?? tid));
-                    try { using var ctsW = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tid, ctsW.Token); LogInfo("Write access OK - Token scope: READ + WRITE (suitable for Repair)"); }
-                    catch (Exception wEx) { if (wEx.Message.Contains("403")) LogWarn("Write access DENIED - READ ONLY. Repair requires 'Cloudflare Tunnel:Edit' permission."); else LogWarn("Write access inconclusive: " + wEx.Message); }
+                    var tunnel = await api.GetTunnelAsync(tid, ctsR.Token); LogInfo("Read OK: " + (tunnel?.Name ?? tid));
+                    try { using var ctsW = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tid, ctsW.Token); LogInfo("Write OK - suitable for Repair"); }
+                    catch (Exception wEx) { if (wEx.Message.Contains("403")) LogWarn("Write DENIED - READ ONLY token."); else LogWarn("Write test inconclusive: " + wEx.Message); }
                 }
-                else LogInfo("Token appears valid. Run Check Tunnel Status to associate with a tunnel.");
+                else LogInfo("Token valid. Run Check Tunnel Status to associate with a tunnel.");
             }
             catch (Exception ex) { LogError("Token test failed", ex); }
             finally { btnTestToken.Enabled = true; }
         }
 
+        // ── Check tunnel status ───────────────────────────────────────────
         public async Task CheckTunnelStatusAsync()
         {
+            ShowStandardView();
             btnTunnelStatus.Enabled = false; dgvIngress.Rows.Clear();
             try
             {
@@ -522,7 +598,7 @@ namespace CloudflaredMonitor
                 ApplyBadge(lblService, localStatus.ServiceState, isService: true);
                 lblTunnelId.Text = localStatus.TunnelId ?? "-";
                 if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote)) LogInfo(localStatus.DiagnosticsNote!);
-                if (localStatus.ServiceState == "NotInstalled") { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed. Use Install New Tunnel or Repair Tunnel."); return; }
+                if (localStatus.ServiceState == "NotInstalled") { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed."); return; }
                 if (localStatus.ServiceState != "Running") { LogWarn("Service installed but not running. Use Repair Tunnel."); return; }
                 LogInfo("Service is running.");
                 var tid = localStatus.TunnelId;
@@ -533,23 +609,22 @@ namespace CloudflaredMonitor
                     var endpointUrl = GetFirstEndpointUrl(tid);
                     if (endpointUrl != null)
                     {
-                        LogInfo("Pinging endpoint: " + endpointUrl + " ...");
+                        LogInfo("Pinging: " + endpointUrl + " ...");
                         try
                         {
                             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
                             var resp = await http.GetAsync(endpointUrl, HttpCompletionOption.ResponseHeadersRead);
                             int code = (int)resp.StatusCode;
-                            if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("Endpoint responded (" + code + ") — tunnel appears reachable."); }
-                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("Endpoint returned " + code + " — tunnel may be down."); }
+                            if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("Endpoint responded (" + code + ")"); }
+                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("Endpoint returned " + code); }
                         }
-                        catch (Exception pingEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("Endpoint ping failed: " + pingEx.Message); }
-                        if (!HasToken()) LogInfo("No API token — endpoint ping only. Add a token for detailed tunnel status.");
+                        catch (Exception pingEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("Ping failed: " + pingEx.Message); }
+                        if (!HasToken()) LogInfo("No API token — endpoint ping only.");
                     }
-                    else if (!HasToken()) LogInfo("No cached routes and no API token. Add a token then re-run to fetch full details.");
                 }
                 if (HasToken() && tid != null)
                 {
-                    LogInfo("API token found — fetching authoritative tunnel status...");
+                    LogInfo("Fetching authoritative tunnel status...");
                     var api = new CloudflareApi(GetToken());
                     using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                     var tunnel = await api.GetTunnelAsync(tid, cts1.Token);
@@ -559,53 +634,45 @@ namespace CloudflaredMonitor
                     var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
                     var items = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
                     PopulateIngress(items); await SaveTunnelDetailsAsync(tid, tunnel?.Name, tunnel?.Status, ingress);
-                    LogInfo("Tunnel details refreshed and saved (" + items.Count + " route(s)).");
+                    LogInfo("Saved " + items.Count + " route(s).");
                 }
                 LogInfo("Check complete.");
             }
-            catch (Exception ex) { LogError("Check tunnel status failed", ex); }
+            catch (Exception ex) { LogError("Check failed", ex); }
             finally { btnTunnelStatus.Enabled = true; }
         }
 
-        public async Task CreateTunnelAsync()
+        // ── Create tunnel (in-place, called from install panel) ───────────
+        private async Task CreateTunnelFromSpecAsync(CreateTunnelSpec spec)
         {
-            if (!HasToken()) { LogWarn("Enter an API token first."); return; }
-            using var dlg = new CreateTunnelForm();
-            if (dlg.ShowDialog(this) != DialogResult.OK || dlg.Result == null) { LogInfo("Install tunnel cancelled."); return; }
-            var spec = dlg.Result; LogInfo("Creating tunnel: " + spec.TunnelName);
+            LogInfo("Creating tunnel: " + spec.TunnelName);
             var api = new CloudflareApi(GetToken());
-            try
-            {
-                using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
-                if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
-                LogInfo("Tunnel created: " + tunnel.Name + " (" + tunnel.Id + ")");
-                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = r.Hostname, Path = string.IsNullOrEmpty(r.Path) ? null : r.Path, Service = r.Service }).ToList();
-                using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token);
-                LogInfo("Configured " + ingressRules.Count + " route(s).");
-                await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
-                PopulateIngress(ingressRules.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>());
-                lblTunnelName.Text = tunnel.Name ?? "-"; ApplyBadge(lblRemoteStatus, "pending");
-                if (MessageBox.Show(this, "Tunnel '" + spec.TunnelName + "' created!\n\nTunnel ID: " + tunnel.Id + "\n\nInstall cloudflared on this machine now?",
-                    "Tunnel Created", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
-                {
-                    LogInfo("Fetching tunnel token..."); using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("API returned empty token.");
-                    LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-                    var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
-                    LogInfo("Uninstalling any existing cloudflared..."); await Task.Run(() => _installer.UninstallExistingMsi());
-                    LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
-                    var exe = _installer.FindCloudflaredExeOrThrow();
-                    LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
-                    _serviceManager.StartService(); LogInfo("Installation complete."); await CheckTunnelStatusAsync();
-                }
-            }
-            catch (Exception ex) { LogError("Install tunnel failed", ex); }
+            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
+            if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
+            LogInfo("Tunnel created: " + tunnel.Name + " (" + tunnel.Id + ")");
+            var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = r.Hostname, Service = r.Service }).ToList();
+            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token);
+            LogInfo("Configured " + ingressRules.Count + " route(s).");
+            await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
+            LogInfo("Fetching tunnel token...");
+            using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("API returned empty token.");
+            LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+            var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
+            LogInfo("Uninstalling existing cloudflared..."); await Task.Run(() => _installer.UninstallExistingMsi());
+            LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
+            var exe = _installer.FindCloudflaredExeOrThrow();
+            LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
+            _serviceManager.StartService(); LogInfo("Installation complete.");
+            await CheckTunnelStatusAsync();
         }
 
+        // ── Repair ────────────────────────────────────────────────────────
         public async Task RepairAsync()
         {
+            ShowStandardView();
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
             if (MessageBox.Show(this, "This will stop, uninstall and reinstall the cloudflared service.\n\nContinue?",
                     "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
@@ -620,11 +687,11 @@ namespace CloudflaredMonitor
                     {
                         var files = Directory.GetFiles(TunnelDetailsDir, "*.json");
                         if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached tunnel ID: " + tid); }
-                        else if (files.Length > 1) { LogWarn("Multiple cached tunnels found. Run Check Tunnel Status first."); return; }
+                        else if (files.Length > 1) { LogWarn("Multiple cached tunnels. Run Check Tunnel Status first."); return; }
                     }
                 }
-                if (tid == null) { LogError("No tunnel ID found. Run Check Tunnel Status or install a new tunnel first."); return; }
-                LogInfo("Starting repair for tunnel " + tid + "...");
+                if (tid == null) { LogError("No tunnel ID found."); return; }
+                LogInfo("Repairing tunnel " + tid + "...");
                 LogInfo("Step 1/8  Stopping..."); _serviceManager.StopServiceBestEffort();
                 LogInfo("Step 2/8  Killing processes..."); _serviceManager.KillCloudflaredProcess();
                 LogInfo("Step 3/8  Removing from SCM..."); _serviceManager.DeleteService();
@@ -635,10 +702,10 @@ namespace CloudflaredMonitor
                 LogInfo("Step 6/8  Locating exe..."); var exe = _installer.FindCloudflaredExeOrThrow(); LogInfo("          " + exe);
                 LogInfo("Step 7/8  Getting token...");
                 string newToken; using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
-                    newToken = await api.GetTunnelTokenAsync(tid, cts.Token) ?? throw new InvalidOperationException("API returned empty token.");
+                    newToken = await api.GetTunnelTokenAsync(tid, cts.Token) ?? throw new InvalidOperationException("Empty token.");
                 LogInfo("          Done.");
                 LogInfo("Step 8/8  Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
-                _serviceManager.StartService(); LogInfo("          Service started.");
+                _serviceManager.StartService(); LogInfo("          Started.");
                 LogInfo("Repair complete."); await CheckTunnelStatusAsync();
             }
             catch (Exception ex) { LogError("Repair failed", ex); }
@@ -647,6 +714,7 @@ namespace CloudflaredMonitor
 
         public void ExportDiagnostics()
         {
+            ShowStandardView();
             try
             {
                 if (_currentStatus == null) { MessageBox.Show(this, "Check tunnel status first.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
@@ -679,12 +747,26 @@ namespace CloudflaredMonitor
             catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
 
-        private async void btnTunnelStatus_Click(object? sender, EventArgs e)   => await CheckTunnelStatusAsync();
+        // ── Event handlers ────────────────────────────────────────────────
+        private void btnCreateTunnel_Click(object? sender, EventArgs e)          => ShowInstallView();
+        private async void btnTunnelStatus_Click(object? sender, EventArgs e)    => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)       => await TestTokenAsync();
         private void btnOpenLogs_Click(object? sender, EventArgs e)               => OpenLogFolder();
         private void btnOpenConfig_Click(object? sender, EventArgs e)             => OpenConfigFolder();
         private async void btnRepair_Click(object? sender, EventArgs e)           => await RepairAsync();
-        private async void btnCreateTunnel_Click(object? sender, EventArgs e)     => await CreateTunnelAsync();
         private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync();
+    }
+
+    // ── Spec models for install view ─────────────────────────────────────────
+    internal sealed class CreateTunnelSpec
+    {
+        public string TunnelName { get; set; } = "";
+        public List<RouteSpec> Routes { get; set; } = new();
+    }
+
+    internal sealed class RouteSpec
+    {
+        public string Hostname { get; set; } = "";
+        public string Service  { get; set; } = "";
     }
 }
