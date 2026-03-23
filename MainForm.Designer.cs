@@ -63,6 +63,7 @@ namespace CloudflaredMonitor
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
+            // ── Sidebar ──────────────────────────────────────────────────────
             this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock  = DockStyle.Left;
             this.pnlSidebar.Width = 224;
@@ -128,19 +129,21 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
+            // ── Main layout ── item 3: card margins doubled to 8px
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
-            this.tblMain.Padding     = new Padding(8, 8, 8, 8);
+            this.tblMain.Padding     = new Padding(10, 10, 10, 10);
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 114));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
+            // ── Status card ──────────────────────────────────────────────────
             this.pnlStatusCard.Dock   = DockStyle.Fill;
-            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 4);
+            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -197,8 +200,10 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            this.pnlIngressCard.Dock   = DockStyle.Fill;
-            this.pnlIngressCard.Margin = new Padding(0, 0, 0, 4);
+            // ── Ingress card ── item 2: padding gives grid breathing room
+            this.pnlIngressCard.Dock    = DockStyle.Fill;
+            this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
+            this.pnlIngressCard.Padding = new Padding(14, 12, 14, 12);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -206,7 +211,7 @@ namespace CloudflaredMonitor
             this.lblIngressTitle.Text      = "Published Routes";
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Location  = new System.Drawing.Point(16, 6);
+            this.lblIngressTitle.Location  = new System.Drawing.Point(14, 8);
             this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
@@ -222,8 +227,8 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            this.dgvIngress.Location   = new System.Drawing.Point(16, 30);
-            this.dgvIngress.Padding    = new Padding(0, 0, 0, 8);
+            // Anchored inside padded card - 14px inset each side, 32px from top for title
+            this.dgvIngress.Location   = new System.Drawing.Point(14, 32);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
             this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
@@ -258,8 +263,9 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
+            // ── Token card ───────────────────────────────────────────────────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
-            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 4);
+            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
             this.lblTokenTitle.Text      = "Cloudflare API Token";
             this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
@@ -298,6 +304,7 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
+            // ── Log card ─────────────────────────────────────────────────────
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Padding = new Padding(14, 30, 14, 14);
@@ -321,6 +328,7 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
+            // ── Form ─────────────────────────────────────────────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
