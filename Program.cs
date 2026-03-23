@@ -9,6 +9,15 @@ namespace CloudflaredMonitor
         [STAThread]
         static void Main()
         {
+            // Top-level exception handler - shows message box instead of silent crash
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (_, e) =>
+                MessageBox.Show("Unhandled error: " + e.Exception.Message + "\n\n" + e.Exception.StackTrace,
+                    "TunnelMonitor Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+                MessageBox.Show("Fatal error: " + (e.ExceptionObject?.ToString() ?? "unknown"),
+                    "TunnelMonitor Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
             bool createdNew;
             using var mutex = new Mutex(true, "TunnelMonitor_SingleInstance", out createdNew);
             if (!createdNew)
@@ -21,6 +30,7 @@ namespace CloudflaredMonitor
                 catch { }
                 return;
             }
+
             ApplicationConfiguration.Initialize();
             Application.Run(new TrayAppContext(startMinimised: true));
         }
