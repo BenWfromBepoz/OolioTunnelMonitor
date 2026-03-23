@@ -175,7 +175,7 @@ namespace CloudflaredMonitor
             Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.Opaque, true)
+                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.Opaque, true);
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
