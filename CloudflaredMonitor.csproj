@@ -18,14 +18,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Images\Oolio Primary.png">
+    <EmbeddedResource Include="Resources\\Images\\Oolio Primary.png">
       <LogicalName>CloudflaredMonitor.Resources.Oolio.png</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\Oolio White.png">
+    <EmbeddedResource Include="Resources\\Images\\Oolio White.png">
       <LogicalName>CloudflaredMonitor.Resources.OolioWhite.png</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\Oolio Black.png">
+    <EmbeddedResource Include="Resources\\Images\\Oolio Black.png">
       <LogicalName>CloudflaredMonitor.Resources.OolioBlack.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\\Images\\icon_oolioSystemTray.png">
+      <LogicalName>CloudflaredMonitor.Resources.IconSystemTray.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\\Images\\icon_oolioTaskbar.png">
+      <LogicalName>CloudflaredMonitor.Resources.IconTaskbar.png</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
