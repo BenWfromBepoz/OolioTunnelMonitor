@@ -92,32 +92,62 @@ namespace CloudflaredMonitor
     internal sealed class SidebarCorner : Control
     {
         public const int R = 20;
+    
         private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
-        private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
-
+    
         public SidebarCorner()
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
-            BackColor = _sidebar;
-            Size      = new Size(R, R);
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.UserPaint |
+                ControlStyles.ResizeRedraw,
+                true
+            );
+    
+            BackColor = Color.Transparent;
+            Size = new Size(R, R);
         }
-
+    
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+    
+            using var full = new GraphicsPath();
+            full.AddRectangle(new Rectangle(0, 0, Width, Height));
+    
+            using var cutout = new GraphicsPath();
+    
+            // Arc centered bottom-right
+            cutout.AddArc(-R, -R, R * 2, R * 2, 180, -90);
+    
+            // Close the quarter shape cleanly
+            cutout.AddLine(0, 0, R, 0);
+            cutout.AddLine(R, 0, R, R);
+            cutout.CloseFigure();
+    
+            // Subtract cutout from full rectangle
+            var region = new Region(full);
+            region.Exclude(cutout);
+    
+            this.Region = region;
+        }
+    
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // Prevent default background painting
+        }
+    
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(Color.Transparent);
-            // Quarter-circle in top-left quadrant filled with sidebar color
-            using var path = new GraphicsPath();
-            path.AddArc(0, 0, R * 2, R * 2, 270, -90);
-            path.AddLine(0, 0, 0, 0);
-            path.CloseFigure();
-            using var brush = new SolidBrush(_pageBg);
-            g.FillPath(brush, path);
+    
+            // Fill remaining visible region (sidebar color)
+            using var brush = new SolidBrush(_sidebar);
+            g.FillRectangle(brush, ClientRectangle);
         }
     }
-
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
