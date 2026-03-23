@@ -10,9 +10,9 @@
     <RootNamespace>CloudflaredMonitor</RootNamespace>
     <AssemblyName>TunnelMonitor</AssemblyName>
     <Product>TunnelMonitor</Product>
-    <Version>1.2.0.1</Version>
-    <AssemblyVersion>1.2.0.1</AssemblyVersion>
-    <FileVersion>1.2.0.1</FileVersion>
+    <Version>1.2.1.0</Version>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
