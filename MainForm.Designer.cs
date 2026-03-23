@@ -142,8 +142,9 @@ namespace CloudflaredMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ──────────────────────────────────────────────────
-            this.pnlStatusCard.Dock   = DockStyle.Fill;
-            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
+            this.pnlStatusCard.Dock    = DockStyle.Fill;
+            this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
+            this.pnlStatusCard.Padding = new Padding(12, 30, 12, 12);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -203,7 +204,7 @@ namespace CloudflaredMonitor
             // ── Ingress card ── padding keeps dgv inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
+            this.pnlIngressCard.Padding = new Padding(12, 30, 12, 12);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
