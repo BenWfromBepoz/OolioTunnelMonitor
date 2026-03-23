@@ -140,6 +140,8 @@ namespace CloudflaredMonitor
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
+        // Always paint white - the rounded card background.
+        // Do NOT try to paint the parent/transparent - that bleeds sibling controls.
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -194,6 +196,9 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // Fix: no Region clipping - that causes black corners on child PillButton/PillLabel controls.
+    // Rounded visual is achieved purely in OnPaint. The control rect is rectangular as far
+    // as WinForms hit-testing and clipping are concerned, which is fine for a card panel.
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
@@ -201,19 +206,19 @@ namespace CloudflaredMonitor
         public RoundedPanel()
         {
             DoubleBuffered = true; ResizeRedraw = true;
-            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
             BackColor = Color.White;
             _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
-            _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); ApplyRegion(); Invalidate(); };
+            _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); Invalidate(); };
         }
-        private void ApplyRegion() { if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); } }
         protected override void OnResize(EventArgs e) { base.OnResize(e); _resizeTimer.Stop(); _resizeTimer.Start(); }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            // Shadow
             for (int i = 3; i >= 1; i--)
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
+            // White card - clip children outside this path handled by WinForms normally
             using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
         }
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
@@ -267,16 +272,13 @@ namespace CloudflaredMonitor
         private TunnelServiceStatus? _currentStatus;
         private readonly List<string> _uiLogs = new();
         private const string AppVersion     = "1.2.0.1";
-        private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/main/version.json";
+        // Fix 3: version.json raw URL - use the correct raw.githubusercontent path
+        private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/refs/heads/main/version.json";
 
         private static string TunnelDetailsDir =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                 "Bepoz", "CloudflaredMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
-
-        // Install panel - lives inside tblMain (row-spanning), never added to form directly
-        private Panel?  _pnlInstall;
-        private bool    _installViewActive;
 
         public MainForm()
         {
@@ -292,96 +294,6 @@ namespace CloudflaredMonitor
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
-        }
-
-        // ── View switching ────────────────────────────────────────────────────
-        // Both panels live inside tblMain - no z-order conflict with sidebar
-
-        private void ShowStandardView()
-        {
-            if (!_installViewActive) return;
-            if (_pnlInstall != null) _pnlInstall.Visible = false;
-            // Restore all four standard rows
-            pnlStatusCard.Visible  = true;
-            pnlIngressCard.Visible = true;
-            pnlTokenCard.Visible   = true;
-            pnlLogCard.Visible     = true;
-            _installViewActive = false;
-        }
-
-        private void ShowInstallView()
-        {
-            if (_installViewActive) return;
-
-            // Build install panel lazily and add it to tblMain row 0, spanning all rows
-            if (_pnlInstall == null)
-            {
-                _pnlInstall = BuildInstallPanel();
-                tblMain.Controls.Add(_pnlInstall, 0, 0);
-                tblMain.SetRowSpan(_pnlInstall, 4);
-                _pnlInstall.Dock = DockStyle.Fill;
-            }
-
-            // Hide standard rows, show install panel
-            pnlStatusCard.Visible  = false;
-            pnlIngressCard.Visible = false;
-            pnlTokenCard.Visible   = false;
-            pnlLogCard.Visible     = false;
-            _pnlInstall.Visible    = true;
-            _installViewActive     = true;
-        }
-
-        private Panel BuildInstallPanel()
-        {
-            // Plain panel - no RoundedPanel so no Region clipping issues
-            var pnl = new Panel { BackColor = Color.FromArgb(226, 232, 240), Visible = false };
-
-            var card = new RoundedPanel { Location = new Point(10, 10) };
-            card.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            card.Size   = new Size(500, 400); // initial size, Resize event corrects it
-            pnl.Controls.Add(card);
-            pnl.Resize += (_, _) =>
-            {
-                if (pnl.Width > 20 && pnl.Height > 20)
-                    card.Size = new Size(pnl.Width - 20, pnl.Height - 20);
-            };
-
-            var title     = new Label { Text = "Install New Tunnel", Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(24, 20), Size = new Size(500, 30), BackColor = Color.Transparent };
-            var lblName   = new Label { Text = "Tunnel Name", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(100,116,139), Location = new Point(24, 70), AutoSize = true, BackColor = Color.Transparent };
-            var txtName   = new TextBox { Location = new Point(24, 92), Size = new Size(400, 28), Font = new Font("Segoe UI", 9.5f), BorderStyle = BorderStyle.FixedSingle };
-            var lblRoutes = new Label { Text = "Ingress Routes  (one per line: hostname=service  e.g.  app.example.com=http://localhost:8080)", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(100,116,139), Location = new Point(24, 134), AutoSize = true, BackColor = Color.Transparent };
-            var txtRoutes = new TextBox { Location = new Point(24, 156), Size = new Size(600, 140), Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Cascadia Mono", 8.5f), BorderStyle = BorderStyle.FixedSingle };
-            var lblStatus = new Label { Location = new Point(24, 314), Size = new Size(700, 18), Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(100,116,139), BackColor = Color.Transparent };
-            var btnInstall = new PillButton { Text = "Install Tunnel", Location = new Point(24, 344), Size = new Size(140, 34) };
-            var btnCancel  = new Button { Text = "Cancel", Location = new Point(174, 344), Size = new Size(90, 34), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(226,232,240), ForeColor = Color.FromArgb(71,85,105), Font = new Font("Segoe UI", 9f), Cursor = Cursors.Hand };
-            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(200, 210, 220);
-            btnCancel.Click += (_, _) => ShowStandardView();
-
-            btnInstall.Click += async (_, _) =>
-            {
-                if (!HasToken()) { lblStatus.Text = "Enter an API token first."; lblStatus.ForeColor = Color.FromArgb(200,30,30); return; }
-                string tunnelName = txtName.Text.Trim();
-                if (string.IsNullOrEmpty(tunnelName)) { lblStatus.Text = "Tunnel name is required."; lblStatus.ForeColor = Color.FromArgb(200,30,30); return; }
-                var routes = new List<CfIngressRule>();
-                foreach (var line in txtRoutes.Lines)
-                {
-                    var trimmed = line.Trim(); if (string.IsNullOrEmpty(trimmed)) continue;
-                    var eqIdx = trimmed.IndexOf('='); if (eqIdx < 0) continue;
-                    var hostname = trimmed[..eqIdx].Trim(); var service = trimmed[(eqIdx + 1)..].Trim();
-                    if (!string.IsNullOrEmpty(hostname) && !string.IsNullOrEmpty(service))
-                        routes.Add(new CfIngressRule { Hostname = hostname, Service = service });
-                }
-                btnInstall.Enabled = false;
-                lblStatus.Text = "Creating tunnel..."; lblStatus.ForeColor = Color.FromArgb(100,116,139);
-                try { await CreateTunnelFromSpecAsync(tunnelName, routes); lblStatus.Text = "Tunnel created!"; lblStatus.ForeColor = Color.FromArgb(16,140,60); await Task.Delay(1500); ShowStandardView(); }
-                catch (Exception ex) { lblStatus.Text = "Error: " + ex.Message; lblStatus.ForeColor = Color.FromArgb(200,30,30); }
-                finally { btnInstall.Enabled = true; }
-            };
-
-            card.Controls.Add(title); card.Controls.Add(lblName); card.Controls.Add(txtName);
-            card.Controls.Add(lblRoutes); card.Controls.Add(txtRoutes);
-            card.Controls.Add(lblStatus); card.Controls.Add(btnInstall); card.Controls.Add(btnCancel);
-            return pnl;
         }
 
         private void ApplyGridHeaderStyles()
@@ -542,7 +454,6 @@ namespace CloudflaredMonitor
 
         public async Task CheckTunnelStatusAsync()
         {
-            ShowStandardView();
             btnTunnelStatus.Enabled = false; dgvIngress.Rows.Clear();
             try
             {
@@ -609,31 +520,40 @@ namespace CloudflaredMonitor
             finally { btnTunnelStatus.Enabled = true; }
         }
 
-        private async Task CreateTunnelFromSpecAsync(string tunnelName, List<CfIngressRule> routes)
+        // Fix 4: Restore CreateTunnelForm as a dialog (preserves all the rich fields)
+        public async Task CreateTunnelAsync()
         {
-            LogInfo("Creating tunnel: " + tunnelName);
+            if (!HasToken()) { LogWarn("Enter an API token first."); return; }
+            using var dlg = new CreateTunnelForm();
+            if (dlg.ShowDialog(this) != DialogResult.OK || dlg.Result == null) { LogInfo("Install tunnel cancelled."); return; }
+            var spec = dlg.Result;
+            LogInfo("Creating tunnel: " + spec.TunnelName);
             var api = new CloudflareApi(GetToken());
-            using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var tunnel = await api.CreateTunnelAsync(tunnelName, cts1.Token);
-            if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
-            LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
-            using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            await api.PutTunnelConfigAsync(tunnel.Id, routes, cts2.Token); LogInfo("Configured " + routes.Count + " route(s).");
-            await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", routes);
-            using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("Empty token.");
-            LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-            var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
-            await Task.Run(() => _installer.UninstallExistingMsi());
-            LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
-            var exe = _installer.FindCloudflaredExeOrThrow();
-            LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
-            _serviceManager.StartService(); LogInfo("Installation complete."); await CheckTunnelStatusAsync();
+            try
+            {
+                using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
+                if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
+                LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
+                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = r.Hostname, Path = string.IsNullOrEmpty(r.Path) ? null : r.Path, Service = r.Service }).ToList();
+                using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token); LogInfo("Configured " + ingressRules.Count + " route(s).");
+                await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
+                using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("Empty token.");
+                LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
+                await Task.Run(() => _installer.UninstallExistingMsi());
+                LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
+                var exe = _installer.FindCloudflaredExeOrThrow();
+                LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
+                _serviceManager.StartService(); LogInfo("Installation complete."); await CheckTunnelStatusAsync();
+            }
+            catch (Exception ex) { LogError("Install tunnel failed", ex); }
         }
 
         public async Task RepairAsync()
         {
-            ShowStandardView();
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
             if (MessageBox.Show(this, "This will stop, uninstall and reinstall the cloudflared service.\n\nContinue?",
                     "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
@@ -669,7 +589,6 @@ namespace CloudflaredMonitor
 
         public void ExportDiagnostics()
         {
-            ShowStandardView();
             try
             {
                 if (_currentStatus == null) { MessageBox.Show(this, "Check tunnel status first.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
@@ -702,7 +621,7 @@ namespace CloudflaredMonitor
             catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
 
-        private void btnCreateTunnel_Click(object? sender, EventArgs e)          => ShowInstallView();
+        private async void btnCreateTunnel_Click(object? sender, EventArgs e)   => await CreateTunnelAsync();
         private async void btnTunnelStatus_Click(object? sender, EventArgs e)    => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)       => await TestTokenAsync();
         private void btnOpenLogs_Click(object? sender, EventArgs e)               => OpenLogFolder();
