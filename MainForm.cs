@@ -80,9 +80,14 @@ namespace CloudflaredMonitor
     }
 
     /// <summary>
-    ///  Paints an inverse corner at the top-right of the sidebar.
-    ///  Must be added to the FORM's Controls (not pnlSidebar) so it isn't clipped.
-    ///  Positioned at (sidebarWidth - R, 0) and sized (R x R).
+    ///  Paints an inverse corner at the sidebar/content join.
+    ///  Added to the FORM (not pnlSidebar) so it is not clipped.
+    ///  Position: x = pnlSidebar.Width (right edge of sidebar), y = 0.
+    ///  This places the control straddling the join: the left half is over
+    ///  the sidebar, the right half is over the content area.
+    ///  OnPaint fills the whole square with sidebar colour then cuts a
+    ///  quarter-circle of page-background colour from the top-right quadrant,
+    ///  giving the illusion of an inner curve.
     /// </summary>
     internal sealed class SidebarCorner : Control
     {
@@ -102,10 +107,8 @@ namespace CloudflaredMonitor
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            // Fill square with sidebar colour
             g.Clear(_sidebar);
-            // Cut out a quarter-circle filled with page background in top-right quadrant.
-            // Arc from 270 sweeping -90 (counter-clockwise) traces top-right quarter.
+            // Quarter-circle in top-right quadrant filled with page background
             using var path = new GraphicsPath();
             path.AddArc(0, 0, R * 2, R * 2, 270, -90);
             path.AddLine(0, 0, 0, 0);
@@ -319,11 +322,12 @@ namespace CloudflaredMonitor
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
 
-            // Fix 2: SidebarCorner added to FORM controls (not pnlSidebar)
-            // so it isn't clipped by the panel bounds.
-            // Positioned at top-right of sidebar area.
+            // Fix 1: SidebarCorner on the FORM at x=pnlSidebar.Width (right edge of sidebar).
+            // This straddles the sidebar/content join: left half over sidebar, right half
+            // over content. The quarter-circle cutout faces top-right, making the sidebar
+            // appear to curve into the content area.
             var corner = new SidebarCorner();
-            corner.Location = new Point(pnlSidebar.Width - SidebarCorner.R, 0);
+            corner.Location = new Point(pnlSidebar.Width, 0);
             corner.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.Controls.Add(corner);
             corner.BringToFront();
