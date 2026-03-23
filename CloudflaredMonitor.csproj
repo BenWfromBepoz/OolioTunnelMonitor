@@ -8,13 +8,27 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>CloudflaredMonitor</RootNamespace>
-    <Version>1.1.0.1</Version>
-    <AssemblyVersion>1.1.0.1</AssemblyVersion>
-    <FileVersion>1.1.0.1</FileVersion>
+    <Version>1.1.0.2</Version>
+    <AssemblyVersion>1.1.0.2</AssemblyVersion>
+    <FileVersion>1.1.0.2</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Oolio brand images embedded as resources -->
+  <!-- LogicalName sets the string used in GetManifestResourceStream() -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Images\Oolio Primary.png">
+      <LogicalName>CloudflaredMonitor.Resources.Oolio.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Images\Oolio White.png">
+      <LogicalName>CloudflaredMonitor.Resources.OolioWhite.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Images\Oolio Black.png">
+      <LogicalName>CloudflaredMonitor.Resources.OolioBlack.png</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
