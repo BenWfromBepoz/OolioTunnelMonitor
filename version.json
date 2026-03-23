@@ -1,5 +1,6 @@
 {
   "version": "1.2.0.1",
+  "releaseDate": "2026-03-24",
   "downloadUrl": "https://github.com/BenWfromBepoz/CloudflaredMonitor/releases/latest",
-  "releaseNotes": "1.2.0.1 - Install New Tunnel feature (alpha, first debug cut)"
+  "releaseNotes": "TunnelMonitor v1.2.0.1 - Renamed from CloudflaredMonitor. Improved UI, tray icons, DWM title bar colouring."
 }
