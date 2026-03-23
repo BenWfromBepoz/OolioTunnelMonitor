@@ -140,8 +140,6 @@ namespace CloudflaredMonitor
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        // Always paint white - the rounded card background.
-        // Do NOT try to paint the parent/transparent - that bleeds sibling controls.
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -196,9 +194,6 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Fix: no Region clipping - that causes black corners on child PillButton/PillLabel controls.
-    // Rounded visual is achieved purely in OnPaint. The control rect is rectangular as far
-    // as WinForms hit-testing and clipping are concerned, which is fine for a card panel.
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
@@ -215,10 +210,8 @@ namespace CloudflaredMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            // Shadow
             for (int i = 3; i >= 1; i--)
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
-            // White card - clip children outside this path handled by WinForms normally
             using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
         }
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
@@ -272,7 +265,6 @@ namespace CloudflaredMonitor
         private TunnelServiceStatus? _currentStatus;
         private readonly List<string> _uiLogs = new();
         private const string AppVersion     = "1.2.0.1";
-        // Fix 3: version.json raw URL - use the correct raw.githubusercontent path
         private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/refs/heads/main/version.json";
 
         private static string TunnelDetailsDir =>
@@ -328,7 +320,7 @@ namespace CloudflaredMonitor
         {
             string detail = ex == null ? m : m + " - " + ex.Message;
             if (ex != null && ex.Message.Contains("403") && ex.Message.Contains("10000"))
-                detail += " | TOKEN SCOPE: Needs 'Cloudflare Tunnel:Edit' permission.";
+                detail += " | TOKEN SCOPE: Needs Cloudflare Tunnel:Edit permission.";
             AppendLog("ERROR: " + detail);
             if (ex == null) _logger.Error(m); else _logger.Error(m, ex);
         }
@@ -349,7 +341,8 @@ namespace CloudflaredMonitor
                  : s is "inactive" or "degraded" or "down" or "unreachable"               ? Color.FromArgb(200,30,30)
                                                                                            : Color.FromArgb(180,100,0);
         }
-        private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
+        private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
+        { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
         private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
         { "healthy" or "active" or "connected" or "reachable" or "tunnel ok" => "Tunnel is reachable.", "inactive" or "degraded" or "down" or "unreachable" => "Tunnel is not reachable.", _ => "Status unknown." };
         private void ApplyBadge(PillLabel lbl, string text, bool isService = false)
@@ -520,7 +513,6 @@ namespace CloudflaredMonitor
             finally { btnTunnelStatus.Enabled = true; }
         }
 
-        // Fix 4: Restore CreateTunnelForm as a dialog (preserves all the rich fields)
         public async Task CreateTunnelAsync()
         {
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
