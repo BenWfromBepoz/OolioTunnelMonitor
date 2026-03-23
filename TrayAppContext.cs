@@ -76,9 +76,9 @@ namespace CloudflaredMonitor
         public TrayAppContext(bool startMinimised = false)
         {
             // SystemTray image: dark, high-contrast, reads well at 16px
-            _trayAppIcon = LoadIconFromResource("CloudflaredMonitor.Resources.IconSystemTray.png", 16);
+            _trayAppIcon = LoadIconFromResource("CloudflaredMonitor.Resources.IconTray.ico", 16);
             // Taskbar image: richer detail, reads well at 32px
-            _taskbarIcon = LoadIconFromResource("CloudflaredMonitor.Resources.IconTaskbar.png",   32);
+            _taskbarIcon = LoadIconFromResource("CloudflaredMonitor.Resources.IconTaskbar.ico",   32);
 
             _mainForm      = new MainForm();
             _mainForm.Icon = _taskbarIcon;
