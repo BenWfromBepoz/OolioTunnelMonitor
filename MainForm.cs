@@ -125,7 +125,7 @@ namespace CloudflaredMonitor
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 5;
-        private const int PillWidth  = 150;
+        private const int PillWidth  = 110;
         private Color _pillColour = Color.Transparent;
         public Color PillColour { get => _pillColour; set { _pillColour = value; Invalidate(); } }
         public PillLabel()
