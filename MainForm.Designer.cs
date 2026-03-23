@@ -72,7 +72,7 @@ namespace CloudflaredMonitor
             this.oolioLogo.Size      = new System.Drawing.Size(200, 106);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            this.btnCreateTunnel.Text     = "+  Install New Tunnel";
+            this.btnCreateTunnel.Text     = "\u002b  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
@@ -105,18 +105,20 @@ namespace CloudflaredMonitor
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
 
-            // Check for Updates anchored to bottom of sidebar
+            // Check for Updates: 8px from bottom of sidebar (form height 700)
+            // Y = 700 - 36(height) - 8(gap) = 656
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 620);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 656);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Bottom | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
-            // Version label at very bottom
+            // Version label: 2px from bottom
+            // Y = 700 - 16(height) - 2(gap) = 682
             this.lblVersion.Text      = "v1.1.0.2";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 662);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 682);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -180,8 +182,8 @@ namespace CloudflaredMonitor
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
             this.pnlTokenCard.Controls.Add(this.txtApiToken);
-            this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
+            this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 0);
 
             // ── Status card ──────────────────────────────────────────────────
@@ -204,10 +206,11 @@ namespace CloudflaredMonitor
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
+            // cols: key label 90px | value/pill 300px | key label 90px | value/pill 300px
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
 
@@ -235,9 +238,6 @@ namespace CloudflaredMonitor
             this.lblRemoteStatus.BackColor = System.Drawing.Color.Transparent;
             this.lblRemoteStatus.Cursor    = Cursors.Help;
 
-            // Layout as per your arrangement:
-            // Row 0: Tunnel ID (col 0) | value (col 1) | Service label (col 2) | pill (col 3)
-            // Row 1: Tunnel Name (col 0) | value (col 1) | Tunnel Status label (col 2) | pill (col 3)
             this.tblStatus.Controls.Add(this.lblIdLabel,      0, 0);
             this.tblStatus.Controls.Add(this.lblTunnelId,     1, 0);
             this.tblStatus.Controls.Add(this.lblServiceLabel, 2, 0);
@@ -261,17 +261,19 @@ namespace CloudflaredMonitor
             this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
-            this.colCloud.HeaderText   = "Cloud Endpoint";
-            this.colCloud.Name         = "colCloud";
-            this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            this.colCloud.FillWeight   = 55;
-            this.colCloud.ReadOnly     = true;
+            // colCloud width matches first two status columns: 90 + 300 = 390px
+            // colLocal fills remaining space
+            this.colCloud.HeaderText  = "Cloud Endpoint";
+            this.colCloud.Name        = "colCloud";
+            this.colCloud.Width       = 390;
+            this.colCloud.MinimumWidth = 200;
+            this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            this.colCloud.ReadOnly    = true;
 
-            this.colLocal.HeaderText   = "Local Endpoint";
-            this.colLocal.Name         = "colLocal";
+            this.colLocal.HeaderText  = "Local Endpoint";
+            this.colLocal.Name        = "colLocal";
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            this.colLocal.FillWeight   = 45;
-            this.colLocal.ReadOnly     = true;
+            this.colLocal.ReadOnly    = true;
 
             this.dgvIngress.Location   = new System.Drawing.Point(16, 32);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
