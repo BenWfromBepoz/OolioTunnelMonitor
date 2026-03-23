@@ -329,7 +329,7 @@ namespace CloudflaredMonitor
 
             // Add inner curve corner overlay to sidebar top-right
             var corner = new SidebarCorner();
-            corner.Location = new Point(pnlSidebar.Width - SidebarCorner_R, 0);
+            corner.Location = new Point(pnlSidebar.Width, 0);
             corner.Anchor   = AnchorStyles.Top | AnchorStyles.Right;
             pnlSidebar.Controls.Add(corner);
             corner.BringToFront();
