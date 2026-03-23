@@ -142,9 +142,8 @@ namespace CloudflaredMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ──────────────────────────────────────────────────
-            this.pnlStatusCard.Dock    = DockStyle.Fill;
-            this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlStatusCard.Padding = new Padding(16, 6, 16, 10);
+            this.pnlStatusCard.Dock   = DockStyle.Fill;
+            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -201,7 +200,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ── fix 3: padding keeps dgv inside rounded corners
+            // ── Ingress card ── padding keeps dgv inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
             this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
@@ -228,7 +227,7 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            // Fix 3: dgvIngress anchored with inset so it never reaches card corners
+            // dgvIngress anchored with inset matching card padding
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
@@ -305,7 +304,7 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
-            // ── Log card ── fix 3: padding keeps txtLog inside rounded corners
+            // ── Log card ─────────────────────────────────────────────────────
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Padding = new Padding(12, 30, 12, 12);
@@ -320,7 +319,6 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
 
-            // Fix 3: txtLog uses Dock=Fill so it respects card Padding - keeps it off corners
             this.txtLog.Dock        = DockStyle.Fill;
             this.txtLog.ReadOnly    = true;
             this.txtLog.ScrollBars  = RichTextBoxScrollBars.Vertical;
@@ -330,7 +328,7 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form ── fix 1: wider minimum size
+            // ── Form ─────────────────────────────────────────────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
