@@ -79,12 +79,20 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── Pill label ────────────────────────────────────────────────────────────
+    // Gradient colours per semantic state, diagonal (top-left → bottom-right)
+    // matching the PillButton paint style. Gloss overlay on top half.
+    //
+    //  Green  (125,230,135) → (90,200,100)   running / reachable / healthy
+    //  Red    (230,135,125) → (200, 80, 70)  stopped / unreachable
+    //  Amber  (240,230, 90) → (230,180, 50)  degraded / unknown
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
         private const int PillWidth  = 150;
         private Color _pillColour = Color.Transparent;
         public Color PillColour { get => _pillColour; set { _pillColour = value; Invalidate(); } }
+
         public PillLabel()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
@@ -92,35 +100,63 @@ namespace CloudflaredMonitor
             BackColor = Color.Transparent; TextAlign = ContentAlignment.MiddleLeft;
             AutoSize = false; Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
         }
+
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
+
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g = e.Graphics;
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
             bool hasPill = _pillColour != Color.Transparent && Text.Length > 0 && Text != "-";
-            if (hasPill)
-            {
-                int pw = PillWidth, ph = (int)g.MeasureString(Text, Font).Height + 8, py = (Height - ph) / 2;
-                var rect = new Rectangle(0, py, pw, ph);
-                using var grad = new LinearGradientBrush(new Point(0, py), new Point(0, py + ph), Lighten(_pillColour, 40), Darken(_pillColour, 30));
-                using var path = ShapeHelper.RoundedPath(rect, PillRadius);
-                g.FillPath(grad, path);
-                var gr2 = new Rectangle(0, py, pw, ph / 2);
-                using var gloss = new LinearGradientBrush(gr2, Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
-                g.SetClip(path); g.FillRectangle(gloss, gr2); g.ResetClip();
-                using var fg = new SolidBrush(Color.White);
-                g.DrawString(Text, Font, fg, new RectangleF(0, py, pw, ph),
-                    new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-            }
-            else
+            if (!hasPill)
             {
                 using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
                 g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
                     new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
+                return;
             }
+
+            int pw = PillWidth;
+            int ph = (int)g.MeasureString(Text, Font).Height + 8;
+            int py = (Height - ph) / 2;
+            var rect = new Rectangle(0, py, pw, ph);
+
+            // Choose explicit gradient colours based on the semantic colour bucket
+            // so the pill always looks crisp regardless of background.
+            Color topCol, botCol;
+            var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
+            if (gC > r && gC > b)           // green family
+            { topCol = Color.FromArgb(125, 230, 135); botCol = Color.FromArgb(90, 200, 100); }
+            else if (r > gC && r > b)       // red family
+            { topCol = Color.FromArgb(230, 135, 125); botCol = Color.FromArgb(200, 80, 70); }
+            else                            // amber / other
+            { topCol = Color.FromArgb(240, 230, 90);  botCol = Color.FromArgb(230, 180, 50); }
+
+            // Diagonal gradient (top-left → bottom-right) matching PillButton
+            using var grad = new LinearGradientBrush(
+                new Point(0, py), new Point(pw, py + ph), topCol, botCol);
+            using var path = ShapeHelper.RoundedPath(rect, PillRadius);
+            g.FillPath(grad, path);
+
+            // Gloss overlay on top half (identical to PillButton)
+            var glossRect = new Rectangle(0, py, pw, ph / 2);
+            using var gloss = new LinearGradientBrush(
+                glossRect,
+                Color.FromArgb(80, Color.White),
+                Color.FromArgb(0,  Color.White),
+                LinearGradientMode.Vertical);
+            g.SetClip(path);
+            g.FillRectangle(gloss, glossRect);
+            g.ResetClip();
+
+            // Text centred inside pill
+            using var fgBrush = new SolidBrush(Color.White);
+            g.DrawString(Text, Font, fgBrush,
+                new RectangleF(0, py, pw, ph),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
-        private static Color Lighten(Color c, int a) => Color.FromArgb(c.A, Math.Min(255, c.R + a), Math.Min(255, c.G + a), Math.Min(255, c.B + a));
-        private static Color Darken(Color c, int a)  => Color.FromArgb(c.A, Math.Max(0, c.R - a),   Math.Max(0, c.G - a),   Math.Max(0, c.B - a));
     }
 
     internal sealed class PillButton : Button
@@ -398,7 +434,7 @@ namespace CloudflaredMonitor
                                                                                            : Color.FromArgb(180,100,0);
         }
         private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
-        private static string RemoteTooltip(string? v)  => (v ?? "").ToLowerInvariant() switch
+        private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch
         {
             "healthy" or "active" or "connected" or "reachable" or "tunnel ok" => "Tunnel is reachable — Cloudflare is forwarding requests.",
             "inactive" or "degraded" or "down" or "unreachable"                 => "Tunnel is not reachable.",
@@ -512,35 +548,29 @@ namespace CloudflaredMonitor
             dgvIngress.Rows.Clear();
             try
             {
-                // Step 1: always check local Windows service
                 LogInfo("Checking local service...");
                 var localStatus = GetLocalStatus();
                 _currentStatus = localStatus;
                 ApplyBadge(lblService, localStatus.ServiceState, isService: true);
                 lblTunnelId.Text = localStatus.TunnelId ?? "-";
                 if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote)) LogInfo(localStatus.DiagnosticsNote!);
-
                 if (localStatus.ServiceState == "NotInstalled")
                 { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed. Use Install New Tunnel or Repair Tunnel."); return; }
                 if (localStatus.ServiceState != "Running")
                 { LogWarn("Service installed but not running. Use Repair Tunnel."); return; }
-
                 LogInfo("Local service is running.");
                 var tid = localStatus.TunnelId;
 
                 if (!HasToken())
                 {
-                    // ── No token: load cache + HTTP endpoint check ─────────────
                     LogWarn("No API token — running HTTP endpoint check only.");
                     LogInfo("Add a token above for authoritative Cloudflare API status, route config and auto-save.");
-
                     if (tid != null)
                     {
                         var jp = TunnelDetailsPath(tid);
                         if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details (from last API check)."); }
                         else LogInfo("No cached details. Add an API token and re-run for full config.");
                     }
-
                     var endpointUrl = tid != null ? GetFirstEndpointUrl(tid) : null;
                     if (endpointUrl != null)
                     {
@@ -550,78 +580,40 @@ namespace CloudflaredMonitor
                             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                             http.DefaultRequestHeaders.Add("User-Agent", "CloudflaredMonitor/1.2");
                             var resp = await http.GetAsync(endpointUrl, HttpCompletionOption.ResponseHeadersRead);
-                            int    code   = (int)resp.StatusCode;
-                            bool   hasCf  = resp.Headers.Contains("CF-RAY") || resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare"));
+                            int  code  = (int)resp.StatusCode;
+                            bool hasCf = resp.Headers.Contains("CF-RAY") ||
+                                         (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
                             string cfRay  = resp.Headers.Contains("CF-RAY")  ? resp.Headers.GetValues("CF-RAY").First()  : "";
                             string server = resp.Headers.Contains("Server")   ? resp.Headers.GetValues("Server").First()  : "unknown";
-
-                            // Any response that reached Cloudflare means the tunnel is working.
-                            // CF-RAY header or Server: cloudflare confirms Cloudflare handled it.
-                            // 502 specifically = tunnel OK, origin service (localhost) is down.
                             if (hasCf)
                             {
                                 ApplyBadge(lblRemoteStatus, "Tunnel OK");
                                 LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")");
-                                if (code == 502)
-                                    LogWarn("  502 Bad Gateway — tunnel is working, but the origin service at the local endpoint is not responding.");
-                                else if (code == 503)
-                                    LogWarn("  503 Service Unavailable — tunnel is working, but the origin service is temporarily unavailable.");
-                                else if (code >= 200 && code < 300)
-                                    LogInfo("  " + code + " — origin service is also responding normally.");
-                                else
-                                    LogInfo("  " + code + " — origin service returned this status (tunnel itself is fine).");
+                                if (code == 502) LogWarn("  502 Bad Gateway — tunnel is working, but the origin service at the local endpoint is not responding.");
+                                else if (code == 503) LogWarn("  503 Service Unavailable — tunnel is working, but the origin service is temporarily unavailable.");
+                                else if (code >= 200 && code < 300) LogInfo("  " + code + " — origin service is also responding normally.");
+                                else LogInfo("  " + code + " — origin returned this status (tunnel itself is fine).");
                             }
-                            else if (code >= 200 && code < 500)
-                            {
-                                // Got a response but no CF headers - still reachable
-                                ApplyBadge(lblRemoteStatus, "Reachable");
-                                LogInfo("HTTP " + code + " — endpoint responded. Server: " + server);
-                            }
-                            else
-                            {
-                                ApplyBadge(lblRemoteStatus, "Unreachable");
-                                LogWarn("HTTP " + code + " — endpoint may not be functioning. Server: " + server);
-                            }
+                            else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " — endpoint responded. Server: " + server); }
+                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " — endpoint may not be functioning. Server: " + server); }
                         }
-                        catch (HttpRequestException hrEx)
-                        {
-                            ApplyBadge(lblRemoteStatus, "Unreachable");
-                            LogWarn("HTTP check failed: " + hrEx.Message);
-                            LogWarn("  Could not reach " + endpointUrl + " — check DNS or network connectivity.");
-                        }
-                        catch (TaskCanceledException)
-                        {
-                            ApplyBadge(lblRemoteStatus, "Unreachable");
-                            LogWarn("HTTP check timed out after 10s — endpoint did not respond.");
-                        }
+                        catch (HttpRequestException hrEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check failed: " + hrEx.Message); LogWarn("  Could not reach " + endpointUrl + " — check DNS or network."); }
+                        catch (TaskCanceledException)    { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check timed out after 10s."); }
                     }
-                    else
-                    {
-                        LogInfo("No endpoint URL available. Add an API token to fetch route config.");
-                    }
-
+                    else LogInfo("No endpoint URL available. Add an API token to fetch route config.");
                     LogInfo("Check complete (no API token — limited detail).");
                     return;
                 }
 
-                // ── Token present: Cloudflare API is source of truth ───────────
                 LogInfo("API token found — querying Cloudflare...");
                 var api = new CloudflareApi(GetToken());
-
                 using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var tunnel = await api.GetTunnelAsync(tid!, cts1.Token);
-                if (tunnel != null)
-                {
-                    lblTunnelName.Text = tunnel.Name ?? "-";
-                    ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-");
-                    LogInfo("Tunnel: " + tunnel.Name + "  |  API status: " + tunnel.Status);
-                }
-
+                if (tunnel != null) { lblTunnelName.Text = tunnel.Name ?? "-"; ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-"); LogInfo("Tunnel: " + tunnel.Name + "  |  API status: " + tunnel.Status); }
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var config  = await api.GetTunnelConfigAsync(tid!, cts2.Token);
                 var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
-                var items   = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service))
-                                     .Where(i => i != null).Cast<IngressItem>().ToList();
+                var items   = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
                 PopulateIngress(items);
                 await SaveTunnelDetailsAsync(tid!, tunnel?.Name, tunnel?.Status, ingress);
                 LogInfo("Saved " + items.Count + " route(s) to cache.");
