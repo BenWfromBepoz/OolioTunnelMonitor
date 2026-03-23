@@ -186,7 +186,7 @@ namespace CloudflaredMonitor
         protected override void OnPaintBackground(PaintEventArgs e)
             {
                 // Let parent paint background (true transparency behavior)
-                e.Graphics.Clear(Parent?.BackColor ?? Color.White);
+                e.Graphics.Clear(Color.White);
             }
         protected override void OnPaint(PaintEventArgs e)
         {
