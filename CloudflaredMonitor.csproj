@@ -13,7 +13,6 @@
     <Version>1.2.0.1</Version>
     <AssemblyVersion>1.2.0.1</AssemblyVersion>
     <FileVersion>1.2.0.1</FileVersion>
-    <ApplicationIcon>Resources\Images\oolio_taskbar.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
