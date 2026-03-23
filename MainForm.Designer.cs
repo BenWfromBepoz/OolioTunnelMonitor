@@ -223,6 +223,7 @@ namespace CloudflaredMonitor
             this.colLocal.ReadOnly     = true;
 
             this.dgvIngress.Location   = new System.Drawing.Point(16, 30);
+            this.dgvIngress.Padding    = new Padding(0, 0, 0, 8);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
             this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
