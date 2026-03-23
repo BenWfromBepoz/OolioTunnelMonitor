@@ -178,18 +178,18 @@ namespace CloudflaredMonitor
             BackColor = Color.Transparent; ForeColor = Color.White;
             Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
-            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque
                      ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
         protected override void OnPaintBackground(PaintEventArgs e)
             {
-                // Let parent paint background (true transparency behavior)
-                e.Graphics.Clear(Color.White);
+                // Do nothing
             }
         protected override void OnPaint(PaintEventArgs e)
         {
+            g.Clear(Parent?.BackColor ?? Color.White);
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
