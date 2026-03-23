@@ -11,6 +11,7 @@
     <Version>1.2.0.1</Version>
     <AssemblyVersion>1.2.0.1</AssemblyVersion>
     <FileVersion>1.2.0.1</FileVersion>
+    <ApplicationIcon>Resources\\Images\\oolio_taskbar.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,11 +28,11 @@
     <EmbeddedResource Include="Resources\\Images\\Oolio Black.png">
       <LogicalName>CloudflaredMonitor.Resources.OolioBlack.png</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\\Images\\icon_oolioSystemTray.png">
-      <LogicalName>CloudflaredMonitor.Resources.IconSystemTray.png</LogicalName>
+    <EmbeddedResource Include="Resources\\Images\\oolio_taskbar.ico">
+      <LogicalName>CloudflaredMonitor.Resources.IconTaskbar.ico</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\\Images\\icon_oolioTaskbar.png">
-      <LogicalName>CloudflaredMonitor.Resources.IconTaskbar.png</LogicalName>
+    <EmbeddedResource Include="Resources\\Images\\oolio_tray.ico">
+      <LogicalName>CloudflaredMonitor.Resources.IconTray.ico</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
