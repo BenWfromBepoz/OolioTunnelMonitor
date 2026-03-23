@@ -1,3 +1,5 @@
+I have broken it :(
+
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -129,24 +131,27 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── Main layout ──────────────────────────────────────────────────
-            this.tblMain.Dock        = DockStyle.Fill;
-            this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
-            this.tblMain.Padding     = new Padding(8, 8, 8, 8);
-            this.tblMain.ColumnCount = 1;
-            this.tblMain.RowCount    = 4;
-            this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
+			// ── Main layout ─────────────────────────────────────────────────
+			this.tblMain.Dock        = DockStyle.Fill;
+			this.tblMain.BackColor   = Color.FromArgb(226, 232, 240);
+			this.tblMain.Padding     = new Padding(8);
+			this.tblMain.ColumnCount = 1;
+			this.tblMain.RowCount    = 4;
+			
+			this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+			
+			this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 110)); // Status
+			this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent, 35));   // Routes
+			this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 68));  // Token
+			this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent, 65));   // Log
 
             // ── Status card ──────────────────────────────────────────────────
-            this.pnlStatusCard.Dock   = DockStyle.Fill;
-            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 4);
-            this.pnlStatusCard.Controls.Add(this.lblCardTitle);
-            this.pnlStatusCard.Controls.Add(this.tblStatus);
-            this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
+			this.pnlStatusCard.Dock      = DockStyle.Fill;
+			this.pnlStatusCard.Margin    = new Padding(0, 0, 0, 8);
+			this.pnlStatusCard.Padding   = new Padding(12, 28, 12, 12);
+			this.pnlStatusCard.BackColor = Color.White;
+			
+			this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
 
             this.lblCardTitle.Text      = "Tunnel Status";
             this.lblCardTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
@@ -165,8 +170,8 @@ namespace CloudflaredMonitor
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
-            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
+            this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
 
             System.Action<Label, string, bool> styleLabel = (lbl, text, isKey) => {
                 lbl.Text      = text;
@@ -200,70 +205,97 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ─────────────────────────────────────────────────
-            this.pnlIngressCard.Dock   = DockStyle.Fill;
-            this.pnlIngressCard.Margin = new Padding(0, 0, 0, 4);
-            this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
-            this.pnlIngressCard.Controls.Add(this.dgvIngress);
-            this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
+			// ── Ingress card ─────────────────────────────────────────────────
+			this.pnlIngressCard.Dock      = DockStyle.Fill;
+			this.pnlIngressCard.Margin    = new Padding(0, 0, 0, 8);
+			this.pnlIngressCard.Padding   = new Padding(12, 32, 12, 12);
+			this.pnlIngressCard.BackColor = Color.White;
+			
+			this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
+			
+			
+			// Title
+			this.lblIngressTitle.Text      = "Published Routes";
+			this.lblIngressTitle.Font      = new Font("Segoe UI Semibold", 10f, FontStyle.Bold);
+			this.lblIngressTitle.ForeColor = Color.FromArgb(71, 85, 105);
+			this.lblIngressTitle.BackColor = Color.Transparent;
+			this.lblIngressTitle.Dock      = DockStyle.Top;
+			this.lblIngressTitle.Height    = 20;
+			
+			this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
+			
+			
+			// Grid
+			this.dgvIngress.Dock   = DockStyle.Fill;
+			this.dgvIngress.Margin = new Padding(0);
+			this.dgvIngress.Padding = new Padding(0, 0, 8, 0);
+			
+			this.pnlIngressCard.Controls.Add(this.dgvIngress);
+			
+			// visual styling (unchanged)
+			this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
+			this.dgvIngress.EnableHeadersVisualStyles   = false;
+			this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
+			this.dgvIngress.ColumnHeadersHeight         = 26;
+			this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+			
+			this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor          = System.Drawing.Color.FromArgb(237, 233, 254);
+			this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(76, 29, 149);
+			this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionBackColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor;
+			this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionForeColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor;
+			
+			this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
+			this.dgvIngress.DefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(30, 41, 59);
+			this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.White;
+			this.dgvIngress.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+			
+			this.dgvIngress.AlternatingRowsDefaultCellStyle.BackColor          = System.Drawing.Color.FromArgb(249, 250, 251);
+			this.dgvIngress.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(249, 250, 251);
+			this.dgvIngress.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+			
+			this.dgvIngress.GridColor             = System.Drawing.Color.FromArgb(226, 232, 240);
+			this.dgvIngress.BorderStyle           = BorderStyle.None;
+			this.dgvIngress.CellBorderStyle       = DataGridViewCellBorderStyle.SingleHorizontal;
+			this.dgvIngress.SelectionMode         = DataGridViewSelectionMode.FullRowSelect;
+			this.dgvIngress.MultiSelect           = false;
+			this.dgvIngress.ReadOnly              = true;
+			this.dgvIngress.AllowUserToAddRows    = false;
+			this.dgvIngress.AllowUserToDeleteRows = false;
+			this.dgvIngress.AllowUserToResizeRows = false;
+			this.dgvIngress.RowHeadersVisible     = false;
+			this.dgvIngress.AutoSizeRowsMode      = DataGridViewAutoSizeRowsMode.None;
+			this.dgvIngress.RowTemplate.Height    = 24;
+			this.dgvIngress.BackgroundColor       = System.Drawing.Color.White;
+			
+			// IMPORTANT: create right-side breathing room for Fill column
+			this.dgvIngress.Padding = new Padding(0, 0, 8, 0);
+			
+			this.pnlIngressCard.Controls.Add(this.dgvIngress);
 
-            this.lblIngressTitle.Text      = "Published Routes";
-            this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
-            this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Location  = new System.Drawing.Point(16, 6);
-            this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
-            this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
-            this.colCloud.HeaderText   = "Cloud Endpoint";
-            this.colCloud.Name         = "colCloud";
-            this.colCloud.Width        = 390;
-            this.colCloud.MinimumWidth = 200;
-            this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-            this.colCloud.ReadOnly     = true;
-
-            this.colLocal.HeaderText   = "Local Endpoint";
-            this.colLocal.Name         = "colLocal";
-            this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            this.colLocal.ReadOnly     = true;
-
-            this.dgvIngress.Location   = new System.Drawing.Point(16, 30);
-            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
-            this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
-            this.dgvIngress.EnableHeadersVisualStyles   = false;
-            this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
-            this.dgvIngress.ColumnHeadersHeight         = 26;
-            this.dgvIngress.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor          = System.Drawing.Color.FromArgb(237, 233, 254);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(76, 29, 149);
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionBackColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.BackColor;
-            this.dgvIngress.ColumnHeadersDefaultCellStyle.SelectionForeColor = this.dgvIngress.ColumnHeadersDefaultCellStyle.ForeColor;
-            this.dgvIngress.DefaultCellStyle.BackColor          = System.Drawing.Color.White;
-            this.dgvIngress.DefaultCellStyle.ForeColor          = System.Drawing.Color.FromArgb(30, 41, 59);
-            this.dgvIngress.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.White;
-            this.dgvIngress.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
-            this.dgvIngress.AlternatingRowsDefaultCellStyle.BackColor          = System.Drawing.Color.FromArgb(249, 250, 251);
-            this.dgvIngress.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(249, 250, 251);
-            this.dgvIngress.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
-            this.dgvIngress.GridColor             = System.Drawing.Color.FromArgb(226, 232, 240);
-            this.dgvIngress.BorderStyle           = BorderStyle.None;
-            this.dgvIngress.CellBorderStyle       = DataGridViewCellBorderStyle.SingleHorizontal;
-            this.dgvIngress.SelectionMode         = DataGridViewSelectionMode.FullRowSelect;
-            this.dgvIngress.MultiSelect           = false;
-            this.dgvIngress.ReadOnly              = true;
-            this.dgvIngress.AllowUserToAddRows    = false;
-            this.dgvIngress.AllowUserToDeleteRows = false;
-            this.dgvIngress.AllowUserToResizeRows = false;
-            this.dgvIngress.RowHeadersVisible     = false;
-            this.dgvIngress.AutoSizeRowsMode      = DataGridViewAutoSizeRowsMode.None;
-            this.dgvIngress.RowTemplate.Height    = 24;
-            this.dgvIngress.BackgroundColor       = System.Drawing.Color.White;
-            this.dgvIngress.Columns.Add(this.colCloud);
-            this.dgvIngress.Columns.Add(this.colLocal);
+			// ── Columns ─────────────────────────────────────────────────────
+			this.colCloud.HeaderText   = "Cloud Endpoint";
+			this.colCloud.Name         = "colCloud";
+			this.colCloud.Width        = 390;
+			this.colCloud.MinimumWidth = 200;
+			this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+			this.colCloud.ReadOnly     = true;
+			
+			this.colLocal.HeaderText   = "Local Endpoint";
+			this.colLocal.Name         = "colLocal";
+			this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+			this.colLocal.ReadOnly     = true;
+			
+			this.dgvIngress.Columns.Add(this.colCloud);
+			this.dgvIngress.Columns.Add(this.colLocal);
 
             // ── Token card ───────────────────────────────────────────────────
-            this.pnlTokenCard.Dock   = DockStyle.Fill;
-            this.pnlTokenCard.Margin = new Padding(0, 0, 0, 4);
+			this.pnlTokenCard.Dock      = DockStyle.Fill;
+			this.pnlTokenCard.Margin    = new Padding(0, 0, 0, 8);
+			this.pnlTokenCard.Padding   = new Padding(12, 28, 12, 12);
+			this.pnlTokenCard.BackColor = Color.White;
+			
+			this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
             this.lblTokenTitle.Text      = "Cloudflare API Token";
             this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
@@ -300,15 +332,15 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Controls.Add(this.txtApiToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
-            this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
+            this.tblMain.Controls.Add(this.pnlTokenCard, 0, 4);
 
             // ── Log card ─────────────────────────────────────────────────────
-            this.pnlLogCard.Dock    = DockStyle.Fill;
-            this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
-            this.pnlLogCard.Padding = new Padding(14, 30, 14, 14);
-            this.pnlLogCard.Controls.Add(this.lblLogTitle);
-            this.pnlLogCard.Controls.Add(this.txtLog);
-            this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
+			this.pnlLogCard.Dock      = DockStyle.Fill;
+			this.pnlLogCard.Margin    = new Padding(0);
+			this.pnlLogCard.Padding   = new Padding(12, 28, 12, 12);
+			this.pnlLogCard.BackColor = Color.White;
+			
+			this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
 
             this.lblLogTitle.Text      = "Activity Log";
             this.lblLogTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
@@ -381,4 +413,31 @@ namespace CloudflaredMonitor
         private Label            lblLogTitle;
         private RichTextBox      txtLog;
     }
+	class RoundedPanel : Panel
+	{
+	    public int CornerRadius { get; set; } = 8;
+	
+	    protected override void OnResize(EventArgs e)
+	    {
+	        base.OnResize(e);
+	        UpdateRegion();
+	    }
+	
+	    private void UpdateRegion()
+	    {
+	        using (var path = new GraphicsPath())
+	        {
+	            int r = CornerRadius;
+	            int d = r * 2;
+	
+	            path.AddArc(0, 0, d, d, 180, 90);
+	            path.AddArc(Width - d, 0, d, d, 270, 90);
+	            path.AddArc(Width - d, Height - d, d, d, 0, 90);
+	            path.AddArc(0, Height - d, d, d, 90, 90);
+	            path.CloseFigure();
+	
+	            this.Region = new Region(path);
+	        }
+	    }
+	}
 }
