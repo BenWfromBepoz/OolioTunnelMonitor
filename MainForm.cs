@@ -183,7 +183,11 @@ namespace CloudflaredMonitor
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
+        protected override void OnPaintBackground(PaintEventArgs e)
+            {
+                // Let parent paint background (true transparency behavior)
+                base.OnPaintBackground(e);
+            }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
