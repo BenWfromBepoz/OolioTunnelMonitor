@@ -125,6 +125,10 @@ namespace CloudflaredMonitor
         }
     }
 
+    // Fix: ControlStyles.Opaque prevents WinForms from painting the parent background
+    // behind this control, avoiding the black-corner artefact.
+    // OnPaintBackground is empty (no base call, no clear).
+    // OnPaint starts with g.Clear(Parent?.BackColor) to fill corners with card colour.
     internal sealed class PillButton : Button
     {
         private const int Radius = 13;
@@ -136,15 +140,17 @@ namespace CloudflaredMonitor
             Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+                     ControlStyles.UserPaint | ControlStyles.Opaque, true);
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
+        protected override void OnPaintBackground(PaintEventArgs e) { /* empty - Opaque style handles this */ }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            // Fill entire control rect with parent (card) background to mask corners
+            g.Clear(Parent?.BackColor ?? Color.White);
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
             var topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220);
