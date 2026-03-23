@@ -108,9 +108,9 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(_sidebar);
-            // Quarter-circle in top-right quadrant filled with page background
+            // Quarter-circle in top-left quadrant filled with sidebar color
             using var path = new GraphicsPath();
-            path.AddArc(0, 0, R * 2, R * 2, 270, -90);
+            path.AddArc(-R, -R, R * 2, R * 2, 180, -90);
             path.AddLine(0, 0, 0, 0);
             path.CloseFigure();
             using var brush = new SolidBrush(_pageBg);
@@ -175,14 +175,15 @@ namespace CloudflaredMonitor
             Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
-                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.Opaque, true)
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
+        protected override void OnPaintBackground(PaintEventArgs e) { } // Do nothing
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g = e.Graphics; g.Clear(Parent?.BackColor ?? Color.White);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
