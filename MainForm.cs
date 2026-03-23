@@ -194,10 +194,15 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // Fix: OnPaint clears to parent background colour first so card corners
+    // appear rounded against the grey tblMain background without needing Region clipping.
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
         private readonly System.Windows.Forms.Timer _resizeTimer;
+        // The grey background of tblMain that should show in the card corners
+        private static readonly Color _pageBg = Color.FromArgb(226, 232, 240);
+
         public RoundedPanel()
         {
             DoubleBuffered = true; ResizeRedraw = true;
@@ -206,15 +211,25 @@ namespace CloudflaredMonitor
             _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
             _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); Invalidate(); };
         }
+
         protected override void OnResize(EventArgs e) { base.OnResize(e); _resizeTimer.Stop(); _resizeTimer.Start(); }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            // Fill entire rectangle with parent bg so corners look transparent
+            g.Clear(_pageBg);
+            // Subtle shadow
             for (int i = 3; i >= 1; i--)
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
-            using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
+            // White rounded card
+            using var wb = new SolidBrush(Color.White);
+            using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+            g.FillPath(wb, wp);
         }
+
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
+
         private static GraphicsPath RRP(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
