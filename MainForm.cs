@@ -194,48 +194,21 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // ── RoundedPanel ──────────────────────────────────────────────────────────
-    // Fix: debounce Region recalc using a Timer so it only fires after the
-    // resize interaction settles (eliminates flicker/glitch during drag-resize).
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
         private readonly System.Windows.Forms.Timer _resizeTimer;
-
         public RoundedPanel()
         {
             DoubleBuffered = true; ResizeRedraw = true;
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer, true);
             BackColor = Color.White;
-
-            // Debounce: wait 50ms after last resize event before updating Region
             _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
-            _resizeTimer.Tick += (_, _) =>
-            {
-                _resizeTimer.Stop();
-                ApplyRegion();
-                Invalidate();
-            };
+            _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); ApplyRegion(); Invalidate(); };
         }
-
-        private void ApplyRegion()
-        {
-            if (Width > 0 && Height > 0)
-            {
-                using var p = RRP(new Rectangle(0, 0, Width, Height), Radius);
-                Region = new Region(p);
-            }
-        }
-
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-            // Restart the debounce timer on every resize event
-            _resizeTimer.Stop();
-            _resizeTimer.Start();
-        }
-
+        private void ApplyRegion() { if (Width > 0 && Height > 0) { using var p = RRP(new Rectangle(0, 0, Width, Height), Radius); Region = new Region(p); } }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); _resizeTimer.Stop(); _resizeTimer.Start(); }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -243,13 +216,7 @@ namespace CloudflaredMonitor
             { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
             using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
         }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) _resizeTimer.Dispose();
-            base.Dispose(disposing);
-        }
-
+        protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
         private static GraphicsPath RRP(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
@@ -307,8 +274,9 @@ namespace CloudflaredMonitor
                 "Bepoz", "CloudflaredMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
-        private Panel? _pnlInstall;
-        private bool   _installViewActive;
+        // Install panel - lives inside tblMain (row-spanning), never added to form directly
+        private Panel?  _pnlInstall;
+        private bool    _installViewActive;
 
         public MainForm()
         {
@@ -326,28 +294,58 @@ namespace CloudflaredMonitor
             _ = CheckTunnelStatusAsync();
         }
 
+        // ── View switching ────────────────────────────────────────────────────
+        // Both panels live inside tblMain - no z-order conflict with sidebar
+
         private void ShowStandardView()
         {
-            if (_installViewActive && _pnlInstall != null)
-            { tblMain.Visible = true; _pnlInstall.Visible = false; _installViewActive = false; }
+            if (!_installViewActive) return;
+            if (_pnlInstall != null) _pnlInstall.Visible = false;
+            // Restore all four standard rows
+            pnlStatusCard.Visible  = true;
+            pnlIngressCard.Visible = true;
+            pnlTokenCard.Visible   = true;
+            pnlLogCard.Visible     = true;
+            _installViewActive = false;
         }
 
         private void ShowInstallView()
         {
             if (_installViewActive) return;
-            if (_pnlInstall == null) _pnlInstall = BuildInstallPanel();
-            tblMain.Visible = false; _pnlInstall.Visible = true; _installViewActive = true;
+
+            // Build install panel lazily and add it to tblMain row 0, spanning all rows
+            if (_pnlInstall == null)
+            {
+                _pnlInstall = BuildInstallPanel();
+                tblMain.Controls.Add(_pnlInstall, 0, 0);
+                tblMain.SetRowSpan(_pnlInstall, 4);
+                _pnlInstall.Dock = DockStyle.Fill;
+            }
+
+            // Hide standard rows, show install panel
+            pnlStatusCard.Visible  = false;
+            pnlIngressCard.Visible = false;
+            pnlTokenCard.Visible   = false;
+            pnlLogCard.Visible     = false;
+            _pnlInstall.Visible    = true;
+            _installViewActive     = true;
         }
 
         private Panel BuildInstallPanel()
         {
-            var pnl = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(226, 232, 240), Visible = false };
-            Controls.Add(pnl); pnl.BringToFront(); pnlSidebar.BringToFront();
-            var card = new RoundedPanel { Dock = DockStyle.None, Location = new Point(20, 20) };
+            // Plain panel - no RoundedPanel so no Region clipping issues
+            var pnl = new Panel { BackColor = Color.FromArgb(226, 232, 240), Visible = false };
+
+            var card = new RoundedPanel { Location = new Point(10, 10) };
             card.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            card.Size = new Size(pnl.Width - 40, pnl.Height - 40);
+            card.Size   = new Size(500, 400); // initial size, Resize event corrects it
             pnl.Controls.Add(card);
-            pnl.Resize += (_, _) => { card.Size = new Size(pnl.Width - 40, pnl.Height - 40); };
+            pnl.Resize += (_, _) =>
+            {
+                if (pnl.Width > 20 && pnl.Height > 20)
+                    card.Size = new Size(pnl.Width - 20, pnl.Height - 20);
+            };
+
             var title     = new Label { Text = "Install New Tunnel", Font = new Font("Segoe UI Semibold", 13f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(24, 20), Size = new Size(500, 30), BackColor = Color.Transparent };
             var lblName   = new Label { Text = "Tunnel Name", Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(100,116,139), Location = new Point(24, 70), AutoSize = true, BackColor = Color.Transparent };
             var txtName   = new TextBox { Location = new Point(24, 92), Size = new Size(400, 28), Font = new Font("Segoe UI", 9.5f), BorderStyle = BorderStyle.FixedSingle };
@@ -358,6 +356,7 @@ namespace CloudflaredMonitor
             var btnCancel  = new Button { Text = "Cancel", Location = new Point(174, 344), Size = new Size(90, 34), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(226,232,240), ForeColor = Color.FromArgb(71,85,105), Font = new Font("Segoe UI", 9f), Cursor = Cursors.Hand };
             btnCancel.FlatAppearance.BorderColor = Color.FromArgb(200, 210, 220);
             btnCancel.Click += (_, _) => ShowStandardView();
+
             btnInstall.Click += async (_, _) =>
             {
                 if (!HasToken()) { lblStatus.Text = "Enter an API token first."; lblStatus.ForeColor = Color.FromArgb(200,30,30); return; }
@@ -378,6 +377,7 @@ namespace CloudflaredMonitor
                 catch (Exception ex) { lblStatus.Text = "Error: " + ex.Message; lblStatus.ForeColor = Color.FromArgb(200,30,30); }
                 finally { btnInstall.Enabled = true; }
             };
+
             card.Controls.Add(title); card.Controls.Add(lblName); card.Controls.Add(txtName);
             card.Controls.Add(lblRoutes); card.Controls.Add(txtRoutes);
             card.Controls.Add(lblStatus); card.Controls.Add(btnInstall); card.Controls.Add(btnCancel);
@@ -499,8 +499,7 @@ namespace CloudflaredMonitor
                     string host = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "" : "";
                     string path = route.TryGetProperty("Path",     out var pp) ? pp.GetString() ?? "" : "";
                     if (string.IsNullOrEmpty(host) || host == "*") continue;
-                    string url = "https://" + host;
-                    if (!string.IsNullOrEmpty(path) && path != "*") url += "/" + path.TrimStart('/');
+                    string url = "https://" + host; if (!string.IsNullOrEmpty(path) && path != "*") url += "/" + path.TrimStart('/');
                     return url;
                 }
             }
@@ -552,16 +551,14 @@ namespace CloudflaredMonitor
                 ApplyBadge(lblService, localStatus.ServiceState, isService: true);
                 lblTunnelId.Text = localStatus.TunnelId ?? "-";
                 if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote)) LogInfo(localStatus.DiagnosticsNote!);
-                if (localStatus.ServiceState == "NotInstalled")
-                { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed."); return; }
-                if (localStatus.ServiceState != "Running")
-                { LogWarn("Service installed but not running. Use Repair Tunnel."); return; }
+                if (localStatus.ServiceState == "NotInstalled") { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed."); return; }
+                if (localStatus.ServiceState != "Running") { LogWarn("Service not running. Use Repair Tunnel."); return; }
                 LogInfo("Local service is running.");
                 var tid = localStatus.TunnelId;
                 if (!HasToken())
                 {
                     LogWarn("No API token — running HTTP endpoint check only.");
-                    LogInfo("Add a token above for authoritative Cloudflare API status, route config and auto-save.");
+                    LogInfo("Add a token above for authoritative status, route config and auto-save.");
                     if (tid != null) { var jp = TunnelDetailsPath(tid); if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details."); } else LogInfo("No cached details. Add an API token and re-run."); }
                     var endpointUrl = tid != null ? GetFirstEndpointUrl(tid) : null;
                     if (endpointUrl != null)
@@ -580,10 +577,10 @@ namespace CloudflaredMonitor
                             {
                                 ApplyBadge(lblRemoteStatus, "Tunnel OK");
                                 LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")");
-                                if (code == 502) LogWarn("  502 — tunnel working, origin service not responding.");
+                                if (code == 502) LogWarn("  502 — tunnel working, origin not responding.");
                                 else if (code == 503) LogWarn("  503 — tunnel working, origin temporarily unavailable.");
                                 else if (code >= 200 && code < 300) LogInfo("  " + code + " — origin also responding normally.");
-                                else LogInfo("  " + code + " — origin returned this status (tunnel itself is fine).");
+                                else LogInfo("  " + code + " — origin returned this status (tunnel fine).");
                             }
                             else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " — endpoint responded. Server: " + server); }
                             else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " — endpoint may not be functioning."); }
