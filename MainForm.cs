@@ -80,52 +80,45 @@ namespace CloudflaredMonitor
     }
 
     /// <summary>
-    ///  Paints an inverse corner curve at the top-right of the sidebar,
-    ///  creating the illusion that the sidebar curves into the content area.
-    ///  The radius matches the RoundedPanel card radius (20px for a slightly
-    ///  larger feel as requested).
+    ///  Paints an inverse corner at the top-right of the sidebar.
+    ///  Must be added to the FORM's Controls (not pnlSidebar) so it isn't clipped.
+    ///  Positioned at (sidebarWidth - R, 0) and sized (R x R).
     /// </summary>
     internal sealed class SidebarCorner : Control
     {
-        private const int R = 20; // corner radius - slightly larger than card radius
-        private static readonly Color _sidebarColour = Color.FromArgb(226, 232, 240);
-        private static readonly Color _pageBg        = Color.FromArgb(39, 46, 63);
+        public const int R = 20;
+        private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
+        private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
 
         public SidebarCorner()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             BackColor = Color.Transparent;
-            Size = new Size(R, R);
+            Size      = new Size(R, R);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            // Fill the whole square with sidebar colour (background)
-            g.Clear(_sidebarColour);
-
-            // Draw a quarter-circle filled with the page background colour in the
-            // top-right corner. This "cuts out" the corner, leaving the sidebar
-            // colour only in the bottom-left quadrant — creating an inner curve.
+            // Fill square with sidebar colour
+            g.Clear(_sidebar);
+            // Cut out a quarter-circle filled with page background in top-right quadrant.
+            // Arc from 270 sweeping -90 (counter-clockwise) traces top-right quarter.
             using var path = new GraphicsPath();
-            // Arc from 270° (top) to 0° (right) = top-right quarter circle
-            // We draw the full "pie" shape: arc + lines back to top-right corner
-            path.AddArc(0, 0, R * 2, R * 2, 270, -90); // quarter arc, counter-clockwise
-            path.AddLine(0, 0, 0, 0); // close
+            path.AddArc(0, 0, R * 2, R * 2, 270, -90);
+            path.AddLine(0, 0, 0, 0);
             path.CloseFigure();
-
-            using var bgBrush = new SolidBrush(_pageBg);
-            g.FillPath(bgBrush, path);
+            using var brush = new SolidBrush(_pageBg);
+            g.FillPath(brush, path);
         }
     }
 
     internal sealed class PillLabel : Label
     {
-        private const int PillRadius = 5;
-        private const int PillWidth  = 110;
+        private const int PillRadius = 9;
+        private const int PillWidth  = 150;
         private Color _pillColour = Color.Transparent;
         public Color PillColour { get => _pillColour; set { _pillColour = value; Invalidate(); } }
         public PillLabel()
@@ -178,20 +171,15 @@ namespace CloudflaredMonitor
             BackColor = Color.Transparent; ForeColor = Color.White;
             Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
-            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque | 
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnPaintBackground(PaintEventArgs e)
-            {
-                // Do nothing
-            }
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; 
-            g.Clear(Parent?.BackColor ?? Color.White);
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
@@ -247,7 +235,6 @@ namespace CloudflaredMonitor
         private const int Radius = 10;
         private readonly System.Windows.Forms.Timer _resizeTimer;
         private static readonly Color _pageBg = Color.FromArgb(226, 232, 240);
-
         public RoundedPanel()
         {
             DoubleBuffered = true; ResizeRedraw = true;
@@ -332,16 +319,15 @@ namespace CloudflaredMonitor
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
 
-            // Add inner curve corner overlay to sidebar top-right
+            // Fix 2: SidebarCorner added to FORM controls (not pnlSidebar)
+            // so it isn't clipped by the panel bounds.
+            // Positioned at top-right of sidebar area.
             var corner = new SidebarCorner();
-            corner.Location = new Point(pnlSidebar.Width, 0);
-            corner.Anchor   = AnchorStyles.Top | AnchorStyles.Right;
-            pnlSidebar.Controls.Add(corner);
+            corner.Location = new Point(pnlSidebar.Width - SidebarCorner.R, 0);
+            corner.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
+            this.Controls.Add(corner);
             corner.BringToFront();
         }
-
-        // Expose the corner radius so Designer can use it
-        private const int SidebarCorner_R = 20;
 
         protected override void OnShown(EventArgs e)
         {
