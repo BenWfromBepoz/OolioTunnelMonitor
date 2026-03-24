@@ -1,6 +1,6 @@
 {
   "version": "1.2.1.0",
   "releaseDate": "2026-03-24",
-  "downloadUrl": "https://github.com/BenWfromBepoz/CloudflaredMonitor/releases/latest",
-  "releaseNotes": "v1.2.1.0 - First public release. Renamed to TunnelMonitor. Improved UI, icons, DWM title bar colouring, ingress card padding."
+  "downloadUrl": "https://github.com/BenWfromBepoz/OolioTunnelMonitor/releases/latest",
+  "releaseNotes": "v1.2.1.0 - Initial public release. Renamed to Oolio Tunnel Monitor."
 }
