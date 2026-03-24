@@ -125,10 +125,6 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Fix: ControlStyles.Opaque prevents WinForms from painting the parent background
-    // behind this control, avoiding the black-corner artefact.
-    // OnPaintBackground is empty (no base call, no clear).
-    // OnPaint starts with g.Clear(Parent?.BackColor) to fill corners with card colour.
     internal sealed class PillButton : Button
     {
         private const int Radius = 13;
@@ -144,12 +140,11 @@ namespace CloudflaredMonitor
         }
         protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
-        protected override void OnPaintBackground(PaintEventArgs e) { /* empty - Opaque style handles this */ }
+        protected override void OnPaintBackground(PaintEventArgs e) { }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            // Fill entire control rect with parent (card) background to mask corners
             g.Clear(Parent?.BackColor ?? Color.White);
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
@@ -274,8 +269,13 @@ namespace CloudflaredMonitor
         private readonly DiagnosticsExporter       _exporter;
         private TunnelServiceStatus? _currentStatus;
         private readonly List<string> _uiLogs = new();
-        private const string AppVersion     = "1.2.0.1";
-        private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/CloudflaredMonitor/refs/heads/main/version.json";
+        private const string AppVersion     = "1.2.1.0";
+        private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/OolioTunnelMonitor/refs/heads/main/version.json";
+
+        // Stores last update-check date so silent startup checks only run once per day
+        private static readonly string _updateCheckFile = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "Bepoz", "CloudflaredMonitor", "last-update-check.txt");
 
         private static string TunnelDetailsDir =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -296,6 +296,8 @@ namespace CloudflaredMonitor
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
+            // Silent daily update check on startup
+            _ = CheckForUpdatesAsync(silent: true);
         }
 
         private void ApplyGridHeaderStyles()
@@ -481,7 +483,7 @@ namespace CloudflaredMonitor
                         try
                         {
                             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-                            http.DefaultRequestHeaders.Add("User-Agent", "CloudflaredMonitor/1.2");
+                            http.DefaultRequestHeaders.Add("User-Agent", "OolioTunnelMonitor/1.2");
                             var resp = await http.GetAsync(endpointUrl, HttpCompletionOption.ResponseHeadersRead);
                             int  code  = (int)resp.StatusCode;
                             bool hasCf = resp.Headers.Contains("CF-RAY") || (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
@@ -604,23 +606,69 @@ namespace CloudflaredMonitor
 
         public async Task CheckForUpdatesAsync(bool silent = false)
         {
+            // Silent startup check: skip if already checked today
+            if (silent)
+            {
+                try
+                {
+                    if (File.Exists(_updateCheckFile))
+                    {
+                        var lastCheck = File.ReadAllText(_updateCheckFile).Trim();
+                        if (lastCheck == DateTime.Today.ToString("yyyy-MM-dd")) return;
+                    }
+                }
+                catch { }
+            }
+
             try
             {
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                http.DefaultRequestHeaders.Add("User-Agent", "OolioTunnelMonitor/" + AppVersion);
                 var json = await http.GetStringAsync(VersionJsonUrl);
+
+                // Record successful check date for daily throttle
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(_updateCheckFile)!);
+                    File.WriteAllText(_updateCheckFile, DateTime.Today.ToString("yyyy-MM-dd"));
+                }
+                catch { }
+
                 using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
                 string latest = root.TryGetProperty("version", out var v) ? v.GetString() ?? AppVersion : AppVersion;
                 string url    = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "";
-                if (latest != AppVersion)
+                string notes  = root.TryGetProperty("releaseNotes", out var n) ? n.GetString() ?? "" : "";
+
+                if (IsNewerVersion(latest, AppVersion))
                 {
                     LogInfo("Update available: v" + latest);
-                    if (MessageBox.Show(this, "New version v" + latest + " is available.\nOpen download page?",
-                        "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes && !string.IsNullOrWhiteSpace(url))
+                    string msg = $"A new version of Oolio Tunnel Monitor is available!\n\n" +
+                                 $"Your version:\tv{AppVersion}\n" +
+                                 $"New version:\tv{latest}";
+                    if (!string.IsNullOrWhiteSpace(notes)) msg += "\n\n" + notes;
+                    msg += "\n\nOpen the download page?";
+                    if (MessageBox.Show(this, msg, "Update Available",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes
+                        && !string.IsNullOrWhiteSpace(url))
                         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
-                else if (!silent) LogInfo("Up to date (v" + AppVersion + ")");
+                else if (!silent)
+                {
+                    LogInfo("Up to date (v" + AppVersion + ")");
+                    MessageBox.Show(this, $"Oolio Tunnel Monitor is up to date.\n\nVersion: v{AppVersion}",
+                        "No Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
-            catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
+            catch (Exception ex)
+            {
+                if (!silent) LogWarn("Update check failed: " + ex.Message);
+            }
+        }
+
+        private static bool IsNewerVersion(string latest, string current)
+        {
+            try { return new Version(latest) > new Version(current); }
+            catch { return latest != current && latest != ""; }
         }
 
         private async void btnCreateTunnel_Click(object? sender, EventArgs e)   => await CreateTunnelAsync();
@@ -629,6 +677,6 @@ namespace CloudflaredMonitor
         private void btnOpenLogs_Click(object? sender, EventArgs e)               => OpenLogFolder();
         private void btnOpenConfig_Click(object? sender, EventArgs e)             => OpenConfigFolder();
         private async void btnRepair_Click(object? sender, EventArgs e)           => await RepairAsync();
-        private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync();
+        private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync(silent: false);
     }
 }
