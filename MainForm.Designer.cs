@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace CloudflaredMonitor
@@ -19,7 +18,7 @@ namespace CloudflaredMonitor
         {
             this.toolTip          = new ToolTip();
             this.pnlSidebar       = new Panel();
-            this.oolioLogo        = new OolioLogoBrand();
+            this.oolioLogo        = new OolioSidebarLogo();
             this.btnCreateTunnel  = new ModernButton();
             this.btnTunnelStatus  = new ModernButton();
             this.btnOpenLogs      = new ModernButton();
@@ -28,6 +27,7 @@ namespace CloudflaredMonitor
             this.chkReinstall     = new CheckBox();
             this.btnCheckUpdates  = new ModernButton();
             this.lblVersion       = new Label();
+            this.contentPanel     = new ContentPanel();
             this.tblMain          = new TableLayoutPanel();
             this.pnlStatusCard    = new RoundedPanel();
             this.lblCardTitle     = new Label();
@@ -55,6 +55,7 @@ namespace CloudflaredMonitor
             this.txtLog           = new RichTextBox();
 
             this.pnlSidebar.SuspendLayout();
+            this.contentPanel.SuspendLayout();
             this.tblMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).BeginInit();
             this.SuspendLayout();
@@ -63,50 +64,52 @@ namespace CloudflaredMonitor
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
-            // ── Sidebar ──────────────────────────────────────────────────────
-            this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
-            this.pnlSidebar.Dock  = DockStyle.Left;
-            this.pnlSidebar.Width = 224;
+            // ── Sidebar panel (transparent — sits over dark form background) ─
+            this.pnlSidebar.BackColor = System.Drawing.Color.Transparent;
+            this.pnlSidebar.Dock      = DockStyle.Left;
+            this.pnlSidebar.Width     = 224;
 
-            this.oolioLogo.Location  = new System.Drawing.Point(12, 12);
-            this.oolioLogo.Size      = new System.Drawing.Size(200, 106);
+            // Logo: full-width PNG, no card
+            this.oolioLogo.Location  = new System.Drawing.Point(0, 8);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 100);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 120);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 178);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 168);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 226);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 216);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 274);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 264);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 322);
+            this.btnRepair.Location = new System.Drawing.Point(12, 312);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 372);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 362);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
+            this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 404);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 394);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
@@ -114,7 +117,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 446);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 436);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
@@ -129,9 +132,14 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── Main layout ──────────────────────────────────────────────────
+            // ── ContentPanel: fills form, left margin = sidebar width ────────
+            this.contentPanel.Dock    = DockStyle.Fill;
+            this.contentPanel.Padding = new Padding(0, 0, 0, 0);
+            this.contentPanel.Controls.Add(this.tblMain);
+
+            // ── Main layout (inside ContentPanel, padded away from TL corner) ─
             this.tblMain.Dock        = DockStyle.Fill;
-            this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
+            this.tblMain.BackColor   = System.Drawing.Color.Transparent;
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
@@ -200,7 +208,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ── padding keeps dgv inside rounded corners
+            // ── Ingress card ─────────────────────────────────────────────────
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
             this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
@@ -327,19 +335,21 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form ─────────────────────────────────────────────────────────
+            // ── Form: dark sidebar colour IS the background ──────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
             this.MinimumSize         = new System.Drawing.Size(1000, 600);
-            this.Controls.Add(this.tblMain);
+            // Add sidebar first so contentPanel renders on top
+            this.Controls.Add(this.contentPanel);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
             this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor     = System.Drawing.Color.FromArgb(226, 232, 240);
+            this.BackColor     = System.Drawing.Color.FromArgb(39, 46, 63);
 
             this.pnlSidebar.ResumeLayout(false);
+            this.contentPanel.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).EndInit();
             this.ResumeLayout(false);
@@ -347,7 +357,7 @@ namespace CloudflaredMonitor
 
         private ToolTip          toolTip;
         private Panel            pnlSidebar;
-        private OolioLogoBrand   oolioLogo;
+        private OolioSidebarLogo oolioLogo;
         private ModernButton     btnCreateTunnel;
         private ModernButton     btnTunnelStatus;
         private ModernButton     btnOpenLogs;
@@ -356,6 +366,7 @@ namespace CloudflaredMonitor
         private CheckBox         chkReinstall;
         private ModernButton     btnCheckUpdates;
         private Label            lblVersion;
+        private ContentPanel     contentPanel;
         private TableLayoutPanel tblMain;
         private RoundedPanel     pnlStatusCard;
         private Label            lblCardTitle;
