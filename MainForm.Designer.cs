@@ -48,7 +48,7 @@ namespace CloudflaredMonitor
             this.pnlTokenCard     = new RoundedPanel();
             this.lblTokenTitle    = new Label();
             this.txtApiToken      = new TextBox();
-            this.chkShowToken     = new CheckBox();
+            this.tglShowToken     = new ToggleSwitch();
             this.btnTestToken     = new PillButton();
             this.pnlLogCard       = new RoundedPanel();
             this.lblLogTitle      = new Label();
@@ -132,8 +132,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: manually positioned so it floats with 12px gap ─
-            // Form BackColor = sidebar dark; gap around contentPanel shows as border
+            // ── ContentPanel: floated by ResizeContentPanel() ────────────────
             this.contentPanel.Controls.Add(this.tblMain);
 
             // ── Main layout ──────────────────────────────────────────────────
@@ -207,7 +206,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card: Dock=Fill with Padding keeps grid off all edges ─
+            // ── Ingress card ── Dock=Fill with Padding keeps grid off all edges
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
             this.pnlIngressCard.Padding = new Padding(10, 32, 10, 10);
@@ -234,7 +233,6 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            // Dock=Fill respects Padding — grid stays 10px from all card edges
             this.dgvIngress.Dock       = DockStyle.Fill;
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
@@ -268,7 +266,7 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card ───────────────────────────────────────────────────
+            // ── Token card ── purple box + toggle switch ──────────────────────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
@@ -281,7 +279,7 @@ namespace CloudflaredMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            // Purple-tinted token box — width ~390px to align with Local Endpoint column
+            // Purple-tinted input, width ~390 to align with Local Endpoint column
             this.txtApiToken.Location              = new System.Drawing.Point(14, 28);
             this.txtApiToken.Size                  = new System.Drawing.Size(390, 26);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
@@ -291,7 +289,7 @@ namespace CloudflaredMonitor
             this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
             this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(76, 29, 149);
 
-            // ToggleSwitch: sits right of text box, vertically centred
+            // Toggle switch: sits right of text box, vertically aligned
             this.tglShowToken.Location = new System.Drawing.Point(410, 30);
             this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
             this.tglShowToken.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
@@ -331,7 +329,7 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form: dark sidebar bg, contentPanel floated via ResizeContentPanel ─
+            // ── Form ─────────────────────────────────────────────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 720);
@@ -352,7 +350,6 @@ namespace CloudflaredMonitor
             this.ResumeLayout(false);
         }
 
-        // Floats the content panel with a 12px dark gap on all sides except left sidebar
         private void ResizeContentPanel()
         {
             const int gap   = 12;
