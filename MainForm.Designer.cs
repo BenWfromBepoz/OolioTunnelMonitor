@@ -64,53 +64,52 @@ namespace CloudflaredMonitor
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
-            // ── Sidebar (transparent over dark form background) ──────────────
+            // ── Sidebar ──────────────────────────────────────────────────────
             this.pnlSidebar.BackColor = System.Drawing.Color.Transparent;
             this.pnlSidebar.Dock      = DockStyle.Left;
             this.pnlSidebar.Width     = 224;
+            this.pnlSidebar.Padding   = new Padding(0);
 
-            // Logo: square control so full 256x256 PNG renders with gloss intact
-            this.oolioLogo.Location  = new System.Drawing.Point(0, 8);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 224);
+            this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 250);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            // Buttons start below logo: 8 + 224 + 8 = 240
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 240);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 258);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 288);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 306);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 336);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 354);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 384);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 402);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 432);
+            this.btnRepair.Location = new System.Drawing.Point(12, 450);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 480);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 498);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 508);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 526);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
@@ -118,7 +117,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 550);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 568);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
@@ -133,8 +132,8 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: fills form, rounded TL corner ──────────────────
-            this.contentPanel.Dock = DockStyle.Fill;
+            // ── ContentPanel: manually positioned so it floats with 12px gap ─
+            // Form BackColor = sidebar dark; gap around contentPanel shows as border
             this.contentPanel.Controls.Add(this.tblMain);
 
             // ── Main layout ──────────────────────────────────────────────────
@@ -208,10 +207,10 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ─────────────────────────────────────────────────
+            // ── Ingress card: Dock=Fill with Padding keeps grid off all edges ─
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
+            this.pnlIngressCard.Padding = new Padding(10, 32, 10, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -235,10 +234,9 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
-            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
-            this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            // Dock=Fill respects Padding — grid stays 10px from all card edges
+            this.dgvIngress.Dock       = DockStyle.Fill;
+            this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
             this.dgvIngress.ColumnHeadersHeight         = 26;
@@ -283,32 +281,30 @@ namespace CloudflaredMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
+            // Purple-tinted token box — width ~390px to align with Local Endpoint column
             this.txtApiToken.Location              = new System.Drawing.Point(14, 28);
-            this.txtApiToken.Size                  = new System.Drawing.Size(490, 24);
+            this.txtApiToken.Size                  = new System.Drawing.Size(390, 26);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
             this.txtApiToken.UseSystemPasswordChar = true;
-            this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 9f);
             this.txtApiToken.BorderStyle           = BorderStyle.FixedSingle;
-            this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(76, 29, 149);
 
-            this.chkShowToken.Text      = "Show";
-            this.chkShowToken.Font      = new System.Drawing.Font("Segoe UI", 8f);
-            this.chkShowToken.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
-            this.chkShowToken.Location  = new System.Drawing.Point(510, 30);
-            this.chkShowToken.Size      = new System.Drawing.Size(52, 18);
-            this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
-            this.chkShowToken.FlatStyle = FlatStyle.Flat;
-            this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
+            // ToggleSwitch: sits right of text box, vertically centred
+            this.tglShowToken.Location = new System.Drawing.Point(410, 30);
+            this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
+            this.tglShowToken.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(568, 16);
+            this.btnTestToken.Location = new System.Drawing.Point(464, 16);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
             this.pnlTokenCard.Controls.Add(this.txtApiToken);
+            this.pnlTokenCard.Controls.Add(this.tglShowToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
-            this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
             // ── Log card ─────────────────────────────────────────────────────
@@ -335,23 +331,37 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form ─────────────────────────────────────────────────────────
+            // ── Form: dark sidebar bg, contentPanel floated via ResizeContentPanel ─
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
-            this.ClientSize          = new System.Drawing.Size(1040, 700);
-            this.MinimumSize         = new System.Drawing.Size(1000, 620);
+            this.ClientSize          = new System.Drawing.Size(1040, 720);
+            this.MinimumSize         = new System.Drawing.Size(1000, 640);
+            this.Padding             = new Padding(0);
             this.Controls.Add(this.contentPanel);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
             this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor     = System.Drawing.Color.FromArgb(39, 46, 63);
+            this.Resize       += (_, _) => ResizeContentPanel();
 
             this.pnlSidebar.ResumeLayout(false);
             this.contentPanel.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).EndInit();
             this.ResumeLayout(false);
+        }
+
+        // Floats the content panel with a 12px dark gap on all sides except left sidebar
+        private void ResizeContentPanel()
+        {
+            const int gap   = 12;
+            const int sideW = 224;
+            if (contentPanel == null) return;
+            contentPanel.Location = new System.Drawing.Point(sideW + gap, gap);
+            contentPanel.Size     = new System.Drawing.Size(
+                ClientSize.Width  - sideW - gap * 2,
+                ClientSize.Height - gap * 2);
         }
 
         private ToolTip          toolTip;
@@ -386,7 +396,7 @@ namespace CloudflaredMonitor
         private RoundedPanel     pnlTokenCard;
         private Label            lblTokenTitle;
         private TextBox          txtApiToken;
-        private CheckBox         chkShowToken;
+        private ToggleSwitch     tglShowToken;
         private PillButton       btnTestToken;
         private RoundedPanel     pnlLogCard;
         private Label            lblLogTitle;
