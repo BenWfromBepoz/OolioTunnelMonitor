@@ -72,49 +72,50 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Width     = 224;
             this.pnlSidebar.Padding   = new Padding(0);
 
-            // Logo: y=-20 pushes it up so image fills from very top;
-            // control is 270px tall so subtitle sits in lower ~26px (earth shadow area)
-            this.oolioLogo.Location  = new System.Drawing.Point(0, -20);
+            // Fix 1: y=-40 pushes image up so subtitle sits in earth shadow area.
+            // Control height 270 so subtitle (bottom 26px) sits around y=244 which
+            // is firmly in the dark lower portion of the 256x256 PNG.
+            this.oolioLogo.Location  = new System.Drawing.Point(0, -40);
             this.oolioLogo.Size      = new System.Drawing.Size(224, 270);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            // Buttons start at y = 258 (just below visible logo area)
+            // Buttons shuffled up by 20px (were at 258, now 238) to match logo moving up
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 258);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 238);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 306);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 286);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 354);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 334);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 402);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 382);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 450);
+            this.btnRepair.Location = new System.Drawing.Point(12, 430);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 498);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 478);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 526);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 506);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
@@ -122,7 +123,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 568);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 548);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
@@ -137,7 +138,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: floated by ResizeContentPanel() ────────────────
+            // ── ContentPanel ─────────────────────────────────────────────────
             this.contentPanel.Controls.Add(this.tblMain);
 
             // ── Main layout: consistent 12px padding all sides ───────────────
@@ -147,12 +148,14 @@ namespace CloudflaredMonitor
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  96));
+            // Fix 2: status card row height 110 (was 96) — more top/bottom breathing room
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
+            // Fix 3: token card row height 82 (was 68) — room below token box
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  82));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
-            // ── Status card: reduced inner top padding ───────────────────────
+            // ── Status card ──────────────────────────────────────────────────
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -162,15 +165,13 @@ namespace CloudflaredMonitor
             this.lblCardTitle.Text      = "Tunnel Status";
             this.lblCardTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblCardTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            // Reduced from y=4 to y=2 — tighter top
-            this.lblCardTitle.Location  = new System.Drawing.Point(16, 2);
+            this.lblCardTitle.Location  = new System.Drawing.Point(16, 8);
             this.lblCardTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblCardTitle.BackColor = System.Drawing.Color.Transparent;
 
-            // Grid moved up: y=24 (was 26/30)
-            this.tblStatus.Location    = new System.Drawing.Point(16, 24);
+            this.tblStatus.Location    = new System.Drawing.Point(16, 32);
             this.tblStatus.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.tblStatus.Size        = new System.Drawing.Size(200, 66);
+            this.tblStatus.Size        = new System.Drawing.Size(200, 68);
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
@@ -213,12 +214,9 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card: padding keeps dgv off ALL edges ─────────────────
-            // The trick: set card Padding, then use dgvIngress with Dock=Fill.
-            // Title sits above the padding area via absolute Location.
+            // ── Ingress card ─────────────────────────────────────────────────
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            // Top=32 reserves space for title; sides+bottom=10 keep grid off card edges
             this.pnlIngressCard.Padding = new Padding(10, 32, 10, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
@@ -243,7 +241,6 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            // Dock=Fill respects pnlIngressCard.Padding — grid stays 10px from all edges
             this.dgvIngress.Dock       = DockStyle.Fill;
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
@@ -277,7 +274,7 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card: row height 68 gives breathing room below box ──────
+            // ── Token card: Fix 3 — taller row, box and button bottom-aligned ─
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
@@ -290,8 +287,8 @@ namespace CloudflaredMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            // Token box: vertically centred in the card
-            this.tokenBox.Location = new System.Drawing.Point(14, 30);
+            // Token box: y=32, height=24 → bottom edge at y=56
+            this.tokenBox.Location = new System.Drawing.Point(14, 32);
             this.tokenBox.Size     = new System.Drawing.Size(546, 24);
             this.tokenBox.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
@@ -310,9 +307,10 @@ namespace CloudflaredMonitor
             this.tokenBox.Controls.Add(this.txtApiToken);
             this.tokenBox.Controls.Add(this.eyeToken);
 
+            // Button: height=24, y=32 → bottom edge at y=56, aligned with token box
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(568, 18);
-            this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
+            this.btnTestToken.Location = new System.Drawing.Point(568, 32);
+            this.btnTestToken.Size     = new System.Drawing.Size(106, 24);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
