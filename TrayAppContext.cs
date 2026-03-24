@@ -1,5 +1,8 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
@@ -21,17 +24,39 @@ namespace CloudflaredMonitor
         }
 
         // ── Icon loading ──────────────────────────────────────────────────────
-        /// <summary>
-        ///  Loads an embedded .ico and requests a specific pixel size.
-        ///  Windows picks the closest match from the multi-resolution container.
-        /// </summary>
-        private static Icon LoadIcoFromResource(string resourceName, int size)
+        // Load .ico without specifying size — Windows picks best frame automatically.
+        // Falls back to generating from the 256x256 PNG if .ico fails.
+        private static Icon LoadIcon(string icoResourceName, int fallbackSize)
         {
             try
             {
                 var asm    = System.Reflection.Assembly.GetExecutingAssembly();
-                var stream = asm.GetManifestResourceStream(resourceName);
-                if (stream != null) return new Icon(stream, size, size);
+                var stream = asm.GetManifestResourceStream(icoResourceName);
+                if (stream != null && stream.Length > 0)
+                    return new Icon(stream);
+            }
+            catch { }
+            return GenerateIconFromPng(fallbackSize);
+        }
+
+        private static Icon GenerateIconFromPng(int size)
+        {
+            try
+            {
+                var asm    = System.Reflection.Assembly.GetExecutingAssembly();
+                var stream = asm.GetManifestResourceStream("CloudflaredMonitor.Resources.OolioTaskbar256.png")
+                          ?? asm.GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
+                if (stream != null)
+                {
+                    using var src = Image.FromStream(stream);
+                    using var bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb);
+                    using var g   = Graphics.FromImage(bmp);
+                    g.SmoothingMode     = SmoothingMode.AntiAlias;
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.Clear(Color.Transparent);
+                    g.DrawImage(src, new Rectangle(0, 0, size, size));
+                    return Icon.FromHandle(bmp.GetHicon());
+                }
             }
             catch { }
             return FallbackIcon(size);
@@ -39,9 +64,9 @@ namespace CloudflaredMonitor
 
         private static Icon FallbackIcon(int size)
         {
-            using var bmp   = new System.Drawing.Bitmap(size, size);
+            using var bmp   = new Bitmap(size, size);
             using var g     = Graphics.FromImage(bmp);
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             using var brush = new SolidBrush(Color.FromArgb(103, 58, 182));
             g.FillEllipse(brush, 1, 1, size - 2, size - 2);
             using var font = new Font("Segoe UI", size * 0.4f, FontStyle.Bold, GraphicsUnit.Pixel);
@@ -54,13 +79,13 @@ namespace CloudflaredMonitor
         // ── Fields ────────────────────────────────────────────────────────────
         private readonly NotifyIcon _trayIcon;
         private readonly MainForm   _mainForm;
-        private readonly Icon       _trayIco;     // 16px - system tray
-        private readonly Icon       _taskbarIco;  // 48px - taskbar + title bar
+        private readonly Icon       _trayIco;
+        private readonly Icon       _taskbarIco;
 
         public TrayAppContext(bool startMinimised = false)
         {
-            _trayIco    = LoadIcoFromResource("CloudflaredMonitor.Resources.IconTray.ico",    16);
-            _taskbarIco = LoadIcoFromResource("CloudflaredMonitor.Resources.IconTaskbar.ico", 48);
+            _trayIco    = LoadIcon("CloudflaredMonitor.Resources.IconTray.ico",    16);
+            _taskbarIco = LoadIcon("CloudflaredMonitor.Resources.IconTaskbar.ico", 48);
 
             _mainForm      = new MainForm();
             _mainForm.Icon = _taskbarIco;
@@ -76,7 +101,7 @@ namespace CloudflaredMonitor
 
             _trayIcon = new NotifyIcon
             {
-                Text             = "Oolio ZeroTrust Tunnel Monitor",
+                Text             = "Oolio Tunnel Monitor",
                 Icon             = _trayIco,
                 Visible          = true,
                 ContextMenuStrip = contextMenu
