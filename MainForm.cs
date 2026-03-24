@@ -14,21 +14,23 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    internal sealed class OolioLogoBrand : Control
+    // ── Sidebar logo: just the PNG, no card, full sidebar width ──────────────
+    internal sealed class OolioSidebarLogo : Control
     {
         private static readonly Image? _logo = LoadLogo();
-        private const int Radius = 10;
         private static Image? LoadLogo()
         {
             try
             {
-                var stream = System.Reflection.Assembly.GetExecutingAssembly()
-                    .GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
+                // Prefer 256x256 for crisp rendering at any sidebar size
+                var asm = System.Reflection.Assembly.GetExecutingAssembly();
+                var stream = asm.GetManifestResourceStream("CloudflaredMonitor.Resources.OolioTaskbar256.png")
+                          ?? asm.GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
                 return stream != null ? Image.FromStream(stream) : null;
             }
             catch { return null; }
         }
-        public OolioLogoBrand()
+        public OolioSidebarLogo()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
@@ -37,39 +39,24 @@ namespace CloudflaredMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
-            for (int i = 3; i >= 1; i--)
-            { using var sb = new SolidBrush(Color.FromArgb(35, 0, 0, 0)); using var sp = Rnd(bounds, Radius, i); g.FillPath(sb, sp); }
-            using (var path = Rnd(bounds, Radius, 0)) using (var b = new SolidBrush(Color.White)) g.FillPath(b, path);
             if (_logo != null)
             {
-                var lr = new Rectangle(12, 10, Width - 24, Height - 42);
-                float sc = Math.Min(lr.Width / (float)_logo.Width, lr.Height / (float)_logo.Height);
-                int w = (int)(_logo.Width * sc), h = (int)(_logo.Height * sc);
-                g.DrawImage(_logo, new Rectangle(lr.X + (lr.Width - w) / 2, lr.Y + (lr.Height - h) / 2, w, h));
+                // Scale to fit width, maintain aspect ratio, centre vertically
+                float scale = Width / (float)_logo.Width;
+                int w = Width;
+                int h = (int)(_logo.Height * scale);
+                int y = (Height - h) / 2;
+                g.DrawImage(_logo, new Rectangle(0, y, w, h));
             }
             else
             {
-                using var f = new Font("Segoe UI", 18f, FontStyle.Bold);
-                using var b = new SolidBrush(Color.FromArgb(103, 58, 182));
-                g.DrawString("oolio", f, b, new RectangleF(0, 0, Width, Height - 26),
+                using var f = new Font("Segoe UI", 22f, FontStyle.Bold);
+                using var b = new SolidBrush(Color.White);
+                g.DrawString("oolio", f, b, new RectangleF(0, 0, Width, Height),
                     new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
             }
-            using var sf = new Font("Segoe UI", 8.5f);
-            using var sb2 = new SolidBrush(Color.FromArgb(100, 116, 139));
-            g.DrawString("ZeroTrust Tunnel Monitor", sf, sb2, new RectangleF(0, Height - 26, Width, 22),
-                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-        }
-        private static GraphicsPath Rnd(Rectangle r, int radius, int inset)
-        {
-            var rect = new Rectangle(r.X + inset, r.Y + inset, r.Width - inset * 2, r.Height - inset * 2);
-            int d = radius * 2; var p = new GraphicsPath();
-            p.AddArc(rect.X, rect.Y, d, d, 180, 90); p.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
-            p.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90); p.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
-            p.CloseFigure(); return p;
         }
     }
 
@@ -77,6 +64,19 @@ namespace CloudflaredMonitor
     {
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+
+        // Rounded path with selective corners: flags = TL, TR, BR, BL
+        public static GraphicsPath RoundedPathSelective(Rectangle r, int rad, bool tl, bool tr, bool br, bool bl)
+        {
+            int d = rad * 2; var p = new GraphicsPath();
+            if (tl) p.AddArc(r.X, r.Y, d, d, 180, 90); else p.AddLine(r.X, r.Y, r.X + rad, r.Y);
+            if (tr) p.AddArc(r.Right - d, r.Y, d, d, 270, 90); else p.AddLine(r.Right - rad, r.Y, r.Right, r.Y);
+            p.AddLine(r.Right, r.Y + (tr ? rad : 0), r.Right, r.Bottom - (br ? rad : 0));
+            if (br) p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); else p.AddLine(r.Right, r.Bottom, r.Right - rad, r.Bottom);
+            if (bl) p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); else p.AddLine(r.X + rad, r.Bottom, r.X, r.Bottom);
+            p.AddLine(r.X, r.Bottom - (bl ? rad : 0), r.X, r.Y + (tl ? rad : 0));
+            p.CloseFigure(); return p;
+        }
     }
 
     internal sealed class PillLabel : Label
@@ -224,6 +224,114 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    /// <summary>
+    ///  The large content panel that sits on top of the sidebar-coloured form.
+    ///  Has a rounded top-left corner only, square everywhere else, so it
+    ///  appears to emerge from the sidebar on the left.
+    /// </summary>
+    internal sealed class ContentPanel : Panel
+    {
+        private const int Radius = 18;
+        private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
+        private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
+        private readonly System.Windows.Forms.Timer _resizeTimer;
+        public ContentPanel()
+        {
+            DoubleBuffered = true; ResizeRedraw = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = _pageBg;
+            _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
+            _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); Invalidate(); };
+        }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); _resizeTimer.Stop(); _resizeTimer.Start(); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            // Fill everything with sidebar colour first (form background shows through)
+            g.Clear(_sidebar);
+            // Draw the content area with only top-left rounded
+            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            using var path = ShapeHelper.RoundedPathSelective(rect, Radius, true, false, false, false);
+            using var brush = new SolidBrush(_pageBg);
+            g.FillPath(brush, path);
+        }
+        protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
+    }
+
+    /// <summary>
+    ///  Themed message box matching the app design — replaces plain MessageBox.Show().
+    /// </summary>
+    internal sealed class OolioMessageBox : Form
+    {
+        private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
+        private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
+        private static readonly Color _accent  = Color.FromArgb(103, 58, 182);
+
+        private OolioMessageBox(string title, string message, bool yesNo)
+        {
+            Text            = title;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition   = FormStartPosition.CenterParent;
+            BackColor       = _sidebar;
+            Size            = new Size(460, 220);
+            MinimumSize     = new Size(360, 180);
+
+            var content = new ContentPanel { Dock = DockStyle.Fill };
+            Controls.Add(content);
+
+            var titleLbl = new Label
+            {
+                Text      = title,
+                Font      = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 41, 59),
+                Location  = new Point(20, 18),
+                Size      = new Size(380, 24),
+                BackColor = Color.Transparent
+            };
+            content.Controls.Add(titleLbl);
+
+            var msgLbl = new Label
+            {
+                Text      = message,
+                Font      = new Font("Segoe UI", 9f),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Location  = new Point(20, 50),
+                Size      = new Size(420, 100),
+                BackColor = Color.Transparent,
+                AutoSize  = false
+            };
+            content.Controls.Add(msgLbl);
+
+            var btnOk = new PillButton { Text = yesNo ? "Yes" : "OK", Size = new Size(100, 32), Location = new Point(230, 162) };
+            btnOk.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); };
+            content.Controls.Add(btnOk);
+
+            if (yesNo)
+            {
+                var btnNo = new PillButton { Text = "No", Size = new Size(80, 32), Location = new Point(340, 162) };
+                btnNo.Click += (_, _) => { DialogResult = DialogResult.No; Close(); };
+                content.Controls.Add(btnNo);
+            }
+
+            // Drag to move (borderless)
+            bool dragging = false; Point dragStart = Point.Empty;
+            content.MouseDown += (_, me) => { if (me.Button == MouseButtons.Left) { dragging = true; dragStart = me.Location; } };
+            content.MouseMove += (_, me) => { if (dragging) Location = new Point(Location.X + me.X - dragStart.X, Location.Y + me.Y - dragStart.Y); };
+            content.MouseUp   += (_, _)  => dragging = false;
+
+            // Close button
+            var closeBtn = new Label { Text = "\u00d7", Font = new Font("Segoe UI", 13f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(420, 12), Size = new Size(24, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, Cursor = Cursors.Hand };
+            closeBtn.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
+            content.Controls.Add(closeBtn);
+        }
+
+        public static DialogResult Show(IWin32Window owner, string message, string title, bool yesNo = false)
+        {
+            using var dlg = new OolioMessageBox(title, message, yesNo);
+            return dlg.ShowDialog(owner);
+        }
+    }
+
     internal static class TrayIconGenerator
     {
         public static System.Drawing.Icon CreateOolioIcon()
@@ -272,7 +380,6 @@ namespace CloudflaredMonitor
         private const string AppVersion     = "1.2.1.0";
         private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/OolioTunnelMonitor/refs/heads/main/version.json";
 
-        // Stores last update-check date so silent startup checks only run once per day
         private static readonly string _updateCheckFile = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "Bepoz", "CloudflaredMonitor", "last-update-check.txt");
@@ -296,7 +403,6 @@ namespace CloudflaredMonitor
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
-            // Silent daily update check on startup
             _ = CheckForUpdatesAsync(silent: true);
         }
 
@@ -530,8 +636,7 @@ namespace CloudflaredMonitor
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
             using var dlg = new CreateTunnelForm();
             if (dlg.ShowDialog(this) != DialogResult.OK || dlg.Result == null) { LogInfo("Install tunnel cancelled."); return; }
-            var spec = dlg.Result;
-            LogInfo("Creating tunnel: " + spec.TunnelName);
+            var spec = dlg.Result; LogInfo("Creating tunnel: " + spec.TunnelName);
             var api = new CloudflareApi(GetToken());
             try
             {
@@ -559,8 +664,8 @@ namespace CloudflaredMonitor
         public async Task RepairAsync()
         {
             if (!HasToken()) { LogWarn("Enter an API token first."); return; }
-            if (MessageBox.Show(this, "This will stop, uninstall and reinstall the cloudflared service.\n\nContinue?",
-                    "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+            if (OolioMessageBox.Show(this, "This will stop, uninstall and reinstall the cloudflared service.\n\nContinue?",
+                    "Confirm Repair", yesNo: true) != DialogResult.Yes)
             { LogInfo("Repair cancelled."); return; }
             var api = new CloudflareApi(GetToken()); btnRepair.Enabled = false;
             try
@@ -595,18 +700,17 @@ namespace CloudflaredMonitor
         {
             try
             {
-                if (_currentStatus == null) { MessageBox.Show(this, "Check tunnel status first.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+                if (_currentStatus == null) { OolioMessageBox.Show(this, "Check tunnel status first.", "Export"); return; }
                 var lines = new List<string>();
                 foreach (DataGridViewRow row in dgvIngress.Rows) lines.Add((row.Cells[0].Value?.ToString() ?? "") + "  ->  " + (row.Cells[1].Value?.ToString() ?? ""));
                 var zipPath = _exporter.Export(_currentStatus, _uiLogs, lines);
-                MessageBox.Show(this, "Exported to:" + Environment.NewLine + zipPath, "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                OolioMessageBox.Show(this, "Exported to:\n" + zipPath, "Export Complete");
             }
-            catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            catch (Exception ex) { OolioMessageBox.Show(this, "Export failed: " + ex.Message, "Export Error"); }
         }
 
         public async Task CheckForUpdatesAsync(bool silent = false)
         {
-            // Silent startup check: skip if already checked today
             if (silent)
             {
                 try
@@ -619,50 +723,29 @@ namespace CloudflaredMonitor
                 }
                 catch { }
             }
-
             try
             {
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
                 http.DefaultRequestHeaders.Add("User-Agent", "OolioTunnelMonitor/" + AppVersion);
                 var json = await http.GetStringAsync(VersionJsonUrl);
-
-                // Record successful check date for daily throttle
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(_updateCheckFile)!);
-                    File.WriteAllText(_updateCheckFile, DateTime.Today.ToString("yyyy-MM-dd"));
-                }
-                catch { }
-
+                try { Directory.CreateDirectory(Path.GetDirectoryName(_updateCheckFile)!); File.WriteAllText(_updateCheckFile, DateTime.Today.ToString("yyyy-MM-dd")); } catch { }
                 using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
                 string latest = root.TryGetProperty("version", out var v) ? v.GetString() ?? AppVersion : AppVersion;
                 string url    = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "";
                 string notes  = root.TryGetProperty("releaseNotes", out var n) ? n.GetString() ?? "" : "";
-
                 if (IsNewerVersion(latest, AppVersion))
                 {
                     LogInfo("Update available: v" + latest);
-                    string msg = $"A new version of Oolio Tunnel Monitor is available!\n\n" +
-                                 $"Your version:\tv{AppVersion}\n" +
-                                 $"New version:\tv{latest}";
+                    string msg = $"A new version is available!\n\nYour version:\tv{AppVersion}\nNew version:\tv{latest}";
                     if (!string.IsNullOrWhiteSpace(notes)) msg += "\n\n" + notes;
                     msg += "\n\nOpen the download page?";
-                    if (MessageBox.Show(this, msg, "Update Available",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes
-                        && !string.IsNullOrWhiteSpace(url))
+                    if (OolioMessageBox.Show(this, msg, "Update Available", yesNo: true) == DialogResult.Yes && !string.IsNullOrWhiteSpace(url))
                         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
                 else if (!silent)
-                {
-                    LogInfo("Up to date (v" + AppVersion + ")");
-                    MessageBox.Show(this, $"Oolio Tunnel Monitor is up to date.\n\nVersion: v{AppVersion}",
-                        "No Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                    OolioMessageBox.Show(this, $"Oolio Tunnel Monitor is up to date.\n\nVersion: v{AppVersion}", "No Updates");
             }
-            catch (Exception ex)
-            {
-                if (!silent) LogWarn("Update check failed: " + ex.Message);
-            }
+            catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
 
         private static bool IsNewerVersion(string latest, string current)
