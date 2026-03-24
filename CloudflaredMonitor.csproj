@@ -9,7 +9,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RootNamespace>CloudflaredMonitor</RootNamespace>
     <AssemblyName>TunnelMonitor</AssemblyName>
-    <Product>TunnelMonitor</Product>
+    <Product>Oolio Tunnel Monitor</Product>
+    <Company>Oolio Group</Company>
+    <Copyright>Copyright © Oolio Group 2026</Copyright>
     <Version>1.2.1.0</Version>
     <AssemblyVersion>1.2.1.0</AssemblyVersion>
     <FileVersion>1.2.1.0</FileVersion>
