@@ -14,10 +14,7 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // ── Sidebar logo: full PNG at natural proportions, no clipping ───────────
-    // Control must be square (Width x Width) in the Designer.
-    // The 256x256 PNG has its own glossy rounded border baked in.
-    // We draw it centred and uniformly scaled to fill the control with 8px padding.
+    // Fix 1+2: Logo fills full control width, subtitle drawn below
     internal sealed class OolioSidebarLogo : Control
     {
         private static readonly Image? _logo = LoadLogo();
@@ -43,20 +40,29 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             if (_logo == null) return;
 
-            const int pad = 8;
-            int available = Math.Min(Width, Height) - pad * 2;
-            if (available <= 0) return;
+            const int pad       = 6;
+            const int subtitleH = 26;
+            int imgArea = Height - subtitleH;
+            int avail   = Math.Min(Width, imgArea) - pad * 2;
+            if (avail <= 0) return;
 
-            // Scale uniformly to fit within available square, preserving aspect ratio
-            float scale = Math.Min(available / (float)_logo.Width, available / (float)_logo.Height);
+            float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width  * scale);
             int h = (int)(_logo.Height * scale);
-            int x = (Width  - w) / 2;
-            int y = (Height - h) / 2;
-
+            // Fix 1: top-aligned (y = pad, not centred)
+            int x = (Width - w) / 2;
+            int y = pad;
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
+
+            // Fix 2: subtitle below logo
+            using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
+            g.DrawString("Oolio Tunnel Monitor", sf, sb,
+                new RectangleF(0, imgArea, Width, subtitleH),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
 
@@ -64,18 +70,6 @@ namespace CloudflaredMonitor
     {
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
-
-        public static GraphicsPath RoundedPathSelective(Rectangle r, int rad, bool tl, bool tr, bool br, bool bl)
-        {
-            int d = rad * 2; var p = new GraphicsPath();
-            if (tl) p.AddArc(r.X, r.Y, d, d, 180, 90); else { p.AddLine(r.X, r.Y + (bl ? rad : 0), r.X, r.Y); p.AddLine(r.X, r.Y, r.X + rad, r.Y); }
-            if (tr) p.AddArc(r.Right - d, r.Y, d, d, 270, 90); else { p.AddLine(r.Right - rad, r.Y, r.Right, r.Y); p.AddLine(r.Right, r.Y, r.Right, r.Y + rad); }
-            p.AddLine(r.Right, r.Y + (tr ? rad : 0), r.Right, r.Bottom - (br ? rad : 0));
-            if (br) p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); else { p.AddLine(r.Right, r.Bottom, r.Right - rad, r.Bottom); }
-            if (bl) p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); else { p.AddLine(r.X + rad, r.Bottom, r.X, r.Bottom); }
-            p.AddLine(r.X, r.Bottom - (bl ? rad : 0), r.X, r.Y + (tl ? rad : 0));
-            p.CloseFigure(); return p;
-        }
     }
 
     internal sealed class PillLabel : Label
@@ -223,6 +217,7 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // Fix 6: all four corners rounded
     internal sealed class ContentPanel : Panel
     {
         private const int Radius = 18;
@@ -242,12 +237,87 @@ namespace CloudflaredMonitor
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(_sidebar);
+            // Fix 6: all corners rounded (was TL only)
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using var path = ShapeHelper.RoundedPathSelective(rect, Radius, true, false, false, false);
+            using var path = ShapeHelper.RoundedPath(rect, Radius);
             using var brush = new SolidBrush(_pageBg);
             g.FillPath(brush, path);
         }
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
+    }
+
+    // Fix 3: styled token box — light purple rounded container + eye icon toggle
+    internal sealed class TokenBox : Panel
+    {
+        private static readonly Color _fill   = Color.FromArgb(237, 233, 254); // light purple
+        private static readonly Color _border = Color.FromArgb(196, 181, 253); // purple-200
+        private const int Radius = 6;
+        public TokenBox()
+        {
+            DoubleBuffered = true; ResizeRedraw = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = _fill;
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            // Parent is a RoundedPanel (white), so clear to white for corners
+            g.Clear(Color.White);
+            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            using var path = ShapeHelper.RoundedPath(rect, Radius);
+            using var fill = new SolidBrush(_fill); g.FillPath(fill, path);
+            using var pen  = new Pen(_border, 1f);  g.DrawPath(pen,  path);
+        }
+    }
+
+    // Fix 3: eye icon toggle replacing the "Show" checkbox
+    internal sealed class EyeButton : Control
+    {
+        public bool Showing { get; private set; }
+        public event EventHandler? ToggledChanged;
+        private static readonly Color _fill    = Color.FromArgb(237, 233, 254);
+        private static readonly Color _active  = Color.FromArgb(103, 58, 182);
+        private static readonly Color _passive = Color.FromArgb(167, 139, 250);
+        public EyeButton()
+        {
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+            Cursor    = Cursors.Hand;
+            Size      = new Size(32, 28);
+        }
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(_fill); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            int cx = Width / 2, cy = Height / 2;
+            var col = Showing ? _active : _passive;
+            using var pen = new Pen(col, 1.6f);
+
+            if (Showing)
+            {
+                // Open eye
+                using var outer = new GraphicsPath();
+                outer.AddArc(cx - 10, cy - 6, 20, 12, 180, 180);
+                outer.AddArc(cx - 10, cy - 6, 20, 12, 0, 180);
+                g.DrawPath(pen, outer);
+                g.FillEllipse(new SolidBrush(col), cx - 3, cy - 3, 6, 6);
+            }
+            else
+            {
+                // Closed eye: arc + slash
+                using var lidPath = new GraphicsPath();
+                lidPath.AddArc(cx - 10, cy - 6, 20, 12, 180, 180);
+                g.DrawPath(pen, lidPath);
+                g.DrawLine(pen, cx - 8, cy + 5, cx + 8, cy - 5);
+            }
+        }
+        protected override void OnClick(EventArgs e)
+        {
+            Showing = !Showing; Invalidate();
+            ToggledChanged?.Invoke(this, EventArgs.Empty);
+            base.OnClick(e);
+        }
     }
 
     internal sealed class OolioMessageBox : Form
@@ -396,6 +466,8 @@ namespace CloudflaredMonitor
             _exporter = new DiagnosticsExporter(_logger);
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
+            // Wire eye button to token field
+            eyeToken.ToggledChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !eyeToken.Showing; };
         }
 
         protected override void OnShown(EventArgs e)
