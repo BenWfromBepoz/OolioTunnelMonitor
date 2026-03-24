@@ -64,52 +64,53 @@ namespace CloudflaredMonitor
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
-            // ── Sidebar panel (transparent — sits over dark form background) ─
+            // ── Sidebar (transparent over dark form background) ──────────────
             this.pnlSidebar.BackColor = System.Drawing.Color.Transparent;
             this.pnlSidebar.Dock      = DockStyle.Left;
             this.pnlSidebar.Width     = 224;
 
-            // Logo: full-width PNG, no card
+            // Logo: square control so full 256x256 PNG renders with gloss intact
             this.oolioLogo.Location  = new System.Drawing.Point(0, 8);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 100);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 224);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
+            // Buttons start below logo: 8 + 224 + 8 = 240
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 120);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 240);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 168);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 288);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 216);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 336);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 264);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 384);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 312);
+            this.btnRepair.Location = new System.Drawing.Point(12, 432);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 362);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 480);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 394);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 508);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
@@ -117,7 +118,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 436);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 550);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
@@ -132,12 +133,11 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: fills form, left margin = sidebar width ────────
-            this.contentPanel.Dock    = DockStyle.Fill;
-            this.contentPanel.Padding = new Padding(0, 0, 0, 0);
+            // ── ContentPanel: fills form, rounded TL corner ──────────────────
+            this.contentPanel.Dock = DockStyle.Fill;
             this.contentPanel.Controls.Add(this.tblMain);
 
-            // ── Main layout (inside ContentPanel, padded away from TL corner) ─
+            // ── Main layout ──────────────────────────────────────────────────
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.Transparent;
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
@@ -335,12 +335,11 @@ namespace CloudflaredMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form: dark sidebar colour IS the background ──────────────────
+            // ── Form ─────────────────────────────────────────────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
-            this.MinimumSize         = new System.Drawing.Size(1000, 600);
-            // Add sidebar first so contentPanel renders on top
+            this.MinimumSize         = new System.Drawing.Size(1000, 620);
             this.Controls.Add(this.contentPanel);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
