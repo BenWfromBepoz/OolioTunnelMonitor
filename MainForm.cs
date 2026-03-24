@@ -14,7 +14,6 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // Fix 1+2: Logo fills full control width, subtitle drawn below
     internal sealed class OolioSidebarLogo : Control
     {
         private static readonly Image? _logo = LoadLogo();
@@ -52,12 +51,10 @@ namespace CloudflaredMonitor
             float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width  * scale);
             int h = (int)(_logo.Height * scale);
-            // Fix 1: top-aligned (y = pad, not centred)
             int x = (Width - w) / 2;
             int y = pad;
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
 
-            // Fix 2: subtitle below logo
             using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
             g.DrawString("Oolio Tunnel Monitor", sf, sb,
@@ -217,7 +214,6 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    // Fix 6: all four corners rounded
     internal sealed class ContentPanel : Panel
     {
         private const int Radius = 18;
@@ -237,7 +233,6 @@ namespace CloudflaredMonitor
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(_sidebar);
-            // Fix 6: all corners rounded (was TL only)
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(rect, Radius);
             using var brush = new SolidBrush(_pageBg);
@@ -246,12 +241,11 @@ namespace CloudflaredMonitor
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
     }
 
-    // Fix 3: styled token box — light purple rounded container + eye icon toggle
     internal sealed class TokenBox : Panel
     {
-        private static readonly Color _fill   = Color.FromArgb(237, 233, 254); // light purple
-        private static readonly Color _border = Color.FromArgb(196, 181, 253); // purple-200
-        private const int Radius = 6;
+        private static readonly Color _fill   = Color.FromArgb(237, 233, 254);
+        private static readonly Color _border = Color.FromArgb(196, 181, 253);
+        private const int Radius = 5;
         public TokenBox()
         {
             DoubleBuffered = true; ResizeRedraw = true;
@@ -261,7 +255,6 @@ namespace CloudflaredMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            // Parent is a RoundedPanel (white), so clear to white for corners
             g.Clear(Color.White);
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(rect, Radius);
@@ -270,7 +263,7 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Fix 3: eye icon toggle replacing the "Show" checkbox
+    // Fix 3: EyeButton scaled to smaller size (20x20)
     internal sealed class EyeButton : Control
     {
         public bool Showing { get; private set; }
@@ -284,32 +277,36 @@ namespace CloudflaredMonitor
                      ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
             Cursor    = Cursors.Hand;
-            Size      = new Size(32, 28);
+            Size      = new Size(20, 20);
         }
         protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(_fill); }
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            // Scale eye drawing to the actual control size
             int cx = Width / 2, cy = Height / 2;
+            int rw = (int)(Width  * 0.42f);  // eye half-width
+            int rh = (int)(Height * 0.28f);  // eye half-height
             var col = Showing ? _active : _passive;
-            using var pen = new Pen(col, 1.6f);
+            using var pen = new Pen(col, 1.4f);
 
             if (Showing)
             {
-                // Open eye
+                // Open eye outline
                 using var outer = new GraphicsPath();
-                outer.AddArc(cx - 10, cy - 6, 20, 12, 180, 180);
-                outer.AddArc(cx - 10, cy - 6, 20, 12, 0, 180);
+                outer.AddArc(cx - rw, cy - rh, rw * 2, rh * 2, 180, 180);
+                outer.AddArc(cx - rw, cy - rh, rw * 2, rh * 2, 0,   180);
                 g.DrawPath(pen, outer);
-                g.FillEllipse(new SolidBrush(col), cx - 3, cy - 3, 6, 6);
+                int pr = Math.Max(2, rh - 1);
+                g.FillEllipse(new SolidBrush(col), cx - pr / 2, cy - pr / 2, pr, pr);
             }
             else
             {
-                // Closed eye: arc + slash
+                // Closed eye: arc + diagonal slash
                 using var lidPath = new GraphicsPath();
-                lidPath.AddArc(cx - 10, cy - 6, 20, 12, 180, 180);
+                lidPath.AddArc(cx - rw, cy - rh, rw * 2, rh * 2, 180, 180);
                 g.DrawPath(pen, lidPath);
-                g.DrawLine(pen, cx - 8, cy + 5, cx + 8, cy - 5);
+                g.DrawLine(pen, cx - rw + 2, cy + rh - 1, cx + rw - 2, cy - rh + 1);
             }
         }
         protected override void OnClick(EventArgs e)
@@ -466,13 +463,14 @@ namespace CloudflaredMonitor
             _exporter = new DiagnosticsExporter(_logger);
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
-            // Wire eye button to token field
             eyeToken.ToggledChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !eyeToken.Showing; };
         }
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            // Fix 1: position the floating content panel on first show
+            ResizeContentPanel();
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
