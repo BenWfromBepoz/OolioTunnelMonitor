@@ -14,7 +14,10 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // ── Sidebar logo: just the PNG, no card, full sidebar width ──────────────
+    // ── Sidebar logo: full PNG at natural proportions, no clipping ───────────
+    // Control must be square (Width x Width) in the Designer.
+    // The 256x256 PNG has its own glossy rounded border baked in.
+    // We draw it centred and uniformly scaled to fill the control with 8px padding.
     internal sealed class OolioSidebarLogo : Control
     {
         private static readonly Image? _logo = LoadLogo();
@@ -22,7 +25,6 @@ namespace CloudflaredMonitor
         {
             try
             {
-                // Prefer 256x256 for crisp rendering at any sidebar size
                 var asm = System.Reflection.Assembly.GetExecutingAssembly();
                 var stream = asm.GetManifestResourceStream("CloudflaredMonitor.Resources.OolioTaskbar256.png")
                           ?? asm.GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
@@ -41,22 +43,20 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            if (_logo != null)
-            {
-                // Scale to fit width, maintain aspect ratio, centre vertically
-                float scale = Width / (float)_logo.Width;
-                int w = Width;
-                int h = (int)(_logo.Height * scale);
-                int y = (Height - h) / 2;
-                g.DrawImage(_logo, new Rectangle(0, y, w, h));
-            }
-            else
-            {
-                using var f = new Font("Segoe UI", 22f, FontStyle.Bold);
-                using var b = new SolidBrush(Color.White);
-                g.DrawString("oolio", f, b, new RectangleF(0, 0, Width, Height),
-                    new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-            }
+            if (_logo == null) return;
+
+            const int pad = 8;
+            int available = Math.Min(Width, Height) - pad * 2;
+            if (available <= 0) return;
+
+            // Scale uniformly to fit within available square, preserving aspect ratio
+            float scale = Math.Min(available / (float)_logo.Width, available / (float)_logo.Height);
+            int w = (int)(_logo.Width  * scale);
+            int h = (int)(_logo.Height * scale);
+            int x = (Width  - w) / 2;
+            int y = (Height - h) / 2;
+
+            g.DrawImage(_logo, new Rectangle(x, y, w, h));
         }
     }
 
@@ -65,15 +65,14 @@ namespace CloudflaredMonitor
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
 
-        // Rounded path with selective corners: flags = TL, TR, BR, BL
         public static GraphicsPath RoundedPathSelective(Rectangle r, int rad, bool tl, bool tr, bool br, bool bl)
         {
             int d = rad * 2; var p = new GraphicsPath();
-            if (tl) p.AddArc(r.X, r.Y, d, d, 180, 90); else p.AddLine(r.X, r.Y, r.X + rad, r.Y);
-            if (tr) p.AddArc(r.Right - d, r.Y, d, d, 270, 90); else p.AddLine(r.Right - rad, r.Y, r.Right, r.Y);
+            if (tl) p.AddArc(r.X, r.Y, d, d, 180, 90); else { p.AddLine(r.X, r.Y + (bl ? rad : 0), r.X, r.Y); p.AddLine(r.X, r.Y, r.X + rad, r.Y); }
+            if (tr) p.AddArc(r.Right - d, r.Y, d, d, 270, 90); else { p.AddLine(r.Right - rad, r.Y, r.Right, r.Y); p.AddLine(r.Right, r.Y, r.Right, r.Y + rad); }
             p.AddLine(r.Right, r.Y + (tr ? rad : 0), r.Right, r.Bottom - (br ? rad : 0));
-            if (br) p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); else p.AddLine(r.Right, r.Bottom, r.Right - rad, r.Bottom);
-            if (bl) p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); else p.AddLine(r.X + rad, r.Bottom, r.X, r.Bottom);
+            if (br) p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); else { p.AddLine(r.Right, r.Bottom, r.Right - rad, r.Bottom); }
+            if (bl) p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); else { p.AddLine(r.X + rad, r.Bottom, r.X, r.Bottom); }
             p.AddLine(r.X, r.Bottom - (bl ? rad : 0), r.X, r.Y + (tl ? rad : 0));
             p.CloseFigure(); return p;
         }
@@ -224,11 +223,6 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
-    /// <summary>
-    ///  The large content panel that sits on top of the sidebar-coloured form.
-    ///  Has a rounded top-left corner only, square everywhere else, so it
-    ///  appears to emerge from the sidebar on the left.
-    /// </summary>
     internal sealed class ContentPanel : Panel
     {
         private const int Radius = 18;
@@ -247,9 +241,7 @@ namespace CloudflaredMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            // Fill everything with sidebar colour first (form background shows through)
             g.Clear(_sidebar);
-            // Draw the content area with only top-left rounded
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPathSelective(rect, Radius, true, false, false, false);
             using var brush = new SolidBrush(_pageBg);
@@ -258,14 +250,10 @@ namespace CloudflaredMonitor
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
     }
 
-    /// <summary>
-    ///  Themed message box matching the app design — replaces plain MessageBox.Show().
-    /// </summary>
     internal sealed class OolioMessageBox : Form
     {
         private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
         private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
-        private static readonly Color _accent  = Color.FromArgb(103, 58, 182);
 
         private OolioMessageBox(string title, string message, bool yesNo)
         {
@@ -285,7 +273,7 @@ namespace CloudflaredMonitor
                 Font      = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(30, 41, 59),
                 Location  = new Point(20, 18),
-                Size      = new Size(380, 24),
+                Size      = new Size(390, 24),
                 BackColor = Color.Transparent
             };
             content.Controls.Add(titleLbl);
@@ -302,27 +290,40 @@ namespace CloudflaredMonitor
             };
             content.Controls.Add(msgLbl);
 
-            var btnOk = new PillButton { Text = yesNo ? "Yes" : "OK", Size = new Size(100, 32), Location = new Point(230, 162) };
-            btnOk.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); };
-            content.Controls.Add(btnOk);
-
             if (yesNo)
             {
-                var btnNo = new PillButton { Text = "No", Size = new Size(80, 32), Location = new Point(340, 162) };
+                var btnYes = new PillButton { Text = "Yes", Size = new Size(90, 32), Location = new Point(250, 168) };
+                btnYes.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); };
+                content.Controls.Add(btnYes);
+                var btnNo = new PillButton { Text = "No", Size = new Size(90, 32), Location = new Point(352, 168) };
                 btnNo.Click += (_, _) => { DialogResult = DialogResult.No; Close(); };
                 content.Controls.Add(btnNo);
             }
+            else
+            {
+                var btnOk = new PillButton { Text = "OK", Size = new Size(90, 32), Location = new Point(352, 168) };
+                btnOk.Click += (_, _) => { DialogResult = DialogResult.OK; Close(); };
+                content.Controls.Add(btnOk);
+            }
 
-            // Drag to move (borderless)
+            var closeBtn = new Label
+            {
+                Text      = "\u00d7",
+                Font      = new Font("Segoe UI", 13f),
+                ForeColor = Color.FromArgb(120, 140, 160),
+                Location  = new Point(424, 10),
+                Size      = new Size(24, 24),
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Cursor    = Cursors.Hand
+            };
+            closeBtn.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
+            content.Controls.Add(closeBtn);
+
             bool dragging = false; Point dragStart = Point.Empty;
             content.MouseDown += (_, me) => { if (me.Button == MouseButtons.Left) { dragging = true; dragStart = me.Location; } };
             content.MouseMove += (_, me) => { if (dragging) Location = new Point(Location.X + me.X - dragStart.X, Location.Y + me.Y - dragStart.Y); };
             content.MouseUp   += (_, _)  => dragging = false;
-
-            // Close button
-            var closeBtn = new Label { Text = "\u00d7", Font = new Font("Segoe UI", 13f), ForeColor = Color.FromArgb(100, 116, 139), Location = new Point(420, 12), Size = new Size(24, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, Cursor = Cursors.Hand };
-            closeBtn.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
-            content.Controls.Add(closeBtn);
         }
 
         public static DialogResult Show(IWin32Window owner, string message, string title, bool yesNo = false)
