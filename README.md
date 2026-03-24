@@ -1,78 +1,73 @@
-# Cloudflared Monitor
+# Oolio Tunnel Monitor
 
-Cloudflared Monitor is a small Windows utility designed to help operations
-teams diagnose and repair Cloudflare Zero Trust tunnels running on point of
-sale (POS) servers.  It presents a simple system tray icon and window to
-summarise the health of the local `cloudflared` service and its
-corresponding Cloudflare tunnel, collect diagnostics, and reinstall
-cloudflared when necessary.
+A lightweight Windows system tray application for managing and monitoring Cloudflare Zero Trust tunnels at customer sites.
+
+Built for Oolio Group field technicians — provides a single-pane view of tunnel health, service status, and published routes without needing to log in to the Cloudflare dashboard.
+
+---
 
 ## Features
 
-* **One‑click diagnostics** – display the Windows service state, tunnel name,
-  tunnel ID, remote status and ingress mappings.
-* **Repair existing tunnel** – stops the service, kills any stray
-  `cloudflared.exe` processes, deletes the Windows service, optionally
-  reinstalls the latest `cloudflared` MSI, fetches a fresh tunnel token
-  through the Cloudflare API, installs the service and restarts it.
-* **Log to file** – all actions and diagnostics are logged to a file under
-  `%ProgramData%\Bepoz\CloudflaredMonitor\logs` with rotation by date.
-* **Export diagnostics** – generate a ZIP bundle with status, ingress
-  information, UI logs and the persistent log file for easy attachment to
-  support tickets.
+- **Real-time tunnel status** — service state, tunnel health (healthy/degraded/inactive) and published routes via the Cloudflare API
+- **One-click Repair** — automated stop, uninstall, reinstall MSI, and re-register token workflow
+- **Install New Tunnel** — guided form to create, configure and install a new tunnel from scratch
+- **HTTP endpoint check** — verifies Cloudflare connectivity even without an API token
+- **Daily update check** — automatically checks for a newer version on startup (once per day) and prompts to download
+- **System tray** — runs minimised and silently in the system tray; starts minimised on launch
 
-## Configuration
+---
 
-Configuration values live in `Services/AppConfig.cs` and include:
+## Requirements
 
-* `AccountId` – the Cloudflare account ID that owns your tunnels.
-* `Key` / `EncryptedApiToken` – the AES key and encrypted API token used
-  to authenticate API calls.  See below for instructions on generating
-  these values.
-* `CloudflaredMsiUrl` – link to the latest cloudflared installer.
-* `ServiceName` – Windows service name for cloudflared.
+- Windows 10 or 11 (64-bit)
+- [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) — download and install if not already present
+- Cloudflare API token with **Tunnel: Edit** scope — found in LastPass or the HubSpot Company Record under Network & Environment
 
-### Generating the encrypted token
+---
 
-The Cloudflare API token must be encrypted before being embedded in the
-repository.  Use PowerShell on a secure workstation to generate the
-encrypted string.  PowerShell is only needed at build/configuration time —
-the application decrypts the token itself using a pure C# AES-256
-implementation at runtime, with no PowerShell dependency on the host.
+## Installation
 
-```powershell
-$token = "YOUR_API_TOKEN"               # token without the "Bearer" prefix
-$key   = [byte[]](11,92,33,54,76,21,44,87,91,62,17,203,44,56,78,19,22,89,120,45,65,11,98,74,31,44,58,73,92,10,44,61)
-$secure = ConvertTo-SecureString $token -AsPlainText -Force
-ConvertFrom-SecureString $secure -Key $key
-```
+1. Download `TunnelMonitor.exe` from the [latest release](https://github.com/BenWfromBepoz/OolioTunnelMonitor/releases/latest)
+2. Place it somewhere permanent, e.g. `C:\Program Files\Oolio\TunnelMonitor\`
+3. Run it — the Oolio icon will appear in the system tray
+4. To start automatically on login, add a shortcut to `shell:startup`
 
-Replace `EncryptedApiToken` in `AppConfig.cs` with the output of the last
-command.  Keep the key and encrypted token secret.
+---
 
-## Building
+## Usage
 
-The project targets .NET 8 and Windows.  To build it:
+| Action | How |
+|---|---|
+| Open the app | Double-click the tray icon, or right-click → Open |
+| Check tunnel status | Click **Check Tunnel Status** in the sidebar — also runs automatically on open |
+| Repair a broken tunnel | Paste the API token into the token field, then click **Repair Tunnel** |
+| Install a new tunnel | Click **Install New Tunnel** and fill in the form |
+| Check for updates | Click **Check for Updates** in the sidebar — also runs silently once per day on startup |
 
-```bash
-dotnet restore
-dotnet build -c Release
-```
+---
 
-You can then run `CloudflaredMonitor.exe` from the build output directory.
+## API Token
 
-When compiled with the included `app.manifest`, the executable will
-request administrative privileges on launch.  This is necessary to stop
-services, kill processes and install software.
+The Cloudflare API token is required for Repair and Install operations. It needs the **Cloudflare Tunnel: Edit** permission scope.
 
-## Limitations
+Where to find it:
+- **LastPass** — search for the customer site name
+- **HubSpot** — open the Company Record → Network & Environment section
 
-* The tool assumes the tunnel is installed as a Windows service with a
-  token passed via the `--token` argument.  If your deployment uses a
-  different pattern (e.g. local `config.yml`), the tunnel ID may not be
-  discoverable and the repair flow will not work.
+---
 
-## License
+## How Updates Work
 
-This project is provided as‑is for internal use.  See `LICENSE` for
-license terms.
+On startup, the app silently checks `version.json` in this repository once per day. If a newer version is available, a prompt appears offering to open the download page. Clicking **Check for Updates** in the sidebar runs the check immediately regardless of the daily throttle.
+
+---
+
+## Release Notes
+
+See [Releases](https://github.com/BenWfromBepoz/OolioTunnelMonitor/releases) for full version history.
+
+---
+
+## Built by
+
+Oolio Group — internal tooling for Bepoz field operations.
