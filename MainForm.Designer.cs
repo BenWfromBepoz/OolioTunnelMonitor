@@ -66,18 +66,19 @@ namespace CloudflaredMonitor
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
-            // ── Sidebar (transparent, flush to top) ──────────────────────────
+            // ── Sidebar ──────────────────────────────────────────────────────
             this.pnlSidebar.BackColor = System.Drawing.Color.Transparent;
             this.pnlSidebar.Dock      = DockStyle.Left;
             this.pnlSidebar.Width     = 224;
-            // Fix 4: no top padding on sidebar — flush with form top
             this.pnlSidebar.Padding   = new Padding(0);
 
-            // Fix 4: logo y=0, top-aligned flush with form top
-            this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 250);
+            // Logo: y=-20 pushes it up so image fills from very top;
+            // control is 270px tall so subtitle sits in lower ~26px (earth shadow area)
+            this.oolioLogo.Location  = new System.Drawing.Point(0, -20);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 270);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
+            // Buttons start at y = 258 (just below visible logo area)
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 258);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
@@ -136,30 +137,22 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: Fix 1 — margin creates floating gap around edges
-            // Anchor to form but leave sidebar gap on left, and outer padding all round
-            this.contentPanel.Anchor  = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            this.contentPanel.Location = new System.Drawing.Point(224, 0);
-            this.contentPanel.Size     = new System.Drawing.Size(816, 720);
-            // Use Margin via TableLayoutPanel padding inside instead
+            // ── ContentPanel: floated by ResizeContentPanel() ────────────────
             this.contentPanel.Controls.Add(this.tblMain);
 
-            // ── Main layout: Fix 1 + Fix 5
+            // ── Main layout: consistent 12px padding all sides ───────────────
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.Transparent;
-            // Fix 1: outer padding gives floating feel (12px all sides)
-            // Fix 5: top padding reduced to 4 so status grid sits higher
-            this.tblMain.Padding     = new Padding(12, 4, 12, 12);
+            this.tblMain.Padding     = new Padding(12);
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            // Fix 5: status card smaller (100 instead of 114) — tighter top area
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  96));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  60));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
-            // ── Status card ──────────────────────────────────────────────────
+            // ── Status card: reduced inner top padding ───────────────────────
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -169,13 +162,15 @@ namespace CloudflaredMonitor
             this.lblCardTitle.Text      = "Tunnel Status";
             this.lblCardTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblCardTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblCardTitle.Location  = new System.Drawing.Point(16, 4);
+            // Reduced from y=4 to y=2 — tighter top
+            this.lblCardTitle.Location  = new System.Drawing.Point(16, 2);
             this.lblCardTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblCardTitle.BackColor = System.Drawing.Color.Transparent;
 
-            this.tblStatus.Location    = new System.Drawing.Point(16, 26);
+            // Grid moved up: y=24 (was 26/30)
+            this.tblStatus.Location    = new System.Drawing.Point(16, 24);
             this.tblStatus.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.tblStatus.Size        = new System.Drawing.Size(200, 68);
+            this.tblStatus.Size        = new System.Drawing.Size(200, 66);
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
@@ -218,10 +213,13 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ─────────────────────────────────────────────────
+            // ── Ingress card: padding keeps dgv off ALL edges ─────────────────
+            // The trick: set card Padding, then use dgvIngress with Dock=Fill.
+            // Title sits above the padding area via absolute Location.
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
+            // Top=32 reserves space for title; sides+bottom=10 keep grid off card edges
+            this.pnlIngressCard.Padding = new Padding(10, 32, 10, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -245,9 +243,8 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
-            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
+            // Dock=Fill respects pnlIngressCard.Padding — grid stays 10px from all edges
+            this.dgvIngress.Dock       = DockStyle.Fill;
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
@@ -280,25 +277,24 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card: Fix 2 + 3 — slimmer box, smaller eye inside ──────
+            // ── Token card: row height 68 gives breathing room below box ──────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
             this.lblTokenTitle.Text      = "Cloudflare API Token";
             this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblTokenTitle.Location  = new System.Drawing.Point(14, 6);
+            this.lblTokenTitle.Location  = new System.Drawing.Point(14, 8);
             this.lblTokenTitle.Size      = new System.Drawing.Size(175, 18);
             this.lblTokenTitle.BackColor = System.Drawing.Color.Transparent;
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            // Fix 2: box height 24 (was 28) — slimmer
-            this.tokenBox.Location = new System.Drawing.Point(14, 28);
+            // Token box: vertically centred in the card
+            this.tokenBox.Location = new System.Drawing.Point(14, 30);
             this.tokenBox.Size     = new System.Drawing.Size(546, 24);
             this.tokenBox.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
-            // Fix 2: text input taller font, fills most of box
             this.txtApiToken.Location              = new System.Drawing.Point(6, 2);
             this.txtApiToken.Size                  = new System.Drawing.Size(512, 20);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -307,7 +303,6 @@ namespace CloudflaredMonitor
             this.txtApiToken.BorderStyle           = BorderStyle.None;
             this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
 
-            // Fix 3: eye button 20x20, tucked inside right of box with 2px margin
             this.eyeToken.Location = new System.Drawing.Point(524, 2);
             this.eyeToken.Size     = new System.Drawing.Size(20, 20);
             this.eyeToken.Anchor   = AnchorStyles.Top | AnchorStyles.Right;
@@ -316,7 +311,7 @@ namespace CloudflaredMonitor
             this.tokenBox.Controls.Add(this.eyeToken);
 
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(568, 14);
+            this.btnTestToken.Location = new System.Drawing.Point(568, 18);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
@@ -328,7 +323,7 @@ namespace CloudflaredMonitor
             // ── Log card ─────────────────────────────────────────────────────
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
-            this.pnlLogCard.Padding = new Padding(12, 30, 12, 12);
+            this.pnlLogCard.Padding = new Padding(10, 30, 10, 10);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
             this.pnlLogCard.Controls.Add(this.txtLog);
             this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
@@ -336,7 +331,7 @@ namespace CloudflaredMonitor
             this.lblLogTitle.Text      = "Activity Log";
             this.lblLogTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblLogTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblLogTitle.Location  = new System.Drawing.Point(16, 6);
+            this.lblLogTitle.Location  = new System.Drawing.Point(14, 6);
             this.lblLogTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblLogTitle.BackColor = System.Drawing.Color.Transparent;
 
@@ -354,8 +349,6 @@ namespace CloudflaredMonitor
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 720);
             this.MinimumSize         = new System.Drawing.Size(1000, 640);
-            // Fix 1: contentPanel not docked — positioned manually with gap
-            // Form padding gives the floating look on all sides
             this.Padding             = new Padding(0);
             this.Controls.Add(this.contentPanel);
             this.Controls.Add(this.pnlSidebar);
@@ -373,10 +366,9 @@ namespace CloudflaredMonitor
             this.ResumeLayout(false);
         }
 
-        // Fix 1: float contentPanel with gap on all sides except it abuts the sidebar
         private void ResizeContentPanel()
         {
-            const int gap  = 10;
+            const int gap   = 12;
             const int sideW = 224;
             if (contentPanel == null) return;
             contentPanel.Location = new System.Drawing.Point(sideW + gap, gap);
