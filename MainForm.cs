@@ -14,10 +14,7 @@ using CloudflaredMonitor.Services;
 
 namespace CloudflaredMonitor
 {
-    // ── Sidebar logo: full PNG at natural proportions, no clipping ───────────
-    // Control must be square (Width x Width) in the Designer.
-    // The 256x256 PNG has its own glossy rounded border baked in.
-    // We draw it centred and uniformly scaled to fill the control with 8px padding.
+    // ── Sidebar logo ─────────────────────────────────────────────────────────
     internal sealed class OolioSidebarLogo : Control
     {
         private static readonly Image? _logo = LoadLogo();
@@ -43,20 +40,27 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             if (_logo == null) return;
 
-            const int pad = 8;
-            int available = Math.Min(Width, Height) - pad * 2;
-            if (available <= 0) return;
+            const int pad       = 6;
+            const int subtitleH = 26;
+            int imgArea = Height - subtitleH;
+            int avail   = Math.Min(Width, imgArea) - pad * 2;
+            if (avail <= 0) return;
 
-            // Scale uniformly to fit within available square, preserving aspect ratio
-            float scale = Math.Min(available / (float)_logo.Width, available / (float)_logo.Height);
+            float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width  * scale);
             int h = (int)(_logo.Height * scale);
-            int x = (Width  - w) / 2;
-            int y = (Height - h) / 2;
-
+            int x = (Width - w) / 2;
+            int y = pad;
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
+
+            using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
+            g.DrawString("Oolio Tunnel Monitor", sf, sb,
+                new RectangleF(0, imgArea, Width, subtitleH),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
 
@@ -64,18 +68,6 @@ namespace CloudflaredMonitor
     {
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
-
-        public static GraphicsPath RoundedPathSelective(Rectangle r, int rad, bool tl, bool tr, bool br, bool bl)
-        {
-            int d = rad * 2; var p = new GraphicsPath();
-            if (tl) p.AddArc(r.X, r.Y, d, d, 180, 90); else { p.AddLine(r.X, r.Y + (bl ? rad : 0), r.X, r.Y); p.AddLine(r.X, r.Y, r.X + rad, r.Y); }
-            if (tr) p.AddArc(r.Right - d, r.Y, d, d, 270, 90); else { p.AddLine(r.Right - rad, r.Y, r.Right, r.Y); p.AddLine(r.Right, r.Y, r.Right, r.Y + rad); }
-            p.AddLine(r.Right, r.Y + (tr ? rad : 0), r.Right, r.Bottom - (br ? rad : 0));
-            if (br) p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); else { p.AddLine(r.Right, r.Bottom, r.Right - rad, r.Bottom); }
-            if (bl) p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); else { p.AddLine(r.X + rad, r.Bottom, r.X, r.Bottom); }
-            p.AddLine(r.X, r.Bottom - (bl ? rad : 0), r.X, r.Y + (tl ? rad : 0));
-            p.CloseFigure(); return p;
-        }
     }
 
     internal sealed class PillLabel : Label
@@ -223,9 +215,10 @@ namespace CloudflaredMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ContentPanel: all-corners rounded, floated over dark form background
     internal sealed class ContentPanel : Panel
     {
-        private const int Radius = 18;
+        private const int Radius = 16;
         private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
         private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
         private readonly System.Windows.Forms.Timer _resizeTimer;
@@ -243,17 +236,95 @@ namespace CloudflaredMonitor
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(_sidebar);
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using var path = ShapeHelper.RoundedPathSelective(rect, Radius, true, false, false, false);
+            using var path = ShapeHelper.RoundedPath(rect, Radius);
             using var brush = new SolidBrush(_pageBg);
             g.FillPath(brush, path);
         }
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
     }
 
+    // ToggleSwitch: iOS-style pill toggle, purple when on, grey when off
+    // Replaces the "Show" checkbox for the token field
+    internal sealed class ToggleSwitch : Control
+    {
+        private bool   _on;
+        private bool   _hovered;
+        private float  _thumbX;
+        private readonly System.Windows.Forms.Timer _anim;
+
+        private static readonly Color _trackOn  = Color.FromArgb(103, 58, 182);
+        private static readonly Color _trackOff = Color.FromArgb(180, 190, 210);
+        private const int TrackH  = 14;
+        private const int ThumbSz = 18;
+        private const int PadV    = 2; // vertical centring pad
+
+        public bool IsOn
+        {
+            get => _on;
+            set { if (_on == value) return; _on = value; _anim.Start(); ToggledChanged?.Invoke(this, EventArgs.Empty); }
+        }
+        public event EventHandler? ToggledChanged;
+
+        public ToggleSwitch()
+        {
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor  = Color.Transparent;
+            Cursor     = Cursors.Hand;
+            Size       = new Size(46, 22);
+            _thumbX    = 2f;
+            _anim      = new System.Windows.Forms.Timer { Interval = 16 };
+            _anim.Tick += OnAnimTick;
+        }
+
+        private float TargetX  => _on  ? Width - ThumbSz - 2 : 2f;
+        private void OnAnimTick(object? s, EventArgs e)
+        {
+            float target = TargetX;
+            float delta  = (target - _thumbX) * 0.35f;
+            if (Math.Abs(delta) < 0.5f) { _thumbX = target; _anim.Stop(); }
+            else _thumbX += delta;
+            Invalidate();
+        }
+
+        protected override void OnMouseEnter(EventArgs e) { _hovered = true;  Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnClick(EventArgs e) { IsOn = !IsOn; base.OnClick(e); }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        { e.Graphics.Clear(Parent?.BackColor ?? Color.White); }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(Parent?.BackColor ?? Color.White);
+
+            int ty   = (Height - TrackH) / 2;
+            var track = new Rectangle(0, ty, Width - 1, TrackH);
+            var trackCol = _on ? _trackOn : _trackOff;
+            if (_hovered) trackCol = Color.FromArgb(
+                Math.Min(255, trackCol.R + 20),
+                Math.Min(255, trackCol.G + 20),
+                Math.Min(255, trackCol.B + 20));
+
+            using var trackPath = ShapeHelper.RoundedPath(track, TrackH / 2);
+            using var trackBrush = new SolidBrush(trackCol);
+            g.FillPath(trackBrush, trackPath);
+
+            // Thumb: white circle with subtle shadow
+            int thumbY = (Height - ThumbSz) / 2;
+            using var shadow = new SolidBrush(Color.FromArgb(40, 0, 0, 0));
+            g.FillEllipse(shadow, _thumbX, thumbY + 1, ThumbSz, ThumbSz);
+            using var thumb = new SolidBrush(Color.White);
+            g.FillEllipse(thumb, _thumbX, thumbY, ThumbSz, ThumbSz);
+        }
+
+        protected override void Dispose(bool disposing) { if (disposing) _anim.Dispose(); base.Dispose(disposing); }
+    }
+
     internal sealed class OolioMessageBox : Form
     {
         private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
-        private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
 
         private OolioMessageBox(string title, string message, bool yesNo)
         {
@@ -269,24 +340,17 @@ namespace CloudflaredMonitor
 
             var titleLbl = new Label
             {
-                Text      = title,
-                Font      = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(30, 41, 59),
-                Location  = new Point(20, 18),
-                Size      = new Size(390, 24),
-                BackColor = Color.Transparent
+                Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18),
+                Size = new Size(390, 24), BackColor = Color.Transparent
             };
             content.Controls.Add(titleLbl);
 
             var msgLbl = new Label
             {
-                Text      = message,
-                Font      = new Font("Segoe UI", 9f),
-                ForeColor = Color.FromArgb(71, 85, 105),
-                Location  = new Point(20, 50),
-                Size      = new Size(420, 100),
-                BackColor = Color.Transparent,
-                AutoSize  = false
+                Text = message, Font = new Font("Segoe UI", 9f),
+                ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50),
+                Size = new Size(420, 100), BackColor = Color.Transparent, AutoSize = false
             };
             content.Controls.Add(msgLbl);
 
@@ -308,14 +372,10 @@ namespace CloudflaredMonitor
 
             var closeBtn = new Label
             {
-                Text      = "\u00d7",
-                Font      = new Font("Segoe UI", 13f),
-                ForeColor = Color.FromArgb(120, 140, 160),
-                Location  = new Point(424, 10),
-                Size      = new Size(24, 24),
-                BackColor = Color.Transparent,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Cursor    = Cursors.Hand
+                Text = "\u00d7", Font = new Font("Segoe UI", 13f),
+                ForeColor = Color.FromArgb(120, 140, 160), Location = new Point(424, 10),
+                Size = new Size(24, 24), BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter, Cursor = Cursors.Hand
             };
             closeBtn.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
             content.Controls.Add(closeBtn);
@@ -396,11 +456,14 @@ namespace CloudflaredMonitor
             _exporter = new DiagnosticsExporter(_logger);
             dgvIngress.CellPainting += DgvIngress_CellPainting;
             this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
+            // Wire toggle to password visibility
+            tglShowToken.ToggledChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !tglShowToken.IsOn; };
         }
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            ResizeContentPanel();
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
