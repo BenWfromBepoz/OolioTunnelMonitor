@@ -5,9 +5,9 @@ using System.Text;
 namespace CloudflaredMonitor.Services
 {
     /// <summary>
-    ///  Rolling daily log. One file per day named yymmdd_tunnelmonitor.log
-    ///  stored under ProgramData\Bepoz\CloudflaredMonitor\logs.
-    ///  Timestamp format: yy-MM-dd:HH-mm-ss (24-hr local time).
+    /// Rolling daily log. One file per day named yymmdd_tunnelmonitor.log
+    /// stored under ProgramData\Bepoz\CloudflaredMonitor\logs.
+    /// Timestamp format: yy-MM-dd | HH:mm:ss — matches the UI live log format.
     /// </summary>
     internal sealed class FileLogger
     {
@@ -35,7 +35,8 @@ namespace CloudflaredMonitor.Services
 
         private void Write(string level, string message)
         {
-            var ts   = DateTime.Now.ToString("yy-MM-dd:HH-mm-ss");
+            // Format matches Ts() in MainForm: "yy-MM-dd | HH:mm:ss"
+            var ts   = DateTime.Now.ToString("yy-MM-dd | HH:mm:ss");
             var line = $"{ts} [{level}] {message}{Environment.NewLine}";
             lock (_lock)
             {
