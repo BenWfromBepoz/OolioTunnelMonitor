@@ -111,7 +111,7 @@ namespace CloudflaredMonitor
             this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
-            this.lblVersion.Text      = "v1.2.0.1";
+            this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
             this.lblVersion.Location  = new System.Drawing.Point(14, 446);
@@ -142,9 +142,8 @@ namespace CloudflaredMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ──────────────────────────────────────────────────
-            this.pnlStatusCard.Dock    = DockStyle.Fill;
-            this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlStatusCard.Padding = new Padding(12, 30, 12, 12);
+            this.pnlStatusCard.Dock   = DockStyle.Fill;
+            this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -204,7 +203,7 @@ namespace CloudflaredMonitor
             // ── Ingress card ── padding keeps dgv inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(12, 30, 12, 12);
+            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -228,7 +227,6 @@ namespace CloudflaredMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            // dgvIngress anchored with inset matching card padding
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
@@ -337,7 +335,7 @@ namespace CloudflaredMonitor
             this.Controls.Add(this.tblMain);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
-            this.Text          = "Oolio ZeroTrust Tunnel Monitor";
+            this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor     = System.Drawing.Color.FromArgb(226, 232, 240);
 
