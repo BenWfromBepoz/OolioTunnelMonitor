@@ -57,7 +57,7 @@ namespace CloudflaredMonitor
         
             int imageOffsetY = -20;
             int imageY = pad + imageOffsetY;
-            int spacing = -50; // negative = overlap, positive = gap
+            int spacing = -47; // negative = overlap, positive = gap
             int textY = imageY + h + spacing;
         
             g.DrawImage(_logo, new Rectangle(x, imageY, w, h));
