@@ -70,61 +70,62 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Width     = 224;
             this.pnlSidebar.Padding   = new Padding(0);
 
-            // Logo: your offset change preserved — Size 250 tall, buttons start at y=200
+            // Logo: trimmed to 200px tall so it doesn't overlap btnCreateTunnel at y=208
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 250);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 200);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            // Sidebar buttons — your y=200 start preserved
+            // Sidebar nav buttons — start at y=208, 8px gap below logo
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 200);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 208);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 248);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 256);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 296);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 304);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 344);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 352);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 392);
+            this.btnRepair.Location = new System.Drawing.Point(12, 400);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 440);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 448);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
-            // Check for Updates button: below chkReinstall
+            // Check for Updates: anchored to bottom of sidebar
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 468);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 626);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
+            this.btnCheckUpdates.Anchor   = AnchorStyles.Bottom | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
-            // Version label: directly below Check for Updates button
+            // Version label: anchored to bottom, sits directly under the button
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 510);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 668);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
+            this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
+            this.lblVersion.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
@@ -136,7 +137,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: hidden until OnLoad positions it (fix #3 flicker)
+            // ── ContentPanel: hidden until OnLoad positions it (flicker fix)
             this.contentPanel.Controls.Add(this.tblMain);
             this.contentPanel.Visible = false;
 
