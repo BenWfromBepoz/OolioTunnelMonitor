@@ -109,7 +109,7 @@ namespace CloudflaredMonitor
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, -20); //(12, 526)
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, -10); //(12, 526)
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Bottom | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
@@ -117,10 +117,10 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 568);
+            this.lblVersion.Location  = new System.Drawing.Point(14, -4); //(14, 568)
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
+            this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
