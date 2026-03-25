@@ -117,7 +117,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, -4); //(14, 568)
+            this.lblVersion.Location  = new System.Drawing.Point(14, 4); //(14, 568)
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -280,7 +280,7 @@ namespace CloudflaredMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            this.txtApiToken.Location              = new System.Drawing.Point(14, 28);
+            this.txtApiToken.Location              = new System.Drawing.Point(14, 30);
             this.txtApiToken.Size                  = new System.Drawing.Size(390, 26);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
             this.txtApiToken.UseSystemPasswordChar = true;
@@ -297,7 +297,7 @@ namespace CloudflaredMonitor
             // Pill right = tblStatus.X(16) + col0(90) + col1(300) + col2(90) + pillWidth(150) = 646
             // Button width = 106, so X = 646 - 106 = 540
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(540, 20);
+            this.btnTestToken.Location = new System.Drawing.Point(540, 24);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
