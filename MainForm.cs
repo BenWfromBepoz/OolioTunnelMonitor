@@ -65,7 +65,12 @@ namespace CloudflaredMonitor
             using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
             using var shadowBrush = new SolidBrush(Color.FromArgb(120, 0, 0, 0));
-            
+            using var format = new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                };
+
             g.DrawString("Oolio Tunnel Monitor", sf, shadowBrush,
                 new RectangleF(0, textY + 1, Width, subtitleH),
                 format);
