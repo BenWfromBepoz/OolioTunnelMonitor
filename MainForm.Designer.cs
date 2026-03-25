@@ -374,7 +374,7 @@ namespace CloudflaredMonitor
             int h              = pnlSidebar.Height;
             int btnBottom      = h - 22;                            // 22px from sidebar bottom
             int btnTop         = btnBottom - btnCheckUpdates.Height; // top of button
-            int lblTop         = btnBottom + 4;                     // label just below button
+            int lblTop         = btnBottom + 2;                     // label just below button
             btnCheckUpdates.Location = new System.Drawing.Point(12, btnTop);
             lblVersion.Location      = new System.Drawing.Point(14, lblTop);
         }
