@@ -53,7 +53,7 @@ namespace CloudflaredMonitor
             float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width * scale);
             int h = (int)(_logo.Height * scale);
-            int x = 14; // (Width - w) / 2
+            int x = 12; // was (Width - w) / 2
         
             int imageOffsetY = -20;
             int imageY = pad + imageOffsetY;
