@@ -14,6 +14,12 @@ namespace CloudflaredMonitor
             base.Dispose(disposing);
         }
 
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+            ResizeSidebar();
+        }
+
         private void InitializeComponent()
         {
             this.toolTip          = new ToolTip();
@@ -366,7 +372,7 @@ namespace CloudflaredMonitor
         {
             if (btnCheckUpdates == null || lblVersion == null || pnlSidebar == null) return;
             int h              = pnlSidebar.Height;
-            int btnBottom      = h - 16;                            // 16px from sidebar bottom
+            int btnBottom      = h - 22;                            // 22px from sidebar bottom
             int btnTop         = btnBottom - btnCheckUpdates.Height; // top of button
             int lblTop         = btnBottom + 4;                     // label just below button
             btnCheckUpdates.Location = new System.Drawing.Point(12, btnTop);
