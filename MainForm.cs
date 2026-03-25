@@ -37,47 +37,23 @@ namespace CloudflaredMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-        
             g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-        
             if (_logo == null) return;
-        
-            const int pad = 6;
-            const int subtitleH = 10;
-        
-            int avail = Math.Min(Width, Height) - pad * 2;
+            const int pad = 6; const int subtitleH = 26;
+            int imgArea = Height - subtitleH;
+            int avail = Math.Min(Width, imgArea) - pad * 2;
             if (avail <= 0) return;
-        
             float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
-            int w = (int)(_logo.Width * scale);
-            int h = (int)(_logo.Height * scale);
-            int x = 12; // was (Width - w) / 2
-        
-            int imageOffsetY = -20;
-            int imageY = pad + imageOffsetY;
-            int spacing = -37; // negative = overlap, positive = gap
-            int textY = imageY + h + spacing;
-        
-            g.DrawImage(_logo, new Rectangle(x, imageY, w, h));
-        
-            using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
-            using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
-            using var shadowBrush = new SolidBrush(Color.FromArgb(120, 0, 0, 0));
-            using var format = new StringFormat
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
-
-            g.DrawString("Oolio Tunnel Monitor", sf, shadowBrush,
-                new RectangleF(0, textY + 1, Width, subtitleH),
-                format);
-            
+            int w = (int)(_logo.Width * scale), h = (int)(_logo.Height * scale);
+            int x = (Width - w) / 2;
+            g.DrawImage(_logo, new Rectangle(x, pad, w, h));
+            using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
             g.DrawString("Oolio Tunnel Monitor", sf, sb,
-                new RectangleF(0, textY, Width, subtitleH),
-                format);
+                new RectangleF(0, imgArea, Width, subtitleH),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
 
@@ -116,14 +92,12 @@ namespace CloudflaredMonitor
             using var grad = new LinearGradientBrush(new Point(0, py), new Point(pw, py + ph), topCol, botCol);
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
             g.FillPath(grad, path);
-            var gr2 = new Rectangle(0, py, pw, ph / 2);
-            using var gloss = new LinearGradientBrush(gr2, Color.FromArgb(80, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
-            g.SetClip(path); g.FillRectangle(gloss, gr2); g.ResetClip();
             using var fgB = new SolidBrush(Color.White);
             g.DrawString(Text, Font, fgB, new RectangleF(0, py, pw, ph), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
 
+    // Fix 2: PillButton — removed gloss layer that caused mid-button seam line
     internal sealed class PillButton : Button
     {
         private const int Radius = 13; private bool _hovered;
@@ -147,12 +121,12 @@ namespace CloudflaredMonitor
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
             var topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220);
-            var botCol = _hovered ? Color.FromArgb(90, 50, 160)   : Color.FromArgb(75, 40, 140);
-            using var grad = new LinearGradientBrush(new Point(0, 0), new Point(Width, Height), topCol, botCol);
+            var botCol = _hovered ? Color.FromArgb(90,  50, 160)  : Color.FromArgb(75,  40, 140);
+            using var grad = new LinearGradientBrush(new Point(0, 0), new Point(0, Height), topCol, botCol);
             g.FillPath(grad, path);
-            if (Height > 4) { var gr = new Rectangle(0, 0, Width, Height / 2); using var gloss = new LinearGradientBrush(gr, Color.FromArgb(80, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical); g.SetClip(path); g.FillRectangle(gloss, gr); g.ResetClip(); }
             using var fg = new SolidBrush(Color.White);
-            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
 
@@ -180,7 +154,8 @@ namespace CloudflaredMonitor
             using var brush = new SolidBrush(BackColor); g.FillPath(brush, path);
             using var ab = new SolidBrush(_accent); g.FillRectangle(ab, new Rectangle(0, Radius, 3, Height - Radius * 2));
             using var fg = new SolidBrush(ForeColor);
-            g.DrawString(Text, Font, fg, new RectangleF(Padding.Left + 4, 0, Width - Padding.Left - 8, Height), new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap });
+            g.DrawString(Text, Font, fg, new RectangleF(Padding.Left + 4, 0, Width - Padding.Left - 8, Height),
+                new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap });
         }
         private static GraphicsPath RR(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
@@ -204,7 +179,7 @@ namespace CloudflaredMonitor
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(_pageBg);
-            for (int i = 3; i >= 1; i--) { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
+            for (int i = 3; i >= 1; i--) { using var sh = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sh, sp); }
             using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
         }
         protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
@@ -250,8 +225,7 @@ namespace CloudflaredMonitor
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
-            BackColor = Color.Transparent; Cursor = Cursors.Hand; Size = new Size(46, 22);
-            _thumbX = 2f;
+            BackColor = Color.Transparent; Cursor = Cursors.Hand; Size = new Size(46, 22); _thumbX = 2f;
             _anim = new System.Windows.Forms.Timer { Interval = 16 };
             _anim.Tick += (_, _) => { float t = TargetX, d = (t - _thumbX) * 0.35f; if (Math.Abs(d) < 0.5f) { _thumbX = t; _anim.Stop(); } else _thumbX += d; Invalidate(); };
         }
@@ -271,34 +245,49 @@ namespace CloudflaredMonitor
             using var tb = new SolidBrush(trackCol); g.FillPath(tb, tp);
             int thumbY = (Height - ThumbSz) / 2;
             using var shadow = new SolidBrush(Color.FromArgb(40, 0, 0, 0)); g.FillEllipse(shadow, _thumbX, thumbY + 1, ThumbSz, ThumbSz);
-            using var thumb  = new SolidBrush(Color.White);                  g.FillEllipse(thumb,  _thumbX, thumbY,     ThumbSz, ThumbSz);
+            using var thumb  = new SolidBrush(Color.White); g.FillEllipse(thumb, _thumbX, thumbY, ThumbSz, ThumbSz);
         }
         protected override void Dispose(bool disposing) { if (disposing) _anim.Dispose(); base.Dispose(disposing); }
     }
 
+    // Fix 1: OolioMessageBox — ContentPanel clears to Transparent so rounded corners
+    // show the form's dark BackColor instead of a solid black square
     internal sealed class OolioMessageBox : Form
     {
         private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
+
         private OolioMessageBox(string title, string message, bool yesNo)
         {
-            Text = title; FormBorderStyle = FormBorderStyle.None; StartPosition = FormStartPosition.CenterParent;
+            Text = title; FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterParent;
             BackColor = _sidebar; Size = new Size(460, 220); MinimumSize = new Size(360, 180);
-            var content = new ContentPanel { Dock = DockStyle.Fill }; Controls.Add(content);
-            content.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter });
-            content.Controls.Add(new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, AutoSize = false });
+
+            var content = new ContentPanel { Dock = DockStyle.Fill };
+            Controls.Add(content);
+
+            content.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent });
+            content.Controls.Add(new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, AutoSize = false });
+
             if (yesNo)
             {
                 var y = new PillButton { Text = "Yes", Size = new Size(90, 32), Location = new Point(250, 168) }; y.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); }; content.Controls.Add(y);
                 var n = new PillButton { Text = "No",  Size = new Size(90, 32), Location = new Point(352, 168) }; n.Click += (_, _) => { DialogResult = DialogResult.No;  Close(); }; content.Controls.Add(n);
             }
-            else { var ok = new PillButton { Text = "OK", Size = new Size(90, 32), Location = new Point(352, 168) }; ok.Click += (_, _) => { DialogResult = DialogResult.OK; Close(); }; content.Controls.Add(ok); }
-            var x = new Label { Text = "\u00d7", Font = new Font("Segoe UI", 13f), ForeColor = Color.FromArgb(120, 140, 160), Location = new Point(424, 10), Size = new Size(24, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, Cursor = Cursors.Hand };
-            x.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); }; content.Controls.Add(x);
+            else
+            {
+                var ok = new PillButton { Text = "OK", Size = new Size(90, 32), Location = new Point(352, 168) }; ok.Click += (_, _) => { DialogResult = DialogResult.OK; Close(); }; content.Controls.Add(ok);
+            }
+
+            var closeX = new Label { Text = "\u00d7", Font = new Font("Segoe UI", 13f), ForeColor = Color.FromArgb(120, 140, 160), Location = new Point(424, 10), Size = new Size(24, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, Cursor = Cursors.Hand };
+            closeX.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
+            content.Controls.Add(closeX);
+
             bool drag = false; Point ds = Point.Empty;
             content.MouseDown += (_, me) => { if (me.Button == MouseButtons.Left) { drag = true; ds = me.Location; } };
             content.MouseMove += (_, me) => { if (drag) Location = new Point(Location.X + me.X - ds.X, Location.Y + me.Y - ds.Y); };
             content.MouseUp   += (_, _)  => drag = false;
         }
+
         public static DialogResult Show(IWin32Window owner, string message, string title, bool yesNo = false)
         { using var d = new OolioMessageBox(title, message, yesNo); return d.ShowDialog(owner); }
     }
@@ -342,12 +331,10 @@ namespace CloudflaredMonitor
             "Bepoz", "CloudflaredMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
-        // ── Install panel (inline, replaces main content) ─────────────────────
         private InstallPanel? _installPanel;
 
         public MainForm()
         {
-            // Fix #3: enable WS_EX_COMPOSITED to suppress flicker during layout
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
             InitializeComponent();
             _exporter = new DiagnosticsExporter(_logger);
@@ -356,18 +343,15 @@ namespace CloudflaredMonitor
             tglShowToken.ToggledChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !tglShowToken.IsOn; };
         }
 
-        // Fix #3: override CreateParams to add WS_EX_COMPOSITED — eliminates repaint flicker
         protected override CreateParams CreateParams
-        {
-            get { var cp = base.CreateParams; cp.ExStyle |= 0x02000000; return cp; }
-        }
+        { get { var cp = base.CreateParams; cp.ExStyle |= 0x02000000; return cp; } }
 
-        // Fix #3: use OnLoad (fires before first paint) instead of OnShown
+        // Fix 3: also call sidebar bottom reposition here so controls are in place before first paint
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             SuspendLayout();
-            ResizeContentPanel();
+            ResizeContentPanel();          // positions contentPanel AND sidebar bottom controls
             contentPanel.Visible = true;
             ResumeLayout(false);
             ApplyGridHeaderStyles();
@@ -440,7 +424,6 @@ namespace CloudflaredMonitor
         public void OpenLogFolder()    { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
         public void OpenConfigFolder() { try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); } catch (Exception ex) { LogError("Could not open config folder", ex); } }
 
-        // ── Show/hide inline install panel (#4) ───────────────────────────────
         private void ShowInstallPanel()
         {
             if (_installPanel == null)
@@ -451,21 +434,18 @@ namespace CloudflaredMonitor
                 _installPanel.Cancelled += () => HideInstallPanel();
                 contentPanel.Controls.Add(_installPanel);
             }
-            else
-            {
-                _installPanel.Reset(GetToken());
-            }
-            tblMain.Visible      = false;
+            else _installPanel.Reset(GetToken());
+            tblMain.Visible       = false;
             _installPanel.Visible = true;
             _installPanel.BringToFront();
-            btnCreateTunnel.Text = "\u2190  Back to Monitor";
+            btnCreateTunnel.Text  = "\u2190  Back to Monitor";
         }
 
         private void HideInstallPanel()
         {
             if (_installPanel != null) _installPanel.Visible = false;
-            tblMain.Visible          = true;
-            btnCreateTunnel.Text     = "+  Install New Tunnel";
+            tblMain.Visible         = true;
+            btnCreateTunnel.Text    = "+  Install New Tunnel";
         }
 
         private async Task DoInstallAsync(InstallSpec spec)
@@ -631,8 +611,7 @@ namespace CloudflaredMonitor
                         catch (TaskCanceledException)    { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check timed out after 10s."); }
                     }
                     else LogInfo("No endpoint URL available. Add an API token to fetch route config.");
-                    LogInfo("Check complete (no API token — limited detail).");
-                    return;
+                    LogInfo("Check complete (no API token — limited detail)."); return;
                 }
                 LogInfo("API token found — querying Cloudflare...");
                 var api = new CloudflareApi(GetToken());
@@ -659,11 +638,7 @@ namespace CloudflaredMonitor
             {
                 string? tid = _currentStatus?.TunnelId;
                 if (tid == null && Directory.Exists(TunnelDetailsDir))
-                {
-                    var files = Directory.GetFiles(TunnelDetailsDir, "*.json");
-                    if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached ID: " + tid); }
-                    else if (files.Length > 1) { LogWarn("Multiple cached tunnels. Run Check Tunnel Status first."); return; }
-                }
+                { var files = Directory.GetFiles(TunnelDetailsDir, "*.json"); if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached ID: " + tid); } else if (files.Length > 1) { LogWarn("Multiple cached tunnels. Run Check Tunnel Status first."); return; } }
                 if (tid == null) { LogError("No tunnel ID found."); return; }
                 LogInfo("Repairing " + tid + "...");
                 _serviceManager.StopServiceBestEffort(); _serviceManager.KillCloudflaredProcess(); _serviceManager.DeleteService();
@@ -707,14 +682,14 @@ namespace CloudflaredMonitor
                 string notes  = root.TryGetProperty("releaseNotes", out var n) ? n.GetString() ?? "" : "";
                 if (IsNewerVersion(latest, AppVersion))
                 {
-                    LogInfo("Update Available: v" + latest);
+                    LogInfo("Update available: v" + latest);
                     string msg = $"A new version is available!\n\nYour version:\tv{AppVersion}\nNew version:\tv{latest}";
                     if (!string.IsNullOrWhiteSpace(notes)) msg += "\n\n" + notes;
                     msg += "\n\nOpen the download page?";
                     if (OolioMessageBox.Show(this, msg, "Update Available", yesNo: true) == DialogResult.Yes && !string.IsNullOrWhiteSpace(url))
                         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
-                else if (!silent) OolioMessageBox.Show(this, $"Oolio Tunnel Monitor is up to date - no new versions available", "This Version v{AppVersion} is Current");
+                else if (!silent) OolioMessageBox.Show(this, $"Oolio Tunnel Monitor is up to date.\n\nVersion: v{AppVersion}", "No Updates");
             }
             catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
@@ -722,22 +697,16 @@ namespace CloudflaredMonitor
         private static bool IsNewerVersion(string latest, string current)
         { try { return new Version(latest) > new Version(current); } catch { return latest != current && latest != ""; } }
 
-        // #4: Install button now toggles inline panel instead of showing dialog
         private void btnCreateTunnel_Click(object? sender, EventArgs e)
         {
-            if (tblMain.Visible)
-            {
-                if (!HasToken()) { OolioMessageBox.Show(this, "Please enter a Cloudflare API token first.", "API Token Required"); return; }
-                ShowInstallPanel();
-            }
+            if (tblMain.Visible) { if (!HasToken()) { OolioMessageBox.Show(this, "Please enter a Cloudflare API token first.", "API Token Required"); return; } ShowInstallPanel(); }
             else HideInstallPanel();
         }
-
-        private async void btnTunnelStatus_Click(object? sender, EventArgs e)    => await CheckTunnelStatusAsync();
-        private async void btnTestToken_Click(object? sender, EventArgs e)        => await TestTokenAsync();
-        private void btnOpenLogs_Click(object? sender, EventArgs e)                => OpenLogFolder();
-        private void btnOpenConfig_Click(object? sender, EventArgs e)              => OpenConfigFolder();
-        private async void btnRepair_Click(object? sender, EventArgs e)            => await RepairAsync();
-        private async void btnCheckUpdates_Click(object? sender, EventArgs e)      => await CheckForUpdatesAsync(silent: false);
+        private async void btnTunnelStatus_Click(object? sender, EventArgs e)   => await CheckTunnelStatusAsync();
+        private async void btnTestToken_Click(object? sender, EventArgs e)       => await TestTokenAsync();
+        private void btnOpenLogs_Click(object? sender, EventArgs e)               => OpenLogFolder();
+        private void btnOpenConfig_Click(object? sender, EventArgs e)             => OpenConfigFolder();
+        private async void btnRepair_Click(object? sender, EventArgs e)           => await RepairAsync();
+        private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync(silent: false);
     }
 }
