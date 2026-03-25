@@ -132,8 +132,9 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: floated by ResizeContentPanel() ────────────────
+            // ── ContentPanel: hidden until OnLoad positions it (fix #3 flicker)
             this.contentPanel.Controls.Add(this.tblMain);
+            this.contentPanel.Visible = false;
 
             // ── Main layout ──────────────────────────────────────────────────
             this.tblMain.Dock        = DockStyle.Fill;
@@ -206,7 +207,7 @@ namespace CloudflaredMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ── Dock=Fill with Padding keeps grid off all edges
+            // ── Ingress card ──────────────────────────────────────────────────
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
             this.pnlIngressCard.Padding = new Padding(10, 32, 10, 10);
@@ -266,7 +267,7 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card ── purple box + toggle switch ──────────────────────
+            // ── Token card ───────────────────────────────────────────────────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
@@ -279,7 +280,6 @@ namespace CloudflaredMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            // Purple-tinted input, width ~390 to align with Local Endpoint column
             this.txtApiToken.Location              = new System.Drawing.Point(14, 28);
             this.txtApiToken.Size                  = new System.Drawing.Size(390, 26);
             this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
@@ -289,13 +289,15 @@ namespace CloudflaredMonitor
             this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
             this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(76, 29, 149);
 
-            // Toggle switch: sits right of text box, vertically aligned
             this.tglShowToken.Location = new System.Drawing.Point(410, 30);
             this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
             this.tglShowToken.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
+            // #2: right edge of Test Token button aligns with right edge of status pills
+            // Pill right = tblStatus.X(16) + col0(90) + col1(300) + col2(90) + pillWidth(150) = 646
+            // Button width = 106, so X = 646 - 106 = 540
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(464, 16);
+            this.btnTestToken.Location = new System.Drawing.Point(540, 16);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
