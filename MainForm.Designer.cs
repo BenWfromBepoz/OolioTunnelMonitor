@@ -112,7 +112,7 @@ namespace CloudflaredMonitor
 
             // Check for Updates: anchored to bottom of sidebar
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 650);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 660);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
             this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
