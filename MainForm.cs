@@ -45,7 +45,7 @@ namespace CloudflaredMonitor
             if (_logo == null) return;
         
             const int pad = 6;
-            const int subtitleH = 26;
+            const int subtitleH = 10;
         
             int avail = Math.Min(Width, Height) - pad * 2;
             if (avail <= 0) return;
