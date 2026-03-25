@@ -114,7 +114,7 @@ namespace CloudflaredMonitor
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
             this.btnCheckUpdates.Location = new System.Drawing.Point(12, 650);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor   = AnchorStyles.Bottom | AnchorStyles.Left;
+            this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
             // Version label: anchored to bottom, sits directly under the button
@@ -124,7 +124,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Location  = new System.Drawing.Point(14, 698);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
+            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
             this.lblVersion.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
