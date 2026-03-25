@@ -53,26 +53,26 @@ namespace CloudflaredMonitor
             float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width * scale);
             int h = (int)(_logo.Height * scale);
-        
             int x = (Width - w) / 2;
         
             int imageOffsetY = -20;
             int imageY = Math.Max(0, pad + imageOffsetY);
-        
-            int textY = Math.Min(imageY + h + 4, Height - subtitleH);
+            int spacing = -20; // negative = overlap, positive = gap
+            int textY = imageY + h + spacing;
         
             g.DrawImage(_logo, new Rectangle(x, imageY, w, h));
         
             using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
-        
+            using var shadowBrush = new SolidBrush(Color.FromArgb(120, 0, 0, 0));
+            
+            g.DrawString("Oolio Tunnel Monitor", sf, shadowBrush,
+                new RectangleF(0, textY + 1, Width, subtitleH),
+                format);
+            
             g.DrawString("Oolio Tunnel Monitor", sf, sb,
                 new RectangleF(0, textY, Width, subtitleH),
-                new StringFormat
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                });
+                format);
         }
     }
 
