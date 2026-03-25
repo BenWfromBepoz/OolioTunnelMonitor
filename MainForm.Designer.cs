@@ -272,7 +272,7 @@ namespace CloudflaredMonitor
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
             this.lblTokenTitle.Text      = "Cloudflare API Token";
-            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
+            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblTokenTitle.Location  = new System.Drawing.Point(14, 6);
             this.lblTokenTitle.Size      = new System.Drawing.Size(175, 18);
@@ -289,7 +289,7 @@ namespace CloudflaredMonitor
             this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
             this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(76, 29, 149);
 
-            this.tglShowToken.Location = new System.Drawing.Point(410, 30);
+            this.tglShowToken.Location = new System.Drawing.Point(410, 29);
             this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
             this.tglShowToken.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
@@ -297,7 +297,7 @@ namespace CloudflaredMonitor
             // Pill right = tblStatus.X(16) + col0(90) + col1(300) + col2(90) + pillWidth(150) = 646
             // Button width = 106, so X = 646 - 106 = 540
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(540, 16);
+            this.btnTestToken.Location = new System.Drawing.Point(540, 20);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
