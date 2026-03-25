@@ -70,12 +70,10 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Width     = 224;
             this.pnlSidebar.Padding   = new Padding(0);
 
-            // Logo: trimmed to 200px tall so it doesn't overlap btnCreateTunnel at y=208
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
             this.oolioLogo.Size      = new System.Drawing.Size(224, 200);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            // Sidebar nav buttons — start at y=208, 8px gap below logo
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 208);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
@@ -110,21 +108,18 @@ namespace CloudflaredMonitor
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
-            // Check for Updates: anchored to bottom of sidebar
-            this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 660);
-            this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
-            this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
+            // Check for Updates + version: no Anchor — positioned by ResizeSidebar()
+            this.btnCheckUpdates.Text   = "\u21bb  Check for Updates";
+            this.btnCheckUpdates.Size   = new System.Drawing.Size(200, 36);
+            this.btnCheckUpdates.Anchor = AnchorStyles.None;
+            this.btnCheckUpdates.Click += new EventHandler(this.btnCheckUpdates_Click);
 
-            // Version label: anchored to bottom, sits directly under the button
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 698);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
+            this.lblVersion.Anchor    = AnchorStyles.None;
             this.lblVersion.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
@@ -137,7 +132,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: hidden until OnLoad positions it (flicker fix)
+            // ── ContentPanel ─────────────────────────────────────────────────
             this.contentPanel.Controls.Add(this.tblMain);
             this.contentPanel.Visible = false;
 
@@ -345,7 +340,7 @@ namespace CloudflaredMonitor
             this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor     = System.Drawing.Color.FromArgb(39, 46, 63);
-            this.Resize       += (_, _) => ResizeContentPanel();
+            this.Resize       += (_, _) => { ResizeContentPanel(); ResizeSidebar(); };
 
             this.pnlSidebar.ResumeLayout(false);
             this.contentPanel.ResumeLayout(false);
@@ -354,6 +349,7 @@ namespace CloudflaredMonitor
             this.ResumeLayout(false);
         }
 
+        // ContentPanel floats with 12px gap on all sides
         private void ResizeContentPanel()
         {
             const int gap   = 12;
@@ -363,6 +359,18 @@ namespace CloudflaredMonitor
             contentPanel.Size     = new System.Drawing.Size(
                 ClientSize.Width  - sideW - gap * 2,
                 ClientSize.Height - gap * 2);
+        }
+
+        // Repositions bottom-pinned sidebar items whenever the window height changes
+        private void ResizeSidebar()
+        {
+            if (btnCheckUpdates == null || lblVersion == null || pnlSidebar == null) return;
+            int h              = pnlSidebar.Height;
+            int btnBottom      = h - 16;                            // 16px from sidebar bottom
+            int btnTop         = btnBottom - btnCheckUpdates.Height; // top of button
+            int lblTop         = btnBottom + 4;                     // label just below button
+            btnCheckUpdates.Location = new System.Drawing.Point(12, btnTop);
+            lblVersion.Location      = new System.Drawing.Point(14, lblTop);
         }
 
         private ToolTip          toolTip;
