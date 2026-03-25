@@ -707,14 +707,14 @@ namespace CloudflaredMonitor
                 string notes  = root.TryGetProperty("releaseNotes", out var n) ? n.GetString() ?? "" : "";
                 if (IsNewerVersion(latest, AppVersion))
                 {
-                    LogInfo("Update available: v" + latest);
+                    LogInfo("Update Available: v" + latest);
                     string msg = $"A new version is available!\n\nYour version:\tv{AppVersion}\nNew version:\tv{latest}";
                     if (!string.IsNullOrWhiteSpace(notes)) msg += "\n\n" + notes;
                     msg += "\n\nOpen the download page?";
                     if (OolioMessageBox.Show(this, msg, "Update Available", yesNo: true) == DialogResult.Yes && !string.IsNullOrWhiteSpace(url))
                         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
-                else if (!silent) OolioMessageBox.Show(this, $"Oolio Tunnel Monitor is up to date.\n\nVersion: v{AppVersion}", "No Updates");
+                else if (!silent) OolioMessageBox.Show(this, $"Oolio Tunnel Monitor is up to date - no new versions available", "This Version v{AppVersion} is Current");
             }
             catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
         }
