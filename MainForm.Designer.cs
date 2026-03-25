@@ -47,6 +47,9 @@ namespace CloudflaredMonitor
             this.colLocal         = new DataGridViewTextBoxColumn();
             this.pnlTokenCard     = new RoundedPanel();
             this.lblTokenTitle    = new Label();
+            this.pnlTokenWrap     = new BorderPanel(
+                System.Drawing.Color.FromArgb(196, 181, 253),
+                System.Drawing.Color.FromArgb(109,  40, 217), 4);
             this.txtApiToken      = new TextBox();
             this.tglShowToken     = new ToggleSwitch();
             this.btnTestToken     = new PillButton();
@@ -57,6 +60,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.SuspendLayout();
             this.contentPanel.SuspendLayout();
             this.tblMain.SuspendLayout();
+            this.pnlTokenWrap.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).BeginInit();
             this.SuspendLayout();
 
@@ -70,12 +74,10 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Width     = 224;
             this.pnlSidebar.Padding   = new Padding(0);
 
-            // Logo: 200px tall — bottom edge at y=200, no overlap with buttons
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
             this.oolioLogo.Size      = new System.Drawing.Size(224, 200);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            // Nav buttons: start at y=208
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 208);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
@@ -110,8 +112,6 @@ namespace CloudflaredMonitor
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
-            // Check Updates + version: NO anchor — repositioned in code via RepositionSidebarBottom()
-            // Initial Y values are for 720px window height; code updates them on every resize
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
             this.btnCheckUpdates.Location = new System.Drawing.Point(12, 626);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
@@ -272,7 +272,7 @@ namespace CloudflaredMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card ───────────────────────────────────────────────────
+            // ── Token card ── rounded + dark-purple border ───────────────────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
@@ -285,14 +285,21 @@ namespace CloudflaredMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            this.txtApiToken.Location              = new System.Drawing.Point(14, 30);
-            this.txtApiToken.Size                  = new System.Drawing.Size(390, 26);
-            this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
+            // txtApiToken inside BorderPanel wrapper — gives rounded corners + purple border
+            this.txtApiToken.BorderStyle           = BorderStyle.None;
             this.txtApiToken.UseSystemPasswordChar = true;
             this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 9f);
-            this.txtApiToken.BorderStyle           = BorderStyle.FixedSingle;
             this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
-            this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(76, 29, 149);
+            this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(109,  40, 217);
+            this.txtApiToken.Location              = new System.Drawing.Point(5, 4);
+            this.txtApiToken.Size                  = new System.Drawing.Size(378, 20);
+            this.txtApiToken.Anchor                = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+
+            this.pnlTokenWrap.Location  = new System.Drawing.Point(14, 28);
+            this.pnlTokenWrap.Size      = new System.Drawing.Size(390, 28);
+            this.pnlTokenWrap.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
+            this.pnlTokenWrap.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
+            this.pnlTokenWrap.Controls.Add(this.txtApiToken);
 
             this.tglShowToken.Location = new System.Drawing.Point(410, 29);
             this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
@@ -304,7 +311,7 @@ namespace CloudflaredMonitor
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
-            this.pnlTokenCard.Controls.Add(this.txtApiToken);
+            this.pnlTokenCard.Controls.Add(this.pnlTokenWrap);
             this.pnlTokenCard.Controls.Add(this.tglShowToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
@@ -350,6 +357,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.ResumeLayout(false);
             this.contentPanel.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
+            this.pnlTokenWrap.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).EndInit();
             this.ResumeLayout(false);
         }
@@ -363,11 +371,6 @@ namespace CloudflaredMonitor
             contentPanel.Size     = new System.Drawing.Size(
                 ClientSize.Width  - sideW - gap * 2,
                 ClientSize.Height - gap * 2);
-
-            // Reposition bottom-anchored sidebar controls in code —
-            // pnlSidebar.Dock=Left doesn't auto-resize height on WinForms,
-            // so Anchor=Bottom doesn't work. We calculate Y from ClientSize.Height directly.
-            // Button sits 62px from bottom, version label 20px from bottom.
             if (btnCheckUpdates != null)
                 btnCheckUpdates.Location = new System.Drawing.Point(12, ClientSize.Height - 62);
             if (lblVersion != null)
@@ -405,6 +408,7 @@ namespace CloudflaredMonitor
         private DataGridViewTextBoxColumn colLocal;
         private RoundedPanel     pnlTokenCard;
         private Label            lblTokenTitle;
+        private BorderPanel      pnlTokenWrap;
         private TextBox          txtApiToken;
         private ToggleSwitch     tglShowToken;
         private PillButton       btnTestToken;
