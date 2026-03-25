@@ -143,9 +143,9 @@ namespace CloudflaredMonitor
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 114));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 116));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  72));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ──────────────────────────────────────────────────
