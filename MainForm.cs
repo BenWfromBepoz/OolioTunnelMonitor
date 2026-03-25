@@ -51,8 +51,9 @@ namespace CloudflaredMonitor
             g.DrawImage(_logo, new Rectangle(x, pad -20, w, h)); // Trim space above logo
             using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
+            int textY = pad + h + 4; // 4px spacing under image
             g.DrawString("Oolio Tunnel Monitor", sf, sb,
-                new RectangleF(0, imgArea, Width, subtitleH),
+                new RectangleF(0, textY, Width, subtitleH),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
