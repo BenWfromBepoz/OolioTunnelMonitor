@@ -56,7 +56,7 @@ namespace CloudflaredMonitor
             int x = (Width - w) / 2;
         
             int imageOffsetY = -10;
-            int imageY = Math.Max(0, pad + imageOffsetY);
+            int imageY = pad + imageOffsetY;
             int spacing = -60; // negative = overlap, positive = gap
             int textY = imageY + h + spacing;
         
