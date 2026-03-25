@@ -282,7 +282,7 @@ namespace CloudflaredMonitor
         private OolioMessageBox(string title, string message, bool yesNo)
         {
             Text = title; FormBorderStyle = FormBorderStyle.None; StartPosition = FormStartPosition.CenterParent;
-            BackColor = Color.Transparent; Size = new Size(460, 220); MinimumSize = new Size(360, 180);
+            BackColor = _sidebar; Size = new Size(460, 220); MinimumSize = new Size(360, 180);
             var content = new ContentPanel { Dock = DockStyle.Fill }; Controls.Add(content);
             content.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter });
             content.Controls.Add(new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, AutoSize = false });
