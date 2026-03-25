@@ -75,34 +75,34 @@ namespace CloudflaredMonitor
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 220);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 200);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 258);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 248);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 306);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 296);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 354);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 344);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 402);
+            this.btnRepair.Location = new System.Drawing.Point(12, 392);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 450);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 440);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
