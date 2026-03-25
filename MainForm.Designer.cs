@@ -71,16 +71,16 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Padding   = new Padding(0);
 
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(228, 255);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 250);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 200);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 210);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 248);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 258);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
