@@ -282,10 +282,10 @@ namespace CloudflaredMonitor
         private OolioMessageBox(string title, string message, bool yesNo)
         {
             Text = title; FormBorderStyle = FormBorderStyle.None; StartPosition = FormStartPosition.CenterParent;
-            BackColor = _sidebar; Size = new Size(460, 220); MinimumSize = new Size(360, 180);
+            BackColor = Color.Transparent; Size = new Size(460, 220); MinimumSize = new Size(360, 180);
             var content = new ContentPanel { Dock = DockStyle.Fill }; Controls.Add(content);
-            content.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent });
-            content.Controls.Add(new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, AutoSize = false });
+            content.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter });
+            content.Controls.Add(new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, AutoSize = false });
             if (yesNo)
             {
                 var y = new PillButton { Text = "Yes", Size = new Size(90, 32), Location = new Point(250, 168) }; y.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); }; content.Controls.Add(y);
