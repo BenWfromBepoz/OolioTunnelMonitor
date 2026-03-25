@@ -36,28 +36,36 @@ namespace CloudflaredMonitor
         }
         protected override void OnPaint(PaintEventArgs e)
         {
+            var g = e.Graphics;
+        
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        
+            if (_logo == null) return;
+        
             const int pad = 6;
             const int subtitleH = 26;
-            
+        
             int avail = Math.Min(Width, Height) - pad * 2;
             if (avail <= 0) return;
-            
+        
             float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width * scale);
             int h = (int)(_logo.Height * scale);
-            
+        
             int x = (Width - w) / 2;
-            
+        
             int imageOffsetY = -20;
             int imageY = Math.Max(0, pad + imageOffsetY);
-            
+        
             int textY = Math.Min(imageY + h + 4, Height - subtitleH);
-            
+        
             g.DrawImage(_logo, new Rectangle(x, imageY, w, h));
-            
+        
             using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
-            
+        
             g.DrawString("Oolio Tunnel Monitor", sf, sb,
                 new RectangleF(0, textY, Width, subtitleH),
                 new StringFormat
