@@ -14,12 +14,6 @@ namespace CloudflaredMonitor
             base.Dispose(disposing);
         }
 
-        protected override void OnLayout(LayoutEventArgs levent)
-        {
-            base.OnLayout(levent);
-            ResizeSidebar();
-        }
-
         private void InitializeComponent()
         {
             this.toolTip          = new ToolTip();
@@ -76,10 +70,12 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Width     = 224;
             this.pnlSidebar.Padding   = new Padding(0);
 
+            // Logo: 200px tall — bottom edge at y=200, no overlap with buttons
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
             this.oolioLogo.Size      = new System.Drawing.Size(224, 200);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
+            // Nav buttons: start at y=208
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 208);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
@@ -114,15 +110,18 @@ namespace CloudflaredMonitor
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
-            // Check for Updates + version: no Anchor — positioned by ResizeSidebar()
-            this.btnCheckUpdates.Text   = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Size   = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor = AnchorStyles.None;
-            this.btnCheckUpdates.Click += new EventHandler(this.btnCheckUpdates_Click);
+            // Check Updates + version: NO anchor — repositioned in code via RepositionSidebarBottom()
+            // Initial Y values are for 720px window height; code updates them on every resize
+            this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 626);
+            this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
+            this.btnCheckUpdates.Anchor   = AnchorStyles.None;
+            this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 668);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.None;
@@ -138,7 +137,7 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel ─────────────────────────────────────────────────
+            // ── ContentPanel: hidden until OnLoad positions it (flicker fix)
             this.contentPanel.Controls.Add(this.tblMain);
             this.contentPanel.Visible = false;
 
@@ -346,7 +345,7 @@ namespace CloudflaredMonitor
             this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor     = System.Drawing.Color.FromArgb(39, 46, 63);
-            this.Resize       += (_, _) => { ResizeContentPanel(); ResizeSidebar(); };
+            this.Resize       += (_, _) => ResizeContentPanel();
 
             this.pnlSidebar.ResumeLayout(false);
             this.contentPanel.ResumeLayout(false);
@@ -355,7 +354,6 @@ namespace CloudflaredMonitor
             this.ResumeLayout(false);
         }
 
-        // ContentPanel floats with 12px gap on all sides
         private void ResizeContentPanel()
         {
             const int gap   = 12;
@@ -365,18 +363,15 @@ namespace CloudflaredMonitor
             contentPanel.Size     = new System.Drawing.Size(
                 ClientSize.Width  - sideW - gap * 2,
                 ClientSize.Height - gap * 2);
-        }
 
-        // Repositions bottom-pinned sidebar items whenever the window height changes
-        private void ResizeSidebar()
-        {
-            if (btnCheckUpdates == null || lblVersion == null || pnlSidebar == null) return;
-            int h              = pnlSidebar.Height;
-            int btnBottom      = h - 22;                            // 22px from sidebar bottom
-            int btnTop         = btnBottom - btnCheckUpdates.Height; // top of button
-            int lblTop         = btnBottom + 2;                     // label just below button
-            btnCheckUpdates.Location = new System.Drawing.Point(12, btnTop);
-            lblVersion.Location      = new System.Drawing.Point(14, lblTop);
+            // Reposition bottom-anchored sidebar controls in code —
+            // pnlSidebar.Dock=Left doesn't auto-resize height on WinForms,
+            // so Anchor=Bottom doesn't work. We calculate Y from ClientSize.Height directly.
+            // Button sits 62px from bottom, version label 20px from bottom.
+            if (btnCheckUpdates != null)
+                btnCheckUpdates.Location = new System.Drawing.Point(12, ClientSize.Height - 62);
+            if (lblVersion != null)
+                lblVersion.Location = new System.Drawing.Point(14, ClientSize.Height - 20);
         }
 
         private ToolTip          toolTip;
