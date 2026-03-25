@@ -52,13 +52,13 @@ namespace CloudflaredMonitor
         
             float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
             int w = (int)(_logo.Width * scale);
-            int h = (int)(_logo.Height * scale);
+            int h = (int)(_logo.Height); // * scale);
             int x = 12; // was (Width - w) / 2
         
             int imageOffsetY = -20;
             int imageY = pad + imageOffsetY;
             int spacing = -47; // negative = overlap, positive = gap
-            int textY = imageY + spacing;
+            int textY = imageY + h + spacing;
         
             g.DrawImage(_logo, new Rectangle(x, imageY, w, h));
         
