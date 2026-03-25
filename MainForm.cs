@@ -55,7 +55,7 @@ namespace CloudflaredMonitor
             int h = (int)(_logo.Height * scale);
             int x = (Width - w) / 2;
         
-            int imageOffsetY = -10;
+            int imageOffsetY = -20;
             int imageY = pad + imageOffsetY;
             int spacing = -60; // negative = overlap, positive = gap
             int textY = imageY + h + spacing;
