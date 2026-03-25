@@ -6,6 +6,7 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -97,7 +98,6 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Fix 2: PillButton — removed gloss layer that caused mid-button seam line
     internal sealed class PillButton : Button
     {
         private const int Radius = 13; private bool _hovered;
@@ -250,42 +250,86 @@ namespace CloudflaredMonitor
         protected override void Dispose(bool disposing) { if (disposing) _anim.Dispose(); base.Dispose(disposing); }
     }
 
-    // Fix 1: OolioMessageBox — ContentPanel clears to Transparent so rounded corners
-    // show the form's dark BackColor instead of a solid black square
+    // Fix 1: OolioMessageBox — painted directly on the Form, no ContentPanel wrapper.
+    // ContentPanel uses WS_EX_COMPOSITED which conflicts with FormBorderStyle.None dialogs.
+    // Instead we owner-draw the dialog surface here using the same rounded rect approach.
     internal sealed class OolioMessageBox : Form
     {
         private static readonly Color _sidebar = Color.FromArgb(39, 46, 63);
+        private static readonly Color _pageBg  = Color.FromArgb(226, 232, 240);
+        private const int Radius = 16;
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                // WS_EX_COMPOSITED for flicker-free drawing, no transparency key needed
+                var cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000;
+                return cp;
+            }
+        }
 
         private OolioMessageBox(string title, string message, bool yesNo)
         {
-            Text = title; FormBorderStyle = FormBorderStyle.None;
-            StartPosition = FormStartPosition.CenterParent;
-            BackColor = _sidebar; Size = new Size(460, 220); MinimumSize = new Size(360, 180);
+            Text            = title;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition   = FormStartPosition.CenterParent;
+            BackColor       = _pageBg;   // light grey — same as ContentPanel interior
+            Size            = new Size(460, 220);
+            MinimumSize     = new Size(360, 180);
+            DoubleBuffered  = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
 
-            var content = new ContentPanel { Dock = DockStyle.Fill };
-            Controls.Add(content);
+            // Region clips the form to a rounded rectangle — no black corners
+            this.Load += (_, _) => ApplyRegion();
+            this.Resize += (_, _) => ApplyRegion();
 
-            content.Controls.Add(new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent });
-            content.Controls.Add(new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, AutoSize = false });
+            // Title
+            var lblTitle = new Label { Text = title, Font = new Font("Segoe UI Semibold", 11f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59), Location = new Point(20, 18), Size = new Size(390, 24), BackColor = Color.Transparent };
+            Controls.Add(lblTitle);
+
+            // Message
+            var lblMsg = new Label { Text = message, Font = new Font("Segoe UI", 9f), ForeColor = Color.FromArgb(71, 85, 105), Location = new Point(20, 50), Size = new Size(420, 100), BackColor = Color.Transparent, AutoSize = false };
+            Controls.Add(lblMsg);
 
             if (yesNo)
             {
-                var y = new PillButton { Text = "Yes", Size = new Size(90, 32), Location = new Point(250, 168) }; y.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); }; content.Controls.Add(y);
-                var n = new PillButton { Text = "No",  Size = new Size(90, 32), Location = new Point(352, 168) }; n.Click += (_, _) => { DialogResult = DialogResult.No;  Close(); }; content.Controls.Add(n);
+                var y = new PillButton { Text = "Yes", Size = new Size(90, 32), Location = new Point(250, 168) }; y.Click += (_, _) => { DialogResult = DialogResult.Yes; Close(); }; Controls.Add(y);
+                var n = new PillButton { Text = "No",  Size = new Size(90, 32), Location = new Point(352, 168) }; n.Click += (_, _) => { DialogResult = DialogResult.No;  Close(); }; Controls.Add(n);
             }
             else
             {
-                var ok = new PillButton { Text = "OK", Size = new Size(90, 32), Location = new Point(352, 168) }; ok.Click += (_, _) => { DialogResult = DialogResult.OK; Close(); }; content.Controls.Add(ok);
+                var ok = new PillButton { Text = "OK", Size = new Size(90, 32), Location = new Point(352, 168) }; ok.Click += (_, _) => { DialogResult = DialogResult.OK; Close(); }; Controls.Add(ok);
             }
 
+            // Close X
             var closeX = new Label { Text = "\u00d7", Font = new Font("Segoe UI", 13f), ForeColor = Color.FromArgb(120, 140, 160), Location = new Point(424, 10), Size = new Size(24, 24), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleCenter, Cursor = Cursors.Hand };
             closeX.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
-            content.Controls.Add(closeX);
+            Controls.Add(closeX);
 
+            // Drag to move
             bool drag = false; Point ds = Point.Empty;
-            content.MouseDown += (_, me) => { if (me.Button == MouseButtons.Left) { drag = true; ds = me.Location; } };
-            content.MouseMove += (_, me) => { if (drag) Location = new Point(Location.X + me.X - ds.X, Location.Y + me.Y - ds.Y); };
-            content.MouseUp   += (_, _)  => drag = false;
+            MouseDown += (_, me) => { if (me.Button == MouseButtons.Left) { drag = true; ds = me.Location; } };
+            MouseMove += (_, me) => { if (drag) Location = new Point(Location.X + me.X - ds.X, Location.Y + me.Y - ds.Y); };
+            MouseUp   += (_, _)  => drag = false;
+        }
+
+        private void ApplyRegion()
+        {
+            // Set Form.Region to rounded rect — Windows clips all painting to this shape
+            var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width, Height), Radius);
+            Region = new Region(path);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            // Draw a subtle dark border around the rounded form
+            using var border = new Pen(Color.FromArgb(180, _sidebar), 1.5f);
+            using var path   = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+            g.DrawPath(border, path);
         }
 
         public static DialogResult Show(IWin32Window owner, string message, string title, bool yesNo = false)
@@ -346,18 +390,23 @@ namespace CloudflaredMonitor
         protected override CreateParams CreateParams
         { get { var cp = base.CreateParams; cp.ExStyle |= 0x02000000; return cp; } }
 
-        // Fix 3: also call sidebar bottom reposition here so controls are in place before first paint
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
             SuspendLayout();
-            ResizeContentPanel();          // positions contentPanel AND sidebar bottom controls
+            ResizeContentPanel();
             contentPanel.Visible = true;
             ResumeLayout(false);
             ApplyGridHeaderStyles();
             _ = LoadTodaysLogAsync();
             _ = CheckTunnelStatusAsync();
             _ = CheckForUpdatesAsync(silent: true);
+
+            // Fix 2: defer sidebar bottom reposition until after first paint completes.
+            // OnLoad fires before the OS has finished sizing the window, so ClientSize
+            // may still be the design-time value. BeginInvoke queues this after the
+            // message pump processes WM_SIZE, ensuring correct ClientSize.
+            BeginInvoke(() => ResizeContentPanel());
         }
 
         private void ApplyGridHeaderStyles()
@@ -595,15 +644,7 @@ namespace CloudflaredMonitor
                             bool hasCf = resp.Headers.Contains("CF-RAY") || (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
                             string cfRay = resp.Headers.Contains("CF-RAY") ? resp.Headers.GetValues("CF-RAY").First() : "";
                             string server = resp.Headers.Contains("Server") ? resp.Headers.GetValues("Server").First() : "unknown";
-                            if (hasCf)
-                            {
-                                ApplyBadge(lblRemoteStatus, "Tunnel OK");
-                                LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")");
-                                if (code == 502) LogWarn("  502 — tunnel working, origin not responding.");
-                                else if (code == 503) LogWarn("  503 — tunnel working, origin temporarily unavailable.");
-                                else if (code >= 200 && code < 300) LogInfo("  " + code + " — origin also responding normally.");
-                                else LogInfo("  " + code + " — origin returned this status (tunnel fine).");
-                            }
+                            if (hasCf) { ApplyBadge(lblRemoteStatus, "Tunnel OK"); LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")"); if (code == 502) LogWarn("  502 — tunnel working, origin not responding."); else if (code == 503) LogWarn("  503 — origin temporarily unavailable."); else if (code >= 200 && code < 300) LogInfo("  " + code + " — origin responding normally."); else LogInfo("  " + code + " — origin returned this status."); }
                             else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " — endpoint responded. Server: " + server); }
                             else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " — endpoint may not be functioning."); }
                         }
