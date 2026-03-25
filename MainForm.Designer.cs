@@ -117,7 +117,7 @@ namespace CloudflaredMonitor
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 4); //(14, 568)
+            this.lblVersion.Location  = new System.Drawing.Point(14, 0); //(14, 568)
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
             this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
