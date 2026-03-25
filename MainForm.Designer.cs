@@ -70,10 +70,12 @@ namespace CloudflaredMonitor
             this.pnlSidebar.Width     = 224;
             this.pnlSidebar.Padding   = new Padding(0);
 
+            // Logo: your offset change preserved — Size 250 tall, buttons start at y=200
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
             this.oolioLogo.Size      = new System.Drawing.Size(224, 250);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
+            // Sidebar buttons — your y=200 start preserved
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 200);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
@@ -108,19 +110,21 @@ namespace CloudflaredMonitor
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
             this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
+            // Check for Updates button: below chkReinstall
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 28); //(12, 526)
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 468);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor   = AnchorStyles.Bottom | AnchorStyles.Left;
+            this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
+            // Version label: directly below Check for Updates button
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 0); //(14, 568)
+            this.lblVersion.Location  = new System.Drawing.Point(14, 510);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.Bottom | AnchorStyles.Left;
+            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
@@ -293,9 +297,6 @@ namespace CloudflaredMonitor
             this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
             this.tglShowToken.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
-            // #2: right edge of Test Token button aligns with right edge of status pills
-            // Pill right = tblStatus.X(16) + col0(90) + col1(300) + col2(90) + pillWidth(150) = 646
-            // Button width = 106, so X = 646 - 106 = 540
             this.btnTestToken.Text     = "Test Token";
             this.btnTestToken.Location = new System.Drawing.Point(540, 24);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
