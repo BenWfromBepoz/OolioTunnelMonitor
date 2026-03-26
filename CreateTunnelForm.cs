@@ -110,7 +110,8 @@ namespace CloudflaredMonitor
         }
     }
 
-    internal class RouteSpec
+    // FIX: public so CreateTunnelForm.Result property is accessible from MainForm
+    public class RouteSpec
     {
         public string Service { get; set; } = "TSPlus";
         public int    Port    { get; set; }
@@ -118,7 +119,7 @@ namespace CloudflaredMonitor
         public string Domain  { get; set; } = "";
     }
 
-    internal class InstallSpec
+    public class InstallSpec
     {
         public string NetSuiteId { get; set; } = "";
         public string GroupName  { get; set; } = "";
