@@ -481,7 +481,7 @@ namespace CloudflaredMonitor
 
 private async Task DoInstallAsync(InstallSpec spec)
         {
-                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = CreateTunnelForm.BuildHostname(r, spec), Path = null, Service = "http://localhost:" + r.Port }).Where(i => !string.IsNullOrEmpty(i.Hostname)).Cast<CfIngressItem>().ToList();
+                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = CreateTunnelForm.BuildHostname(r, spec), Path = null, Service = "http://localhost:" + r.Port }).Where(i => !string.IsNullOrEmpty(i.Hostname)).Cast<IngressItem>().ToList();
             var api = new CloudflareApi(GetToken());
             try
             {
