@@ -127,6 +127,7 @@ namespace CloudflaredMonitor
         public string CustomName { get; set; } = "";
         public bool   UseCustom  { get; set; }
         public List<RouteSpec> Routes { get; set; } = new();
+        public string TunnelName => UseCustom && !string.IsNullOrWhiteSpace(CustomName) ? CustomName : string.Join("-", new[]{GroupName, VenueName, NetSuiteId}.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.ToLower().Replace(" ", "-")));
     }
 
     internal class RouteRow : Panel

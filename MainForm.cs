@@ -488,7 +488,7 @@ private async Task DoInstallAsync(InstallSpec spec)
                 var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
                 if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
                 LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
-                var newIngressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = CreateTunnelForm.BuildHostname(r, spec), Path = null, Service = "http://localhost:" + r.Port }).Where(i => !string.IsNullOrEmpty(i.Hostname)).Cast<CfIngressItem>().ToList();
+                var newIngressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = CreateTunnelForm.BuildHostname(r, spec), Path = null, Service = "http://localhost:" + r.Port }).Where(i => !string.IsNullOrEmpty(i.Hostname)).Cast<IngressItem>().ToList();
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token); LogInfo("Configured " + ingressRules.Count + " route(s).");
                 await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
