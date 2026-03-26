@@ -368,12 +368,22 @@ namespace CloudflaredMonitor
 
         private static readonly string _updateCheckFile = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "Bepoz", "CloudflaredMonitor", "last-update-check.txt");
-
-        private static string TunnelDetailsDir => Path.Combine(
+            "Bepoz",
+            "CloudflaredMonitor",
+            "last-update-check.txt"
+        );
+        
+        private static readonly string TunnelDetailsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "Bepoz", "CloudflaredMonitor", "tunnel-details");
-        private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
+            "Bepoz",
+            "CloudflaredMonitor",
+            "tunnel-details"
+        );
+        
+        private static string TunnelDetailsPath(string id)
+        {
+            return Path.Combine(TunnelDetailsDir, id + ".json");
+        }
 
         public MainForm()
         {
