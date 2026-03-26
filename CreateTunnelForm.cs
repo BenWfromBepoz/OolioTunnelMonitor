@@ -230,9 +230,9 @@ namespace CloudflaredMonitor
         private readonly Label          _reviewLabel = new();
 
         private readonly ModernButton _installBtn = new ModernButton("Install Tunnel",
-            Color.FromArgb(109, 40, 217), Color.White);
+            Color.FromArgb(109, 40, 217);
         private readonly ModernButton _cancelBtn  = new ModernButton("Cancel",
-            Color.FromArgb(108, 117, 125), Color.White);
+            Color.FromArgb(108, 117, 125);
 
         private readonly Panel _scrollContainer;
 
