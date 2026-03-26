@@ -374,7 +374,7 @@ namespace CloudflaredMonitor
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "Bepoz", "CloudflaredMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
-                private CreateTunnelForm? _installPanel;
+                private CreateTunnelForm?;
 
         public MainForm()
         {
@@ -489,7 +489,7 @@ private async Task DoInstallAsync(InstallSpec spec)
                 var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
                 if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
                 LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
-                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = r.Hostname, Path = string.IsNullOrEmpty(r.Path) ? null : r.Path, Service = r.Service }).ToList();
+                var newIngressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = r.Hostname, Path = string.IsNullOrEmpty(r.Path) ? null : r.Path, Service = r.Service }).ToList();
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token); LogInfo("Configured " + ingressRules.Count + " route(s).");
                 await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
