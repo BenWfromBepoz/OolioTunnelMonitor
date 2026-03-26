@@ -529,7 +529,7 @@ namespace CloudflaredMonitor
             return parts.Count > 0 ? string.Join("-", parts) : "(pending)";
         }
 
-        private static string BuildHostname(RouteSpec r, InstallSpec spec)
+        internal static string BuildHostname(RouteSpec r, InstallSpec spec)
         {
             if (string.IsNullOrEmpty(r.Domain)) return "";
             string slug = "";
