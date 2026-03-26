@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace CloudflaredMonitor
 {
-    // — Shared styling helpers ————————————————————————————————————————————
+    // -- Shared styling helpers
     internal static class UiFactory
     {
         public static readonly Color Lavender   = Color.FromArgb(237, 233, 254);
@@ -18,7 +18,6 @@ namespace CloudflaredMonitor
         public static readonly Color PageBg     = Color.FromArgb(226, 232, 240);
         public static readonly Color White      = Color.White;
 
-        // Rounded TextBox: purple-tinted, dark-purple border via owner-draw container
         public static Panel StyledTextBox(TextBox txt, int x, int y, int w, int h = 28)
         {
             txt.BorderStyle = BorderStyle.None;
@@ -27,7 +26,6 @@ namespace CloudflaredMonitor
             txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             txt.Dock        = DockStyle.Fill;
             txt.Margin      = new Padding(6, 0, 6, 0);
-
             var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
             wrap.Controls.Add(txt);
             return wrap;
@@ -46,7 +44,6 @@ namespace CloudflaredMonitor
             };
         }
 
-        // Modernised ComboBox — flat, Lavender fill, rounded owner-draw wrapper
         public static Panel StyledCombo(ComboBox cmb, int x, int y, int w, int h = 28)
         {
             cmb.FlatStyle     = FlatStyle.Flat;
@@ -59,7 +56,6 @@ namespace CloudflaredMonitor
             cmb.DrawMode      = DrawMode.OwnerDrawFixed;
             cmb.ItemHeight    = 20;
             cmb.DrawItem     += ComboDrawItem;
-
             var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
             wrap.Controls.Add(cmb);
             return wrap;
@@ -70,10 +66,8 @@ namespace CloudflaredMonitor
             if (e.Index < 0) return;
             var cmb = (ComboBox)sender;
             bool selected = (e.State & DrawItemState.Selected) != 0;
-
             using var bgBrush = new SolidBrush(selected ? Purple200 : Lavender);
             e.Graphics.FillRectangle(bgBrush, e.Bounds);
-
             using var fgBrush = new SolidBrush(Slate900);
             var sf = new StringFormat { LineAlignment = StringAlignment.Center };
             e.Graphics.DrawString(cmb.Items[e.Index].ToString(), cmb.Font, fgBrush,
@@ -81,13 +75,9 @@ namespace CloudflaredMonitor
         }
     }
 
-    // Rounded panel with purple border (used as input wrapper)
     internal class BorderPanel : Panel
     {
-        public BorderPanel()
-        {
-            Padding = new Padding(4, 2, 4, 2);
-        }
+        public BorderPanel() { Padding = new Padding(4, 2, 4, 2); }
 
         protected override void OnControlAdded(ControlEventArgs e)
         {
@@ -120,7 +110,6 @@ namespace CloudflaredMonitor
         }
     }
 
-    // ——— Data types ——————————————————————————————————————————————————————
     internal class RouteSpec
     {
         public string Service { get; set; } = "TSPlus";
@@ -139,7 +128,6 @@ namespace CloudflaredMonitor
         public List<RouteSpec> Routes { get; set; } = new();
     }
 
-    // ——— Per-row route editor —————————————————————————————————————————————
     internal class RouteRow : Panel
     {
         private readonly ComboBox _svcCombo;
@@ -178,7 +166,7 @@ namespace CloudflaredMonitor
 
             var removeBtn = new Label
             {
-                Text      = "✕",
+                Text      = "X",
                 Location  = new Point(600, 8),
                 Size      = new Size(22, 22),
                 ForeColor = Color.FromArgb(239, 68, 68),
@@ -188,7 +176,6 @@ namespace CloudflaredMonitor
                 BackColor = Color.Transparent
             };
             removeBtn.Click += (_, _) => RemoveClicked?.Invoke(this, EventArgs.Empty);
-
             Controls.AddRange(new Control[] { _svcWrap, _portWrap, _prefixWrap, _domainWrap, removeBtn });
             OnServiceChanged(null, EventArgs.Empty);
         }
@@ -225,30 +212,23 @@ namespace CloudflaredMonitor
         };
     }
 
-    // ——— Main install form ————————————————————————————————————————————————
     public class CreateTunnelForm : Form
     {
-        // Card 1 — Tunnel Identity
         private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
         private readonly TextBox _groupBox     = new() { PlaceholderText = "blank for standalone venue" };
         private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Moon Bar" };
         private readonly TextBox _customBox    = new() { PlaceholderText = "Custom tunnel name" };
         private readonly Label   _previewLabel = new();
 
-        // Toggle for "Custom name"
         private bool  _customToggleOn = false;
         private Panel _toggleTrack    = null!;
         private Panel _toggleThumb    = null!;
 
-        // Card 2 — Routes
         private readonly Panel          _routesPanel = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
         private readonly List<RouteRow> _rows        = new();
+        private readonly Label          _reviewLabel = new();
 
-        // Card 3 — Review
-        private readonly Label _reviewLabel = new();
-
-        // Buttons (right-aligned; Cancel is grey)
-        private readonly ModernButton _installBtn = new ModernButton("↓  Install Tunnel",
+        private readonly ModernButton _installBtn = new ModernButton("Install Tunnel",
             Color.FromArgb(109, 40, 217), Color.White);
         private readonly ModernButton _cancelBtn  = new ModernButton("Cancel",
             Color.FromArgb(108, 117, 125), Color.White);
@@ -284,14 +264,11 @@ namespace CloudflaredMonitor
             RefreshPreview();
         }
 
-        // ——— UI Construction ————————————————————————————————————————————
-
         private void BuildUI()
         {
             int y = 0;
 
-            // Card 1: Tunnel Identity
-            var card1 = MakeCard("1 — Tunnel Identity", ref y, 310);
+            var card1 = MakeCard("1 - Tunnel Identity", ref y, 310);
             int cy = 44;
 
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, cy));
@@ -331,8 +308,7 @@ namespace CloudflaredMonitor
 
             y += card1.Height + 14;
 
-            // Card 2: Published Routes
-            var card2 = MakeCard("2 — Published Routes", ref y, 320);
+            var card2 = MakeCard("2 - Published Routes", ref y, 320);
 
             int hx = 20;
             foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
@@ -370,8 +346,7 @@ namespace CloudflaredMonitor
 
             y += card2.Height + 14;
 
-            // Card 3: Review & Install
-            var card3 = MakeCard("3 — Review & Install", ref y, 120);
+            var card3 = MakeCard("3 - Review & Install", ref y, 120);
             _reviewLabel.Location  = new Point(20, 42);
             _reviewLabel.Size      = new Size(card3.Width - 40, 60);
             _reviewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular);
@@ -381,7 +356,6 @@ namespace CloudflaredMonitor
 
             y += card3.Height + 14;
 
-            // Buttons — right-aligned
             var btnPanel = new Panel
             {
                 Location  = new Point(0, y),
@@ -410,8 +384,6 @@ namespace CloudflaredMonitor
             _scrollContainer.Controls.Add(btnPanel);
         }
 
-        // ——— Card factory ———————————————————————————————————————————————
-
         private RoundedCardPanel MakeCard(string title, ref int y, int minHeight)
         {
             var card = new RoundedCardPanel
@@ -421,7 +393,6 @@ namespace CloudflaredMonitor
                 Height   = minHeight,
                 Anchor   = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
-
             card.Controls.Add(new Label
             {
                 Text      = title,
@@ -433,8 +404,6 @@ namespace CloudflaredMonitor
             });
             return card;
         }
-
-        // ——— Toggle (matches API Token card style) ——————————————————————
 
         private void BuildToggle(Panel parent, int x, int y, string labelText)
         {
@@ -487,7 +456,6 @@ namespace CloudflaredMonitor
         private void ToggleCustom(Panel customWrap)
         {
             _customToggleOn = !_customToggleOn;
-
             if (_customToggleOn)
             {
                 _toggleTrack.BackColor = UiFactory.Purple700;
@@ -503,12 +471,9 @@ namespace CloudflaredMonitor
                 customWrap.Visible     = false;
                 _customBox.Text        = "";
             }
-
             _toggleTrack.Invalidate();
             RefreshPreview();
         }
-
-        // ——— Routes —————————————————————————————————————————————————————
 
         private void AddRoute(Panel card, Label addBtn)
         {
@@ -539,22 +504,19 @@ namespace CloudflaredMonitor
             card.Height         = addBtn.Bottom + 20;
         }
 
-        // ——— Preview / Review ————————————————————————————————————————————
-
         private void RefreshPreview()
         {
             var spec = BuildSpec();
-            _previewLabel.Text = $"Preview: {BuildTunnelName(spec)}";
+            _previewLabel.Text = "Preview: " + BuildTunnelName(spec);
 
             var lines = new List<string>();
             foreach (var r in spec.Routes)
             {
                 string host = BuildHostname(r, spec);
                 if (!string.IsNullOrEmpty(host))
-                    lines.Add($"https://{host}  →  http://localhost:{r.Port}");
+                    lines.Add("https://" + host + "  ->  http://localhost:" + r.Port);
             }
-            _reviewLabel.Text = string.Join("
-", lines);
+            _reviewLabel.Text = string.Join(Environment.NewLine, lines);
         }
 
         private string BuildTunnelName(InstallSpec spec)
@@ -579,10 +541,8 @@ namespace CloudflaredMonitor
             if (!string.IsNullOrWhiteSpace(spec.NetSuiteId))
                 slug += "-" + spec.NetSuiteId;
             string prefix = string.IsNullOrWhiteSpace(r.Prefix) ? "" : r.Prefix + "-";
-            return $"{prefix}{slug}.{r.Domain}";
+            return prefix + slug + "." + r.Domain;
         }
-
-        // ——— Build spec & validate ——————————————————————————————————————
 
         private InstallSpec BuildSpec() => new InstallSpec
         {
@@ -620,8 +580,6 @@ namespace CloudflaredMonitor
             Close();
         }
 
-        // ——— GDI helpers ————————————————————————————————————————————————
-
         private static GraphicsPath RoundedPath(Rectangle r, int radius)
         {
             var path = new GraphicsPath();
@@ -634,7 +592,6 @@ namespace CloudflaredMonitor
         }
     }
 
-    // ——— Rounded white card panel ————————————————————————————————————————
     internal class RoundedCardPanel : Panel
     {
         public RoundedCardPanel()
@@ -648,13 +605,10 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-
             using var shadowBrush = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
             g.FillRoundedRectangle(shadowBrush, new Rectangle(2, 3, Width - 3, Height - 2), 12);
-
             using var fillBrush = new SolidBrush(Color.White);
             g.FillRoundedRectangle(fillBrush, rect, 12);
-
             using var pen = new Pen(Color.FromArgb(220, 220, 235), 1f);
             g.DrawRoundedRectangle(pen, rect, 12);
         }
