@@ -606,12 +606,14 @@ namespace CloudflaredMonitor
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using var shadowBrush = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
-            g.FillRoundedRectangle(shadowBrush, new Rectangle(2, 3, Width - 3, Height - 2), 12);
-            using var fillBrush = new SolidBrush(Color.White);
-            g.FillRoundedRectangle(fillBrush, rect, 12);
+            using var sp = BorderPanel.MakeRoundedPath(new Rectangle(2, 3, Width - 3, Height - 2), 12);
+            using var shadow = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
+            g.FillPath(shadow, sp);
+            using var fp = BorderPanel.MakeRoundedPath(rect, 12);
+            using var fill = new SolidBrush(Color.White);
+            g.FillPath(fill, fp);
             using var pen = new Pen(Color.FromArgb(220, 220, 235), 1f);
-            g.DrawRoundedRectangle(pen, rect, 12);
+            g.DrawPath(pen, fp);
         }
 
         protected override void OnResize(EventArgs e)
