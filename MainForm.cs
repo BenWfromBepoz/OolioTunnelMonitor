@@ -472,34 +472,16 @@ namespace CloudflaredMonitor
         public void OpenLogFolder()    { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
         public void OpenConfigFolder() { try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); } catch (Exception ex) { LogError("Could not open config folder", ex); } }
 
-        private void ShowInstallPanel()
+                private async void ShowInstallPanel()
         {
-            if (_installPanel == null)
-            {
-                _installPanel = new InstallPanel(GetToken());
-                _installPanel.Dock = DockStyle.Fill;
-                _installPanel.InstallRequested += async (spec) => await DoInstallAsync(spec);
-                _installPanel.Cancelled += () => HideInstallPanel();
-                contentPanel.Controls.Add(_installPanel);
-            }
-            else _installPanel.Reset(GetToken());
-            tblMain.Visible       = false;
-            _installPanel.Visible = true;
-            _installPanel.BringToFront();
-            btnCreateTunnel.Text  = "\u2190  Back to Monitor";
+            using var dlg = new CreateTunnelForm();
+            if (dlg.ShowDialog(this) == DialogResult.OK && dlg.Result != null)
+                await DoInstallAsync(dlg.Result);
         }
 
-        private void HideInstallPanel()
+private async Task DoInstallAsync(InstallSpec spec)
         {
-            if (_installPanel != null) _installPanel.Visible = false;
-            tblMain.Visible         = true;
-            btnCreateTunnel.Text    = "+  Install New Tunnel";
-        }
-
-        private async Task DoInstallAsync(InstallSpec spec)
-        {
-            HideInstallPanel();
-            LogInfo("Creating tunnel: " + spec.TunnelName);
+                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = CreateTunnelForm.BuildHostname(r, spec), Path = null, Service = "http://localhost:" + r.Port }).Where(i => !string.IsNullOrEmpty(i.Hostname)).Cast<CfIngressItem>().ToList();
             var api = new CloudflareApi(GetToken());
             try
             {
