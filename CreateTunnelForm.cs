@@ -230,8 +230,8 @@ namespace CloudflaredMonitor
         private readonly List<RouteRow> _rows        = new();
         private readonly Label          _reviewLabel = new();
 
-                private readonly ModernButton _installBtn = new ModernButton("Install Tunnel", Color.FromArgb(109, 40, 217));
-        private readonly ModernButton _cancelBtn  = new ModernButton("Cancel",         Color.FromArgb(108, 117, 125));
+        private readonly ModernButton _installBtn = new ModernButton();
+        private readonly ModernButton _cancelBtn  = new ModernButton();
 
         private readonly Panel _scrollContainer;
 
@@ -262,6 +262,11 @@ namespace CloudflaredMonitor
             _venueBox.TextChanged    += (_, _) => RefreshPreview();
             _customBox.TextChanged   += (_, _) => RefreshPreview();
             RefreshPreview();
+            _installBtn.Text = "Install Tunnel";
+            _installBtn.BackColor = Color.FromArgb(109, 40, 217);
+
+            _cancelBtn.Text = "Cancel";
+            _cancelBtn.BackColor = Color.FromArgb(108, 117, 125);
         }
 
         private void BuildUI()
