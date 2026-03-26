@@ -374,7 +374,6 @@ namespace CloudflaredMonitor
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "Bepoz", "CloudflaredMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
-                private CreateTunnelForm;
 
         public MainForm()
         {
