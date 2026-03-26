@@ -36,10 +36,10 @@
     <EmbeddedResource Include="Resources\Images\oolio_taskbar_256x256.png">
       <LogicalName>CloudflaredMonitor.Resources.OolioTaskbar256.png</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\oolio_taskbar.ico">
+    <EmbeddedResource Include="Resources\Images\oolio_Taskbar.ico">
       <LogicalName>CloudflaredMonitor.Resources.IconTaskbar.ico</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\oolio_tray_icon.ico">
+    <EmbeddedResource Include="Resources\Images\oolio_SystemTray.ico">
       <LogicalName>CloudflaredMonitor.Resources.IconTray.ico</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
