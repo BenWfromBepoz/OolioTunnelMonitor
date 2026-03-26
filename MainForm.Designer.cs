@@ -47,8 +47,8 @@ namespace CloudflaredMonitor
             this.colLocal         = new DataGridViewTextBoxColumn();
             this.pnlTokenCard     = new RoundedPanel();
             this.lblTokenTitle    = new Label();
-                        this.pnlTokenWrap        = new BorderPanel();
-this.txtApiToken      = new TextBox();
+            this.pnlTokenWrap     = new BorderPanel();
+            this.txtApiToken      = new TextBox();
             this.tglShowToken     = new ToggleSwitch();
             this.btnTestToken     = new PillButton();
             this.pnlLogCard       = new RoundedPanel();
