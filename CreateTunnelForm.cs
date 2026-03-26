@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace CloudflaredMonitor
 {
-    // ── Shared styling helpers ────────────────────────────────────────────────
+    // — Shared styling helpers ————————————————————————————————————————————
     internal static class UiFactory
     {
         public static readonly Color Lavender   = Color.FromArgb(237, 233, 254);
@@ -23,532 +23,659 @@ namespace CloudflaredMonitor
         {
             txt.BorderStyle = BorderStyle.None;
             txt.BackColor   = Lavender;
-            txt.ForeColor   = Purple700;
-            txt.Font        = new Font("Cascadia Mono", 9f);
-            txt.Location    = new Point(5, (h - txt.PreferredHeight) / 2 + 1);
-            txt.Size        = new Size(w - 10, txt.PreferredHeight);
-            txt.Anchor      = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+            txt.ForeColor   = Slate900;
+            txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+            txt.Dock        = DockStyle.Fill;
+            txt.Margin      = new Padding(6, 0, 6, 0);
 
-            var wrap = new BorderPanel(Purple200, Purple700, 4)
-            {
-                Location  = new Point(x, y),
-                Size      = new Size(w, h),
-                BackColor = Lavender,
-                Padding   = new Padding(5, 0, 5, 0)
-            };
+            var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
             wrap.Controls.Add(txt);
             return wrap;
         }
 
-        public static Label MakeLabel(string text, bool key = true) => new Label
+        public static Label MakeLabel(string text, int x, int y, int w = 300)
         {
-            Text      = text,
-            Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold),
-            ForeColor = key ? SlateKey : Slate900,
-            AutoSize  = true,
-            BackColor = Color.Transparent
-        };
-
-        public static ComboBox StyledCombo(int w)
-        {
-            var c = new ComboBox
+            return new Label
             {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font          = new Font("Segoe UI", 9f),
-                BackColor     = Lavender,
-                ForeColor     = Purple700,
-                FlatStyle     = FlatStyle.Flat,
-                Width         = w
+                Text      = text,
+                Location  = new Point(x, y),
+                Size      = new Size(w, 18),
+                ForeColor = SlateKey,
+                Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular),
+                BackColor = Color.Transparent
             };
-            return c;
+        }
+
+        // Modernised ComboBox — flat, Lavender fill, rounded owner-draw wrapper
+        public static Panel StyledCombo(ComboBox cmb, int x, int y, int w, int h = 28)
+        {
+            cmb.FlatStyle     = FlatStyle.Flat;
+            cmb.BackColor     = Lavender;
+            cmb.ForeColor     = Slate900;
+            cmb.Font          = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+            cmb.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmb.Dock          = DockStyle.Fill;
+            cmb.Margin        = new Padding(4, 2, 4, 2);
+            cmb.DrawMode      = DrawMode.OwnerDrawFixed;
+            cmb.ItemHeight    = 20;
+            cmb.DrawItem     += ComboDrawItem;
+
+            var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
+            wrap.Controls.Add(cmb);
+            return wrap;
+        }
+
+        private static void ComboDrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0) return;
+            var cmb = (ComboBox)sender;
+            bool selected = (e.State & DrawItemState.Selected) != 0;
+
+            using var bgBrush = new SolidBrush(selected ? Purple200 : Lavender);
+            e.Graphics.FillRectangle(bgBrush, e.Bounds);
+
+            using var fgBrush = new SolidBrush(Slate900);
+            var sf = new StringFormat { LineAlignment = StringAlignment.Center };
+            e.Graphics.DrawString(cmb.Items[e.Index].ToString(), cmb.Font, fgBrush,
+                new RectangleF(e.Bounds.X + 4, e.Bounds.Y, e.Bounds.Width - 4, e.Bounds.Height), sf);
         }
     }
 
-    // Thin rounded border panel drawn with GDI+
-    internal sealed class BorderPanel : Panel
+    // Rounded panel with purple border (used as input wrapper)
+    internal class BorderPanel : Panel
     {
-        private readonly Color _normalBorder;
-        private readonly Color _focusBorder;
-        private readonly int   _radius;
-        private bool _focused;
-
-        public BorderPanel(Color normalBorder, Color focusBorder, int radius)
+        public BorderPanel()
         {
-            _normalBorder = normalBorder; _focusBorder = focusBorder; _radius = radius;
-            DoubleBuffered = true; ResizeRedraw = true;
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            Padding = new Padding(4, 2, 4, 2);
         }
 
         protected override void OnControlAdded(ControlEventArgs e)
         {
             base.OnControlAdded(e);
-            e.Control.GotFocus  += (_, _) => { _focused = true;  Invalidate(); };
-            e.Control.LostFocus += (_, _) => { _focused = false; Invalidate(); };
+            e.Control.BackColor = UiFactory.Lavender;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(Parent?.BackColor ?? Color.White);
+            base.OnPaint(e);
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using var path  = ShapeHelper.RoundedPath(rect, _radius);
-            using var fill  = new SolidBrush(BackColor);
-            using var pen   = new Pen(_focused ? _focusBorder : _normalBorder, 1.5f);
+            using var pen  = new Pen(UiFactory.Purple700, 1.5f);
+            using var path = RoundedRect(rect, 6);
+            using var fill = new SolidBrush(UiFactory.Lavender);
             g.FillPath(fill, path);
-            g.DrawPath(pen,  path);
+            g.DrawPath(pen, path);
+        }
+
+        private static GraphicsPath RoundedRect(Rectangle r, int radius)
+        {
+            var path = new GraphicsPath();
+            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            return path;
         }
     }
 
-    // ── Data models ───────────────────────────────────────────────────────────
-    internal sealed class RouteSpec
+    // ——— Data types ——————————————————————————————————————————————————————
+    internal class RouteSpec
     {
-        public string Hostname { get; set; } = "";
-        public string Path     { get; set; } = "";
-        public string Service  { get; set; } = "";
+        public string Service { get; set; } = "TSPlus";
+        public int    Port    { get; set; }
+        public string Prefix  { get; set; } = "";
+        public string Domain  { get; set; } = "";
     }
 
-    internal sealed class InstallSpec
+    internal class InstallSpec
     {
-        public string          TunnelName { get; set; } = "";
-        public List<RouteSpec> Routes     { get; set; } = new();
+        public string NetSuiteId { get; set; } = "";
+        public string GroupName  { get; set; } = "";
+        public string VenueName  { get; set; } = "";
+        public string CustomName { get; set; } = "";
+        public bool   UseCustom  { get; set; }
+        public List<RouteSpec> Routes { get; set; } = new();
     }
 
-    // ── Per-route editor row ──────────────────────────────────────────────────
-    internal sealed class RouteRow : Panel
+    // ——— Per-row route editor —————————————————————————————————————————————
+    internal class RouteRow : Panel
     {
-        public event EventHandler? Removed;
-        public event EventHandler? Changed;
+        private readonly ComboBox _svcCombo;
+        private readonly TextBox  _portBox;
+        private readonly TextBox  _prefixBox;
+        private readonly TextBox  _domainBox;
+        private readonly Panel    _svcWrap;
+        private readonly Panel    _portWrap;
+        private readonly Panel    _prefixWrap;
+        private readonly Panel    _domainWrap;
+
+        public event EventHandler? RemoveClicked;
+        public RouteSpec Spec => BuildSpec();
 
         private static readonly string[] Services = { "TSPlus", "YourOrder", "MyPlace", "Other" };
 
-        private readonly ComboBox  _cboService  = UiFactory.StyledCombo(130);
-        private readonly TextBox   _txtPort     = new();
-        private readonly TextBox   _txtPrefix   = new();  // Other only
-        private readonly ComboBox  _cboDomain   = UiFactory.StyledCombo(160); // Other only
-        private readonly Panel     _pathsPanel  = new(); // YourOrder paths
-        private readonly List<(TextBox name, TextBox path)> _paths = new();
-
-        private static readonly Color PageBg = Color.FromArgb(226, 232, 240);
-
         public RouteRow()
         {
-            BackColor    = PageBg;
-            Height       = 36;
-            Dock         = DockStyle.Top;
-            AutoSize     = false;
-            Padding      = new Padding(0, 4, 0, 4);
+            Height    = 36;
+            Dock      = DockStyle.Top;
+            BackColor = Color.Transparent;
 
-            // Service picker
-            _cboService.Items.AddRange(Services);
-            _cboService.Location      = new Point(0, 4);
-            _cboService.SelectedIndex = 0;
-            _cboService.SelectedIndexChanged += OnServiceChanged;
+            _svcCombo  = new ComboBox();
+            _portBox   = new TextBox { PlaceholderText = "Port" };
+            _prefixBox = new TextBox { PlaceholderText = "Prefix" };
+            _domainBox = new TextBox { PlaceholderText = "Domain" };
 
-            // Port input
-            var portWrap = UiFactory.StyledTextBox(_txtPort, 140, 4, 90, 28);
-            _txtPort.PlaceholderText = "Port";
-            _txtPort.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
+            foreach (var s in Services) _svcCombo.Items.Add(s);
+            _svcCombo.SelectedIndex         = 0;
+            _svcCombo.SelectedIndexChanged += OnServiceChanged;
 
-            // Prefix (Other)
-            var prefixWrap = UiFactory.StyledTextBox(_txtPrefix, 240, 4, 70, 28);
-            _txtPrefix.PlaceholderText = "abc";
-            _txtPrefix.MaxLength = 3;
-            _txtPrefix.TextChanged += (_, _) => { _txtPrefix.Text = _txtPrefix.Text.ToLower(); Changed?.Invoke(this, EventArgs.Empty); };
+            _svcWrap    = UiFactory.StyledCombo(_svcCombo,    0, 4, 130);
+            _portWrap   = UiFactory.StyledTextBox(_portBox, 138, 4,  80);
+            _prefixWrap = UiFactory.StyledTextBox(_prefixBox, 226, 4, 100);
+            _domainWrap = UiFactory.StyledTextBox(_domainBox, 334, 4, 260);
 
-            // Domain (Other)
-            _cboDomain.Items.Add("bepozcloud.com");
-            _cboDomain.Items.Add("bepozconnect.com");
-            _cboDomain.SelectedIndex = 0;
-            _cboDomain.Location      = new Point(320, 4);
-            _cboDomain.SelectedIndexChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
-
-            // YourOrder paths panel — hidden by default, appears below row
-            _pathsPanel.BackColor  = PageBg;
-            _pathsPanel.Dock       = DockStyle.None;
-            _pathsPanel.Visible    = false;
-            _pathsPanel.Height     = 0;
-
-            // Remove button
-            var btnRemove = new Label
+            var removeBtn = new Label
             {
-                Text      = "\u2715",
-                Font      = new Font("Segoe UI", 10f),
-                ForeColor = Color.FromArgb(200, 80, 80),
+                Text      = "✕",
+                Location  = new Point(600, 8),
+                Size      = new Size(22, 22),
+                ForeColor = Color.FromArgb(239, 68, 68),
+                Font      = new Font("Segoe UI", 9f, FontStyle.Bold),
                 Cursor    = Cursors.Hand,
-                AutoSize  = true,
-                Location  = new Point(0, 8)  // positioned in Resize
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Transparent
             };
-            btnRemove.Click += (_, _) => Removed?.Invoke(this, EventArgs.Empty);
+            removeBtn.Click += (_, _) => RemoveClicked?.Invoke(this, EventArgs.Empty);
 
-            Controls.Add(_cboService);
-            Controls.Add(portWrap);
-            Controls.Add(prefixWrap);
-            Controls.Add(_cboDomain);
-            Controls.Add(_pathsPanel);
-            Controls.Add(btnRemove);
-
-            Resize += (_, _) => {
-                btnRemove.Location = new Point(Width - 20, 8);
-                _cboDomain.Location = new Point(Width - 190, 4);
-            };
-
-            RefreshLayout();
+            Controls.AddRange(new Control[] { _svcWrap, _portWrap, _prefixWrap, _domainWrap, removeBtn });
+            OnServiceChanged(null, EventArgs.Empty);
         }
 
-        private void OnServiceChanged(object? s, EventArgs e)
+        private void OnServiceChanged(object? sender, EventArgs e)
         {
-            RefreshLayout();
-            Changed?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void RefreshLayout()
-        {
-            string svc = _cboService.SelectedItem?.ToString() ?? "";
-            bool isOther    = svc == "Other";
-            bool isYourOrder = svc == "YourOrder";
-
-            // Show/hide Other fields
-            Controls.OfType<Panel>().FirstOrDefault(p => p.Controls.Contains(_txtPrefix))!.Visible = isOther;
-            _cboDomain.Visible = isOther;
-
-            // YourOrder paths
-            if (isYourOrder && _paths.Count == 0) EnsureYourOrderPaths();
-            _pathsPanel.Visible = isYourOrder;
-
-            Height = isYourOrder ? 36 + _pathsPanel.Height + 4 : 36;
-        }
-
-        private void EnsureYourOrderPaths()
-        {
-            _pathsPanel.Controls.Clear(); _paths.Clear();
-            int y = 2;
-            for (int i = 0; i < 5; i++)
-            {
-                var lblN = UiFactory.MakeLabel("Path " + (i + 1) + " name:");
-                var txtN = new TextBox(); var txtP = new TextBox();
-                var wN = UiFactory.StyledTextBox(txtN, 0,  y, 120, 24);
-                var wP = UiFactory.StyledTextBox(txtP, 128, y, 180, 24);
-                lblN.Location = new Point(0, y - 16);
-                txtN.PlaceholderText = "e.g. demo";
-                txtP.PlaceholderText = "/path";
-                txtN.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
-                txtP.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
-                _pathsPanel.Controls.Add(wN); _pathsPanel.Controls.Add(wP);
-                _paths.Add((txtN, txtP));
-                y += 28;
-            }
-            _pathsPanel.Height = y + 4;
-        }
-
-        public string GetServiceKey() => _cboService.SelectedItem?.ToString() ?? "";
-
-        // Returns (hostname, path, localService) tuples for this row
-        public List<(string host, string path, string svc)> BuildRoutes(string groupPart)
-        {
-            string port   = _txtPort.Text.Trim();
-            if (string.IsNullOrEmpty(port)) return new();
-            string local  = "http://localhost:" + port;
-            string svcKey = GetServiceKey();
-            var result    = new List<(string, string, string)>();
-
-            switch (svcKey)
+            var svc = _svcCombo.SelectedItem?.ToString() ?? "";
+            switch (svc)
             {
                 case "TSPlus":
-                    result.Add(("bo-" + groupPart + ".bepozcloud.com", "", local));
-                    break;
-                case "MyPlace":
-                    result.Add(("bo-" + groupPart + ".bepozconnect.com", "", local));
+                    _portBox.Text = "54363"; _prefixBox.Text = ""; _domainBox.Text = "";
+                    _prefixWrap.Visible = false; _domainWrap.Visible = false;
                     break;
                 case "YourOrder":
-                    // Base route
-                    result.Add(("bo-" + groupPart + ".bepozconnect.com", "", local));
-                    // Named paths
-                    foreach (var (n, p) in _paths)
-                    {
-                        string pname = n.Text.Trim(); string ppath = p.Text.Trim();
-                        if (!string.IsNullOrEmpty(pname) && !string.IsNullOrEmpty(ppath))
-                            result.Add(("bo-" + groupPart + ".bepozconnect.com", ppath.StartsWith("/") ? ppath : "/" + ppath, local));
-                    }
+                    _portBox.Text = "8080"; _prefixBox.Text = "yo"; _domainBox.Text = "bepozcloud.com";
+                    _prefixWrap.Visible = true; _domainWrap.Visible = true;
                     break;
-                case "Other":
-                    string pfx = _txtPrefix.Text.Trim(); string dom = _cboDomain.SelectedItem?.ToString() ?? "bepozcloud.com";
-                    if (!string.IsNullOrEmpty(pfx))
-                        result.Add((pfx + "-" + groupPart + "." + dom, "", local));
+                case "MyPlace":
+                    _portBox.Text = "3434"; _prefixBox.Text = ""; _domainBox.Text = "bepozcloud.com";
+                    _prefixWrap.Visible = false; _domainWrap.Visible = true;
+                    break;
+                default:
+                    _prefixWrap.Visible = true; _domainWrap.Visible = true;
                     break;
             }
-            return result;
         }
 
-        public bool IsValid()
+        private RouteSpec BuildSpec() => new RouteSpec
         {
-            if (string.IsNullOrEmpty(_txtPort.Text.Trim())) return false;
-            if (GetServiceKey() == "Other" && string.IsNullOrEmpty(_txtPrefix.Text.Trim())) return false;
-            return true;
-        }
+            Service = _svcCombo.SelectedItem?.ToString() ?? "",
+            Port    = int.TryParse(_portBox.Text, out var p) ? p : 0,
+            Prefix  = _prefixBox.Text.Trim(),
+            Domain  = _domainBox.Text.Trim()
+        };
     }
 
-    // ── Inline install panel ──────────────────────────────────────────────────
-    internal sealed class InstallPanel : Panel
+    // ——— Main install form ————————————————————————————————————————————————
+    public class CreateTunnelForm : Form
     {
-        public event Action<InstallSpec>? InstallRequested;
-        public event Action?              Cancelled;
-
-        private static readonly Color PageBg   = Color.FromArgb(226, 232, 240);
-        private static readonly Color Purple700 = Color.FromArgb(109, 40, 217);
-        private static readonly Color Lavender  = Color.FromArgb(237, 233, 254);
-
         // Card 1 — Tunnel Identity
-        private readonly RoundedPanel _cardIdentity = new();
-        private readonly TextBox  _txtNsId      = new();
-        private readonly TextBox  _txtGroup     = new();
-        private readonly TextBox  _txtVenue     = new();
-        private readonly CheckBox _chkCustom    = new();
-        private readonly TextBox  _txtCustom    = new();
-        private readonly Label    _lblPreview   = new();
+        private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
+        private readonly TextBox _groupBox     = new() { PlaceholderText = "blank for standalone venue" };
+        private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Moon Bar" };
+        private readonly TextBox _customBox    = new() { PlaceholderText = "Custom tunnel name" };
+        private readonly Label   _previewLabel = new();
+
+        // Toggle for "Custom name"
+        private bool  _customToggleOn = false;
+        private Panel _toggleTrack    = null!;
+        private Panel _toggleThumb    = null!;
 
         // Card 2 — Routes
-        private readonly RoundedPanel _cardRoutes = new();
-        private readonly Panel        _routesList = new();
-        private readonly PillButton   _btnAddRoute = new();
-        private readonly List<RouteRow> _rows = new();
+        private readonly Panel          _routesPanel = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
+        private readonly List<RouteRow> _rows        = new();
 
         // Card 3 — Review
-        private readonly RoundedPanel _cardReview  = new();
-        private readonly Label        _lblReview   = new();
-        private readonly PillButton   _btnInstall  = new();
-        private readonly PillButton   _btnCancel   = new();
+        private readonly Label _reviewLabel = new();
 
-        private string _apiToken = "";
+        // Buttons (right-aligned; Cancel is grey)
+        private readonly ModernButton _installBtn = new ModernButton("↓  Install Tunnel",
+            Color.FromArgb(109, 40, 217), Color.White);
+        private readonly ModernButton _cancelBtn  = new ModernButton("Cancel",
+            Color.FromArgb(108, 117, 125), Color.White);
 
-        public InstallPanel(string apiToken) { _apiToken = apiToken; BackColor = PageBg; DoubleBuffered = true; Build(); }
+        private readonly Panel _scrollContainer;
 
-        public void Reset(string apiToken) { _apiToken = apiToken; _txtNsId.Text = ""; _txtGroup.Text = ""; _txtVenue.Text = ""; _txtCustom.Text = ""; _chkCustom.Checked = false; _rows.Clear(); _routesList.Controls.Clear(); UpdatePreview(); UpdateReview(); }
+        public InstallSpec? Result { get; private set; }
 
-        private void Build()
+        public CreateTunnelForm()
         {
-            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = PageBg };
-            var tbl = new TableLayoutPanel
+            Text            = "Install Tunnel";
+            Size            = new Size(820, 700);
+            MinimumSize     = new Size(700, 550);
+            BackColor       = UiFactory.PageBg;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition   = FormStartPosition.CenterParent;
+
+            _scrollContainer = new Panel
             {
-                Dock = DockStyle.Top, AutoSize = true, BackColor = Color.Transparent,
-                ColumnCount = 1, RowCount = 4, Padding = new Padding(10)
+                Dock       = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor  = Color.Transparent,
+                Padding    = new Padding(28, 24, 28, 24)
             };
-            tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            tbl.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            tbl.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            tbl.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            tbl.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            scroll.Controls.Add(tbl);
-            Controls.Add(scroll);
 
-            // ── Card 1: Tunnel Identity ───────────────────────────────────────
-            _cardIdentity.Dock   = DockStyle.Fill;
-            _cardIdentity.Margin = new Padding(0, 0, 0, 8);
-            _cardIdentity.AutoSize = true;
-            _cardIdentity.Padding  = new Padding(16, 8, 16, 12);
-            AddCardTitle(_cardIdentity, "1  —  Tunnel Identity");
+            BuildUI();
+            Controls.Add(_scrollContainer);
 
-            int cy = 30;
-
-            // NetSuite ID
-            var lblNs = UiFactory.MakeLabel("NetSuite ID");
-            lblNs.Location = new Point(16, cy); _cardIdentity.Controls.Add(lblNs); cy += 18;
-            var wNs = UiFactory.StyledTextBox(_txtNsId, 16, cy, 160, 28);
-            _txtNsId.PlaceholderText = "e.g. 12345";
-            _txtNsId.TextChanged += (_, _) => UpdatePreview();
-            _cardIdentity.Controls.Add(wNs); cy += 34;
-
-            // Group Name
-            var lblGrp = UiFactory.MakeLabel("Group Name (blank for standalone venue)");
-            lblGrp.Location = new Point(16, cy); _cardIdentity.Controls.Add(lblGrp); cy += 18;
-            var wGrp = UiFactory.StyledTextBox(_txtGroup, 16, cy, 300, 28);
-            _txtGroup.PlaceholderText = "e.g. Muzz Buzz";
-            _txtGroup.TextChanged += (_, _) => UpdatePreview();
-            _cardIdentity.Controls.Add(wGrp); cy += 34;
-
-            // Venue Name
-            var lblVen = UiFactory.MakeLabel("Venue Name");
-            lblVen.Location = new Point(16, cy); _cardIdentity.Controls.Add(lblVen); cy += 18;
-            var wVen = UiFactory.StyledTextBox(_txtVenue, 16, cy, 300, 28);
-            _txtVenue.PlaceholderText = "e.g. Perth CBD";
-            _txtVenue.TextChanged += (_, _) => UpdatePreview();
-            _cardIdentity.Controls.Add(wVen); cy += 34;
-
-            // Custom toggle
-            _chkCustom.Text      = "Custom name";
-            _chkCustom.Font      = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
-            _chkCustom.ForeColor = UiFactory.SlateKey;
-            _chkCustom.BackColor = Color.Transparent;
-            _chkCustom.Location  = new Point(16, cy);
-            _chkCustom.AutoSize  = true;
-            _chkCustom.CheckedChanged += (_, _) => { _txtCustom.Visible = _chkCustom.Checked; UpdatePreview(); };
-            _cardIdentity.Controls.Add(_chkCustom); cy += 24;
-
-            var wCust = UiFactory.StyledTextBox(_txtCustom, 16, cy, 400, 28);
-            _txtCustom.PlaceholderText = "Enter full custom tunnel name";
-            _txtCustom.TextChanged += (_, _) => UpdatePreview();
-            _txtCustom.Visible = false;
-            _cardIdentity.Controls.Add(wCust); cy += 34;
-
-            // Preview label
-            _lblPreview.Location  = new Point(16, cy);
-            _lblPreview.Size      = new Size(500, 20);
-            _lblPreview.Font      = new Font("Segoe UI", 8.5f, FontStyle.Italic);
-            _lblPreview.ForeColor = Purple700;
-            _lblPreview.BackColor = Color.Transparent;
-            _lblPreview.AutoSize  = false;
-            _cardIdentity.Controls.Add(_lblPreview);
-
-            tbl.Controls.Add(_cardIdentity, 0, 0);
-
-            // ── Card 2: Routes ────────────────────────────────────────────────
-            _cardRoutes.Dock    = DockStyle.Fill;
-            _cardRoutes.Margin  = new Padding(0, 0, 0, 8);
-            _cardRoutes.AutoSize = true;
-            _cardRoutes.Padding  = new Padding(16, 8, 16, 48);
-            AddCardTitle(_cardRoutes, "2  —  Published Routes");
-
-            // Column headers
-            var hdrSvc  = UiFactory.MakeLabel("Service");    hdrSvc.Location  = new Point(16, 30); _cardRoutes.Controls.Add(hdrSvc);
-            var hdrPort = UiFactory.MakeLabel("Port");        hdrPort.Location = new Point(156, 30); _cardRoutes.Controls.Add(hdrPort);
-            var hdrPfx  = UiFactory.MakeLabel("Prefix");     hdrPfx.Location  = new Point(256, 30); _cardRoutes.Controls.Add(hdrPfx);
-            var hdrDom  = UiFactory.MakeLabel("Domain");     hdrDom.Location  = new Point(336, 30); _cardRoutes.Controls.Add(hdrDom);
-
-            _routesList.BackColor  = PageBg;
-            _routesList.Location   = new Point(16, 50);
-            _routesList.AutoSize   = true;
-            _routesList.Width      = 600;
-            _routesList.Anchor     = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
-            _cardRoutes.Controls.Add(_routesList);
-
-            _btnAddRoute.Text   = "+  Add Route";
-            _btnAddRoute.Size   = new Size(110, 28);
-            _btnAddRoute.Click += (_, _) => AddRoute();
-            _btnAddRoute.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            _cardRoutes.Controls.Add(_btnAddRoute);
-            _cardRoutes.Resize += (_, _) => {
-                _btnAddRoute.Location = new Point(16, _cardRoutes.Height - 38);
-                _routesList.Width = _cardRoutes.Width - 32;
-            };
-            tbl.Controls.Add(_cardRoutes, 0, 1);
-
-            // ── Card 3: Review ────────────────────────────────────────────────
-            _cardReview.Dock    = DockStyle.Fill;
-            _cardReview.Margin  = new Padding(0, 0, 0, 0);
-            _cardReview.Padding = new Padding(16, 8, 16, 16);
-            _cardReview.AutoSize = true;
-            AddCardTitle(_cardReview, "3  —  Review & Install");
-
-            _lblReview.Location  = new Point(16, 30);
-            _lblReview.Size      = new Size(620, 60);
-            _lblReview.Font      = new Font("Segoe UI", 8.5f);
-            _lblReview.ForeColor = UiFactory.SlateKey;
-            _lblReview.BackColor = Color.Transparent;
-            _lblReview.AutoSize  = false;
-
-            _btnInstall.Text     = "\u2193  Install Tunnel";
-            _btnInstall.Size     = new Size(140, 34);
-            _btnInstall.Location = new Point(16, 96);
-            _btnInstall.Click   += OnInstallClick;
-
-            _btnCancel.Text     = "Cancel";
-            _btnCancel.Size     = new Size(90, 34);
-            _btnCancel.Location = new Point(164, 96);
-            _btnCancel.Click   += (_, _) => Cancelled?.Invoke();
-
-            _cardReview.Controls.Add(_lblReview);
-            _cardReview.Controls.Add(_btnInstall);
-            _cardReview.Controls.Add(_btnCancel);
-            tbl.Controls.Add(_cardReview, 0, 2);
-
-            UpdatePreview();
-            UpdateReview();
+            _netSuiteBox.TextChanged += (_, _) => RefreshPreview();
+            _groupBox.TextChanged    += (_, _) => RefreshPreview();
+            _venueBox.TextChanged    += (_, _) => RefreshPreview();
+            _customBox.TextChanged   += (_, _) => RefreshPreview();
+            RefreshPreview();
         }
 
-        private void AddRoute()
-        {
-            var row = new RouteRow();
-            row.Changed += (_, _) => UpdateReview();
-            row.Removed += (_, _) => { _rows.Remove(row); _routesList.Controls.Remove(row); UpdateReview(); };
-            _rows.Add(row);
-            _routesList.Controls.Add(row);
-            UpdateReview();
-        }
+        // ——— UI Construction ————————————————————————————————————————————
 
-        private string GetTunnelName()
+        private void BuildUI()
         {
-            if (_chkCustom.Checked) return _txtCustom.Text.Trim();
-            string ns    = _txtNsId.Text.Trim();
-            string group = _txtGroup.Text.Trim();
-            string venue = _txtVenue.Text.Trim();
-            if (string.IsNullOrEmpty(venue) && string.IsNullOrEmpty(ns)) return "";
-            string name = string.IsNullOrEmpty(group) ? venue : group + " - " + venue;
-            if (!string.IsNullOrEmpty(ns)) name += " [" + ns + "]";
-            return name;
-        }
+            int y = 0;
 
-        // The URL-slug part used when building hostnames (lowercase, no spaces)
-        private string GetGroupSlug()
-        {
-            string ns    = _txtNsId.Text.Trim();
-            string venue = _txtVenue.Text.Trim().ToLower().Replace(" ", "-");
-            return string.IsNullOrEmpty(venue) ? ns : (string.IsNullOrEmpty(ns) ? venue : venue + "-" + ns);
-        }
+            // Card 1: Tunnel Identity
+            var card1 = MakeCard("1 — Tunnel Identity", ref y, 310);
+            int cy = 44;
 
-        private void UpdatePreview()
-        {
-            string name = GetTunnelName();
-            _lblPreview.Text = string.IsNullOrEmpty(name) ? "Complete fields above to see preview" : "Preview: " + name;
-        }
+            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, cy));
+            cy += 20;
+            card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, 20, cy, 200));
+            cy += 36;
 
-        private void UpdateReview()
-        {
-            UpdatePreview();
-            string name  = GetTunnelName();
-            string slug  = GetGroupSlug();
-            bool nameOk  = !string.IsNullOrEmpty(name);
-            bool routesOk = _rows.Count > 0 && _rows.All(r => r.IsValid());
-            bool ready   = nameOk && routesOk;
+            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", 20, cy));
+            cy += 20;
+            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, 20, cy, 320));
+            cy += 36;
 
-            if (!nameOk) { _lblReview.Text = "Complete the tunnel identity above."; }
-            else if (_rows.Count == 0) { _lblReview.Text = "Add at least one route."; }
-            else if (!routesOk) { _lblReview.Text = "Complete all route fields (port required for each)."; }
-            else
+            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", 20, cy));
+            cy += 20;
+            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, 20, cy, 320));
+            cy += 38;
+
+            BuildToggle(card1, 20, cy, "Custom name");
+            cy += 32;
+
+            _customBox.Enabled   = false;
+            _customBox.BackColor = UiFactory.Lavender;
+            var customWrap = UiFactory.StyledTextBox(_customBox, 20, cy, 320);
+            customWrap.Visible = false;
+            card1.Controls.Add(customWrap);
+            cy += 34;
+
+            _previewLabel.Location  = new Point(20, cy);
+            _previewLabel.Size      = new Size(520, 18);
+            _previewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Italic);
+            _previewLabel.ForeColor = UiFactory.Purple700;
+            _previewLabel.BackColor = Color.Transparent;
+            card1.Controls.Add(_previewLabel);
+
+            _toggleTrack.Click += (_, _) => ToggleCustom(customWrap);
+            _toggleThumb.Click += (_, _) => ToggleCustom(customWrap);
+
+            y += card1.Height + 14;
+
+            // Card 2: Published Routes
+            var card2 = MakeCard("2 — Published Routes", ref y, 320);
+
+            int hx = 20;
+            foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
             {
-                var lines = new List<string>();
-                foreach (var row in _rows)
-                    foreach (var (host, path, svc) in row.BuildRoutes(slug))
-                        lines.Add("https://" + host + path + "  \u2192  " + svc);
-                _lblReview.Text = string.Join("\n", lines.Take(4)) + (lines.Count > 4 ? "\n..." : "");
-                _lblReview.Size = new Size(620, Math.Max(60, lines.Count * 18 + 8));
-                _btnInstall.Location = new Point(16, _lblReview.Bottom + 8);
-                _btnCancel.Location  = new Point(164, _lblReview.Bottom + 8);
+                card2.Controls.Add(new Label
+                {
+                    Text      = col,
+                    Location  = new Point(hx, 42),
+                    Size      = new Size(w, 16),
+                    Font      = new Font("Segoe UI Semibold", 8f, FontStyle.Bold),
+                    ForeColor = UiFactory.SlateKey,
+                    BackColor = Color.Transparent
+                });
+                hx += w + 8;
             }
-            _btnInstall.Enabled = ready;
+
+            _routesPanel.Location  = new Point(14, 62);
+            _routesPanel.Width     = card2.Width - 28;
+            _routesPanel.BackColor = Color.Transparent;
+            card2.Controls.Add(_routesPanel);
+
+            var addBtn = new Label
+            {
+                Text      = "+ Add Route",
+                AutoSize  = true,
+                Location  = new Point(20, 0),
+                Font      = new Font("Segoe UI Semibold", 9f, FontStyle.Bold),
+                ForeColor = UiFactory.Purple700,
+                BackColor = Color.Transparent,
+                Cursor    = Cursors.Hand
+            };
+            addBtn.Click += (_, _) => AddRoute(card2, addBtn);
+            card2.Controls.Add(addBtn);
+            AddRoute(card2, addBtn);
+
+            y += card2.Height + 14;
+
+            // Card 3: Review & Install
+            var card3 = MakeCard("3 — Review & Install", ref y, 120);
+            _reviewLabel.Location  = new Point(20, 42);
+            _reviewLabel.Size      = new Size(card3.Width - 40, 60);
+            _reviewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular);
+            _reviewLabel.ForeColor = UiFactory.Slate900;
+            _reviewLabel.BackColor = Color.Transparent;
+            card3.Controls.Add(_reviewLabel);
+
+            y += card3.Height + 14;
+
+            // Buttons — right-aligned
+            var btnPanel = new Panel
+            {
+                Location  = new Point(0, y),
+                Size      = new Size(_scrollContainer.Width - 56, 44),
+                BackColor = Color.Transparent,
+                Anchor    = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            _installBtn.Size = new Size(160, 38);
+            _cancelBtn.Size  = new Size(100, 38);
+
+            _cancelBtn.Location  = new Point(btnPanel.Width - _cancelBtn.Width, 3);
+            _installBtn.Location = new Point(_cancelBtn.Left - _installBtn.Width - 10, 3);
+
+            _installBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _cancelBtn.Anchor  = AnchorStyles.Top | AnchorStyles.Right;
+
+            _installBtn.Click += OnInstall;
+            _cancelBtn.Click  += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
+
+            btnPanel.Controls.AddRange(new Control[] { _installBtn, _cancelBtn });
+
+            _scrollContainer.Controls.Add(card1);
+            _scrollContainer.Controls.Add(card2);
+            _scrollContainer.Controls.Add(card3);
+            _scrollContainer.Controls.Add(btnPanel);
         }
 
-        private void OnInstallClick(object? sender, EventArgs e)
-        {
-            string slug = GetGroupSlug();
-            var routes  = new List<RouteSpec>();
-            foreach (var row in _rows)
-                foreach (var (host, path, svc) in row.BuildRoutes(slug))
-                    routes.Add(new RouteSpec { Hostname = host, Path = path, Service = svc });
-            // Catch-all rule
-            routes.Add(new RouteSpec { Hostname = "", Path = "", Service = "http_status:404" });
-            InstallRequested?.Invoke(new InstallSpec { TunnelName = GetTunnelName(), Routes = routes });
-        }
+        // ——— Card factory ———————————————————————————————————————————————
 
-        private static void AddCardTitle(RoundedPanel card, string title)
+        private RoundedCardPanel MakeCard(string title, ref int y, int minHeight)
         {
+            var card = new RoundedCardPanel
+            {
+                Location = new Point(0, y),
+                Width    = _scrollContainer.Width - 56,
+                Height   = minHeight,
+                Anchor   = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+
             card.Controls.Add(new Label
             {
                 Text      = title,
-                Font      = new Font("Segoe UI Semibold", 10f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(71, 85, 105),
-                Location  = new Point(16, 6),
-                Size      = new Size(500, 20),
+                Location  = new Point(20, 14),
+                Size      = new Size(500, 22),
+                Font      = new Font("Segoe UI Semibold", 10.5f, FontStyle.Bold),
+                ForeColor = UiFactory.Slate900,
                 BackColor = Color.Transparent
             });
+            return card;
+        }
+
+        // ——— Toggle (matches API Token card style) ——————————————————————
+
+        private void BuildToggle(Panel parent, int x, int y, string labelText)
+        {
+            _toggleTrack = new Panel
+            {
+                Location  = new Point(x, y + 2),
+                Size      = new Size(40, 22),
+                BackColor = UiFactory.SlateKey,
+                Cursor    = Cursors.Hand
+            };
+            PaintRoundedPanel(_toggleTrack, 11);
+
+            _toggleThumb = new Panel
+            {
+                Size      = new Size(16, 16),
+                Location  = new Point(3, 3),
+                BackColor = Color.White,
+                Cursor    = Cursors.Hand
+            };
+            PaintRoundedPanel(_toggleThumb, 8);
+
+            _toggleTrack.Controls.Add(_toggleThumb);
+            parent.Controls.Add(_toggleTrack);
+
+            parent.Controls.Add(new Label
+            {
+                Text      = labelText,
+                Location  = new Point(x + 48, y + 4),
+                Size      = new Size(200, 18),
+                Font      = new Font("Segoe UI", 9f, FontStyle.Regular),
+                ForeColor = UiFactory.SlateKey,
+                BackColor = Color.Transparent
+            });
+        }
+
+        private static void PaintRoundedPanel(Panel p, int radius)
+        {
+            p.Paint += (_, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                var rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
+                using var path  = RoundedPath(rect, radius);
+                using var brush = new SolidBrush(p.BackColor);
+                g.FillPath(brush, path);
+            };
+            p.Region = new Region(RoundedPath(new Rectangle(0, 0, p.Width, p.Height), radius));
+        }
+
+        private void ToggleCustom(Panel customWrap)
+        {
+            _customToggleOn = !_customToggleOn;
+
+            if (_customToggleOn)
+            {
+                _toggleTrack.BackColor = UiFactory.Purple700;
+                _toggleThumb.Location  = new Point(_toggleTrack.Width - _toggleThumb.Width - 3, 3);
+                _customBox.Enabled     = true;
+                customWrap.Visible     = true;
+            }
+            else
+            {
+                _toggleTrack.BackColor = UiFactory.SlateKey;
+                _toggleThumb.Location  = new Point(3, 3);
+                _customBox.Enabled     = false;
+                customWrap.Visible     = false;
+                _customBox.Text        = "";
+            }
+
+            _toggleTrack.Invalidate();
+            RefreshPreview();
+        }
+
+        // ——— Routes —————————————————————————————————————————————————————
+
+        private void AddRoute(Panel card, Label addBtn)
+        {
+            var row = new RouteRow();
+            row.RemoveClicked += (s, _) =>
+            {
+                _rows.Remove((RouteRow)s!);
+                _routesPanel.Controls.Remove((RouteRow)s!);
+                RefreshRouteLayout(card, addBtn);
+                RefreshPreview();
+            };
+            _rows.Add(row);
+            _routesPanel.Controls.Add(row);
+            RefreshRouteLayout(card, addBtn);
+            RefreshPreview();
+        }
+
+        private void RefreshRouteLayout(Panel card, Label addBtn)
+        {
+            int ry = 0;
+            foreach (var row in _rows)
+            {
+                row.Location = new Point(0, ry);
+                ry += row.Height + 4;
+            }
+            _routesPanel.Height = Math.Max(ry, 4);
+            addBtn.Location     = new Point(20, _routesPanel.Bottom + 72);
+            card.Height         = addBtn.Bottom + 20;
+        }
+
+        // ——— Preview / Review ————————————————————————————————————————————
+
+        private void RefreshPreview()
+        {
+            var spec = BuildSpec();
+            _previewLabel.Text = $"Preview: {BuildTunnelName(spec)}";
+
+            var lines = new List<string>();
+            foreach (var r in spec.Routes)
+            {
+                string host = BuildHostname(r, spec);
+                if (!string.IsNullOrEmpty(host))
+                    lines.Add($"https://{host}  →  http://localhost:{r.Port}");
+            }
+            _reviewLabel.Text = string.Join("
+", lines);
+        }
+
+        private string BuildTunnelName(InstallSpec spec)
+        {
+            if (spec.UseCustom && !string.IsNullOrWhiteSpace(spec.CustomName))
+                return spec.CustomName;
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(spec.GroupName))  parts.Add(spec.GroupName.ToLower().Replace(" ", "-"));
+            if (!string.IsNullOrWhiteSpace(spec.VenueName))  parts.Add(spec.VenueName.ToLower().Replace(" ", "-"));
+            if (!string.IsNullOrWhiteSpace(spec.NetSuiteId)) parts.Add(spec.NetSuiteId);
+            return parts.Count > 0 ? string.Join("-", parts) : "(pending)";
+        }
+
+        private static string BuildHostname(RouteSpec r, InstallSpec spec)
+        {
+            if (string.IsNullOrEmpty(r.Domain)) return "";
+            string slug = "";
+            if (!string.IsNullOrWhiteSpace(spec.GroupName))
+                slug += spec.GroupName.ToLower().Replace(" ", "") + "-";
+            if (!string.IsNullOrWhiteSpace(spec.VenueName))
+                slug += spec.VenueName.ToLower().Replace(" ", "");
+            if (!string.IsNullOrWhiteSpace(spec.NetSuiteId))
+                slug += "-" + spec.NetSuiteId;
+            string prefix = string.IsNullOrWhiteSpace(r.Prefix) ? "" : r.Prefix + "-";
+            return $"{prefix}{slug}.{r.Domain}";
+        }
+
+        // ——— Build spec & validate ——————————————————————————————————————
+
+        private InstallSpec BuildSpec() => new InstallSpec
+        {
+            NetSuiteId = _netSuiteBox.Text.Trim(),
+            GroupName  = _groupBox.Text.Trim(),
+            VenueName  = _venueBox.Text.Trim(),
+            CustomName = _customBox.Text.Trim(),
+            UseCustom  = _customToggleOn,
+            Routes     = _rows.Select(r => r.Spec).ToList()
+        };
+
+        private void OnInstall(object? sender, EventArgs e)
+        {
+            var spec = BuildSpec();
+            if (string.IsNullOrWhiteSpace(spec.NetSuiteId))
+            {
+                MessageBox.Show("Please enter a NetSuite ID.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(spec.VenueName))
+            {
+                MessageBox.Show("Please enter a Venue Name.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!spec.Routes.Any())
+            {
+                MessageBox.Show("Please add at least one route.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            Result       = spec;
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        // ——— GDI helpers ————————————————————————————————————————————————
+
+        private static GraphicsPath RoundedPath(Rectangle r, int radius)
+        {
+            var path = new GraphicsPath();
+            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+    }
+
+    // ——— Rounded white card panel ————————————————————————————————————————
+    internal class RoundedCardPanel : Panel
+    {
+        public RoundedCardPanel()
+        {
+            BackColor      = Color.White;
+            DoubleBuffered = true;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+
+            using var shadowBrush = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
+            g.FillRoundedRectangle(shadowBrush, new Rectangle(2, 3, Width - 3, Height - 2), 12);
+
+            using var fillBrush = new SolidBrush(Color.White);
+            g.FillRoundedRectangle(fillBrush, rect, 12);
+
+            using var pen = new Pen(Color.FromArgb(220, 220, 235), 1f);
+            g.DrawRoundedRectangle(pen, rect, 12);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            var rect = new Rectangle(0, 0, Width, Height);
+            using var path = RoundedPath(rect, 12);
+            Region = new Region(path);
+        }
+
+        private static GraphicsPath RoundedPath(Rectangle r, int radius)
+        {
+            var path = new GraphicsPath();
+            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            return path;
         }
     }
 }
