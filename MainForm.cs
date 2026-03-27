@@ -42,7 +42,8 @@ namespace CloudflaredMonitor
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             if (_logo == null) return;
-            const int pad = 6; const int subtitleH = 26;
+            const int pad = 6; 
+            const int subtitleH = 10;
             int imgArea = Height - subtitleH;
             int avail = Math.Min(Width, imgArea) - pad * 2;
             if (avail <= 0) return;
