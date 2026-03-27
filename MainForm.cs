@@ -42,8 +42,8 @@ namespace CloudflaredMonitor
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             if (_logo == null) return;
-            const int pad = 2; 
-            const int subtitleH = 6;
+            const int pad = 4; 
+            const int subtitleH = 10;
             int imgArea = Height - subtitleH;
             int avail = Math.Min(Width, imgArea) - pad * 2;
             if (avail <= 0) return;
@@ -54,7 +54,7 @@ namespace CloudflaredMonitor
             using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
             g.DrawString("Oolio Tunnel Monitor", sf, sb,
-                new RectangleF(0, imgArea - 36, Width, subtitleH),
+                new RectangleF(0, imgArea - 46, Width, subtitleH),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
