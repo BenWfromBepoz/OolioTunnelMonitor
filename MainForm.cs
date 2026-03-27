@@ -481,7 +481,7 @@ namespace CloudflaredMonitor
         public void OpenLogFolder()    { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
         public void OpenConfigFolder() { try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); } catch (Exception ex) { LogError("Could not open config folder", ex); } }
 
-                private async void ShowInstallPanel()
+                private async void ShowCreateTunnelForm()
         {
             using var dlg = new CreateTunnelForm();
             if (dlg.ShowDialog(this) == DialogResult.OK && dlg.Result != null)
@@ -730,8 +730,8 @@ private async Task DoInstallAsync(InstallSpec spec)
 
         private void btnCreateTunnel_Click(object? sender, EventArgs e)
         {
-            if (tblMain.Visible) { if (!HasToken()) { OolioMessageBox.Show(this, "Please enter a Cloudflare API token first.", "API Token Required"); return; } ShowInstallPanel(); }
-            else ShowInstallPanel();
+            if (tblMain.Visible) { if (!HasToken()) { OolioMessageBox.Show(this, "Please enter a Cloudflare API token first.", "API Token Required"); return; } ShowCreateTunnelForm(); }
+            else ShowCreateTunnelForm();
         }
         private async void btnTunnelStatus_Click(object? sender, EventArgs e)   => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)       => await TestTokenAsync();
