@@ -618,7 +618,7 @@ namespace CloudflaredMonitor
             g.FillPath(fill, fp);
             using var pen = new Pen(Color.FromArgb(220, 220, 235), 1f);
             g.DrawPath(pen, fp);
-
+        }
 
         protected override void OnResize(EventArgs e)
         {
