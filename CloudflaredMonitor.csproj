@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Images\oolio_taskbar_256x256 Primary.png">
+    <EmbeddedResource Include="Resources\Images\oolio_taskbar_256x256.png">
       <LogicalName>CloudflaredMonitor.Resources.OolioTaskbar256.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\Oolio Primary.png">
