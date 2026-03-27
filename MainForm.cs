@@ -88,10 +88,10 @@ namespace CloudflaredMonitor
             var rect = new Rectangle(0, py, pw, ph);
             Color topCol, botCol;
             var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
-            if (gC > r && gC > b)     { topCol = Color.FromArgb(125, 230, 135); botCol = Color.FromArgb(90, 200, 100); }
+            if (gC > r && gC > b)     { topCol = Color.FromArgb(192, 108, 245); botCol = Color.FromArgb(90, 200, 100); }
             else if (r > gC && r > b) { topCol = Color.FromArgb(230, 135, 125); botCol = Color.FromArgb(200, 80, 70); }
             else                      { topCol = Color.FromArgb(240, 230, 90);  botCol = Color.FromArgb(230, 180, 50); }
-            using var grad = new LinearGradientBrush(new Point(0, py), new Point(pw, py + ph), topCol, botCol);
+            using var grad = new LinearGradientBrush(new Point(0, py), new Point(pw, py + ph), topCol, botCol, 45f);
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
             g.FillPath(grad, path);
             using var fgB = new SolidBrush(Color.White);
@@ -121,9 +121,9 @@ namespace CloudflaredMonitor
             g.Clear(Parent?.BackColor ?? Color.White);
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
-            var topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220);
+            var topCol = _hovered ? Color.FromArgb(60, 6, 186) : Color.FromArgb(140, 95, 220);
             var botCol = _hovered ? Color.FromArgb(90,  50, 160)  : Color.FromArgb(75,  40, 140);
-            using var grad = new LinearGradientBrush(new Point(0, 0), new Point(0, Height), topCol, botCol);
+            using var grad = new LinearGradientBrush(new Point(0, 0), new Point(0, Height), topCol, botCol, 45f);
             g.FillPath(grad, path);
             using var fg = new SolidBrush(Color.White);
             g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
