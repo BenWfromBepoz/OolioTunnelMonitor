@@ -15,42 +15,6 @@
     <Version>1.2.1.0</Version>
     <AssemblyVersion>1.2.1.0</AssemblyVersion>
     <FileVersion>1.2.1.0</FileVersion>
-    <!-- Embeds the icon into the exe so Windows Explorer and taskbar show it correctly -->
-    <ApplicationIcon>Resources\Images\oolio_Taskbar.ico</ApplicationIcon>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Images\oolio_taskbar_256x256.png">
-      <LogicalName>CloudflaredMonitor.Resources.OolioTaskbar.png</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\oolio_SystemTray.ico">
-      <LogicalName>CloudflaredMonitor.Resources.OolioTray.ico</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
-
-</Project>
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <RootNamespace>CloudflaredMonitor</RootNamespace>
-    <AssemblyName>TunnelMonitor</AssemblyName>
-    <Product>Oolio Tunnel Monitor</Product>
-    <Company>Oolio Group</Company>
-    <Copyright>Copyright © Oolio Group 2026</Copyright>
-    <Version>1.2.1.0</Version>
-    <AssemblyVersion>1.2.1.0</AssemblyVersion>
-    <FileVersion>1.2.1.0</FileVersion>
-    <!-- Embeds the icon into the exe so Windows Explorer and taskbar show it correctly -->
     <ApplicationIcon>Resources\Images\oolio_taskbar.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -68,10 +32,7 @@
     <EmbeddedResource Include="Resources\Images\Oolio Black.png">
       <LogicalName>CloudflaredMonitor.Resources.OolioBlack.png</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\oolio_taskbar_256x256.png">
-      <LogicalName>CloudflaredMonitor.Resources.OolioTaskbar256.png</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Images\oolio_Taskbar.ico">
+    <EmbeddedResource Include="Resources\Images\oolio_taskbar.ico">
       <LogicalName>CloudflaredMonitor.Resources.IconTaskbar.ico</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\oolio_SystemTray.ico">
