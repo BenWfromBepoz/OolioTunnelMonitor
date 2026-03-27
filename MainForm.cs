@@ -91,7 +91,7 @@ namespace CloudflaredMonitor
             if (gC > r && gC > b)     { topCol = Color.FromArgb(192, 108, 245); botCol = Color.FromArgb(90, 200, 100); }
             else if (r > gC && r > b) { topCol = Color.FromArgb(230, 135, 125); botCol = Color.FromArgb(200, 80, 70); }
             else                      { topCol = Color.FromArgb(240, 230, 90);  botCol = Color.FromArgb(230, 180, 50); }
-            using var grad = new LinearGradientBrush(new Rectangle(px, py, pw, ph), topCol, botCol, 45f);
+            using var grad = new LinearGradientBrush(rect, topCol, botCol, 45f);
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
             g.FillPath(grad, path);
             using var fgB = new SolidBrush(Color.White);
@@ -123,7 +123,7 @@ namespace CloudflaredMonitor
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
             var topCol = _hovered ? Color.FromArgb(60, 6, 186) : Color.FromArgb(140, 95, 220);
             var botCol = _hovered ? Color.FromArgb(90,  50, 160)  : Color.FromArgb(75,  40, 140);
-            using var grad = new LinearGradientBrush(new Rectangle(px, py, pw, ph), topCol, botCol, 45f);
+            using var grad = new LinearGradientBrush(bounds, topCol, botCol, 45f);
             g.FillPath(grad, path);
             using var fg = new SolidBrush(Color.White);
             g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height),
