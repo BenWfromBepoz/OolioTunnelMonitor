@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace CloudflaredMonitor
+namespace OolioTunnelMonitor
 {
     internal static class Program
     {
