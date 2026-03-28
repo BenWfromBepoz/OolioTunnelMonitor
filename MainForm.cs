@@ -160,7 +160,7 @@ namespace CloudflaredMonitor
         private const int Radius = 8;
         private bool _hovered;
         private ModernButtonStyle _style = ModernButtonStyle.Primary;
-        public new ModernButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
+        public ModernButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
         private static readonly Color _normal = Color.FromArgb(45,  52, 68);
         private static readonly Color _hover  = Color.FromArgb(60,  68, 88);
         private static readonly Color _accent = Color.FromArgb(103, 58, 182);
@@ -268,10 +268,10 @@ namespace CloudflaredMonitor
     // ═══════════════════════════════════════════════════════════
     public partial class MainForm : Form
     {
-        private readonly CloudflareMonitorService _monitor;
+        private readonly CloudflaredServiceManager _monitor;
         private readonly CloudflaredInstaller     _installer;
-        private readonly ServiceManager           _serviceManager;
-        private readonly UpdateLogger             _logger;
+        private readonly CloudflaredServiceManager           _serviceManager;
+        private readonly FileLogger             _logger;
         private AppMode _mode = AppMode.Main;
         private static readonly string AppVersion = System.Reflection.Assembly
             .GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
@@ -322,10 +322,9 @@ namespace CloudflaredMonitor
         private Panel            pnlSidebar      = null!;
         public MainForm()
         {
-            _monitor        = new CloudflareMonitorService();
             _installer      = new CloudflaredInstaller();
-            _serviceManager = new ServiceManager();
-            _logger         = new UpdateLogger();
+            _serviceManager = new CloudflaredServiceManager();
+            _logger         = new FileLogger();
             InitializeComponent();
             BuildSidebars();
             BuildInstallPanel();
@@ -474,7 +473,7 @@ namespace CloudflaredMonitor
         {
             if (InvokeRequired) { Invoke(() => AppendLog(message)); return; }
             var line = DateTime.Now.ToString("HH:mm:ss") + "  " + message;
-            _logger.Log(line);
+            _logger.Write(line);
             if (txtLog.Text.Length > 0) txtLog.AppendText(Environment.NewLine + line);
             else txtLog.Text = line;
             txtLog.ScrollToCaret();
@@ -500,11 +499,11 @@ namespace CloudflaredMonitor
         private string GetToken() => txtApiToken.Text.Trim();
         private bool   HasToken() => !string.IsNullOrWhiteSpace(txtApiToken.Text);
 
-        private void PopulateIngress(IEnumerable<IngressItem> items)
+        private void PopulateIngress(IEnumerable<IngressRuleView> items)
         {
             if (InvokeRequired) { Invoke(() => PopulateIngress(items)); return; }
             dgvIngress.Rows.Clear();
-            foreach (var item in items) { if (item.IsCatchAll) continue; dgvIngress.Rows.Add(item.CloudEndpoint, item.LocalEndpoint); }
+            foreach (var item in items) { if (string.IsNullOrEmpty(item.CloudEndpoint)) continue; dgvIngress.Rows.Add(item.CloudEndpoint, item.LocalEndpoint); }
         }
 
         public void OpenLogFolder()    { try { System.Diagnostics.Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
@@ -553,13 +552,13 @@ namespace CloudflaredMonitor
                     if (root.TryGetProperty("Status",     out var st))  ApplyBadge(lblRemoteStatus, st.GetString());
                     if (root.TryGetProperty("Routes", out var routes))
                     {
-                        var items = new List<IngressItem>();
+                        var items = new List<IngressRuleView>();
                         foreach (var route in routes.EnumerateArray())
                         {
                             string h = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "" : "";
                             string p = route.TryGetProperty("Path",     out var pp) ? pp.GetString() ?? "" : "";
                             string s = route.TryGetProperty("Service",  out var sp) ? sp.GetString() ?? "" : "";
-                            var item = IngressHelper.Build(h, p, s); if (item != null) items.Add(item);
+                            var item = (string.IsNullOrEmpty(h) ? null : new IngressRuleView { CloudEndpoint = h, LocalEndpoint = s }); if (item != null) items.Add(item);
                         }
                         PopulateIngress(items);
                     }
@@ -574,7 +573,7 @@ namespace CloudflaredMonitor
                 using var cts2 = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var config = await api.GetTunnelConfigAsync(tid2, cts2.Token);
                 var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
-                var items2 = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
+                var items2 = ingress.Select(r => (string.IsNullOrEmpty(r.Hostname) ? null : new IngressRuleView { CloudEndpoint = r.Hostname ?? "", LocalEndpoint = r.Service ?? "" })).Where(i => i != null).Cast<IngressRuleView>().ToList();
                 PopulateIngress(items2); await SaveTunnelDetailsAsync(tid2, tunnel?.Name, tunnel?.Status, ingress);
                 LogInfo("Saved " + items2.Count + " route(s) to cache."); LogInfo("Check complete.");
                 var url = GetFirstEndpointUrl(tid2);
