@@ -15,7 +15,7 @@ using System.Windows.Forms;
 using CloudflaredMonitor.Services;
 
 
-namespace CloudflaredMonitor
+namespace OolioTunnelMonitor
 {
     internal sealed class OolioLogoBrand : Control
     {
@@ -1126,5 +1126,4 @@ namespace CloudflaredMonitor
         private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync(silent: false);
     }
     }
-}
 }
