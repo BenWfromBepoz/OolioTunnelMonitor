@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace CloudflaredMonitor
+namespace OolioTunnelMonitor
 {
     public partial class MainForm : Form
     {
