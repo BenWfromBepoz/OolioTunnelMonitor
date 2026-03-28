@@ -1125,5 +1125,4 @@ namespace OolioTunnelMonitor
         private async void btnRepair_Click(object? sender, EventArgs e)           => await RepairAsync();
         private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync(silent: false);
     }
-    }
 }
