@@ -5,7 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace CloudflaredMonitor
+namespace OolioTunnelMonitor
 {
     // -- Shared styling helpers
     internal static class UiFactory
