@@ -29,7 +29,7 @@ namespace CloudflaredMonitor
             this.lblVersion       = new Label();
             this.contentPanel     = new ContentPanel();
             this.tblMain          = new TableLayoutPanel();
-            this.pnlStatusCard    = new RoundedPanel();
+            this.pnlStatusCard    = new Panel();
             this.lblCardTitle     = new Label();
             this.tblStatus        = new TableLayoutPanel();
             this.lblServiceLabel  = new Label();
@@ -40,18 +40,18 @@ namespace CloudflaredMonitor
             this.lblTunnelId      = new Label();
             this.lblRemoteLabel   = new Label();
             this.lblRemoteStatus  = new PillLabel();
-            this.pnlIngressCard   = new RoundedPanel();
+            this.pnlIngressCard   = new Panel();
             this.lblIngressTitle  = new Label();
             this.dgvIngress       = new DataGridView();
             this.colCloud         = new DataGridViewTextBoxColumn();
             this.colLocal         = new DataGridViewTextBoxColumn();
-            this.pnlTokenCard     = new RoundedPanel();
+            this.pnlTokenCard     = new Panel();
             this.lblTokenTitle    = new Label();
             this.pnlTokenWrap     = new BorderPanel();
             this.txtApiToken      = new TextBox();
             this.tglShowToken     = new ToggleSwitch();
             this.btnTestToken     = new PillButton();
-            this.pnlLogCard       = new RoundedPanel();
+            this.pnlLogCard       = new Panel();
             this.lblLogTitle      = new Label();
             this.txtLog           = new RichTextBox();
 
@@ -360,58 +360,6 @@ namespace CloudflaredMonitor
             this.ResumeLayout(false);
         }
 
-        private void ResizeContentPanel()
-        {
-            const int gap   = 12;
-            const int sideW = 224;
-            if (contentPanel == null) return;
-            contentPanel.Location = new System.Drawing.Point(sideW + gap, gap);
-            contentPanel.Size     = new System.Drawing.Size(
-                ClientSize.Width  - sideW - gap * 2,
-                ClientSize.Height - gap * 2);
-            if (btnCheckUpdates != null)
-                btnCheckUpdates.Location = new System.Drawing.Point(12, ClientSize.Height - 62);
-            if (lblVersion != null)
-                lblVersion.Location = new System.Drawing.Point(14, ClientSize.Height - 20);
-        }
 
-        private ToolTip          toolTip;
-        private Panel            pnlSidebar;
-        private OolioSidebarLogo oolioLogo;
-        private ModernButton     btnCreateTunnel;
-        private ModernButton     btnTunnelStatus;
-        private ModernButton     btnOpenLogs;
-        private ModernButton     btnOpenConfig;
-        private ModernButton     btnRepair;
-        private CheckBox         chkReinstall;
-        private ModernButton     btnCheckUpdates;
-        private Label            lblVersion;
-        private ContentPanel     contentPanel;
-        private TableLayoutPanel tblMain;
-        private RoundedPanel     pnlStatusCard;
-        private Label            lblCardTitle;
-        private TableLayoutPanel tblStatus;
-        private Label            lblServiceLabel;
-        private PillLabel        lblService;
-        private Label            lblNameLabel;
-        private Label            lblTunnelName;
-        private Label            lblIdLabel;
-        private Label            lblTunnelId;
-        private Label            lblRemoteLabel;
-        private PillLabel        lblRemoteStatus;
-        private RoundedPanel     pnlIngressCard;
-        private Label            lblIngressTitle;
-        private DataGridView     dgvIngress;
-        private DataGridViewTextBoxColumn colCloud;
-        private DataGridViewTextBoxColumn colLocal;
-        private RoundedPanel     pnlTokenCard;
-        private Label            lblTokenTitle;
-        private BorderPanel      pnlTokenWrap;
-        private TextBox          txtApiToken;
-        private ToggleSwitch     tglShowToken;
-        private PillButton       btnTestToken;
-        private RoundedPanel     pnlLogCard;
-        private Label            lblLogTitle;
-        private RichTextBox      txtLog;
     }
 }
