@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace CloudflaredMonitor
+namespace OolioTunnelMonitor
 {
     internal sealed class TrayAppContext : ApplicationContext
     {
