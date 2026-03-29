@@ -4,7 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     /// <summary>
     ///  Produces a zip file containing diagnostic artefacts such as the
@@ -30,7 +30,7 @@ namespace CloudflaredMonitor.Services
         public string Export(TunnelServiceStatus status, IList<string> uiLogLines, IList<string> ingressLines)
         {
             // Create output directories under ProgramData
-            var baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "CloudflaredMonitor", "diagnostics");
+            var baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "OolioTunnelMonitor", "diagnostics");
             Directory.CreateDirectory(baseDir);
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd-HHmmss");
             var workDir = Path.Combine(baseDir, $"diag-{timestamp}");
