@@ -2,11 +2,11 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     /// <summary>
     /// Rolling daily log. One file per day named yymmdd_tunnelmonitor.log
-    /// stored under ProgramData\Bepoz\CloudflaredMonitor\logs.
+    /// stored under ProgramData\Bepoz\OolioTunnelMonitor\logs.
     /// Timestamp format: yy-MM-dd | HH:mm:ss — matches the UI live log format.
     /// </summary>
     internal sealed class FileLogger
@@ -18,7 +18,7 @@ namespace CloudflaredMonitor.Services
         {
             _logDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "Bepoz", "CloudflaredMonitor", "logs");
+                "Bepoz", "OolioTunnelMonitor", "logs");
             Directory.CreateDirectory(_logDir);
         }
 
