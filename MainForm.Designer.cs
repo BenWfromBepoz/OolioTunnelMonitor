@@ -1,8 +1,9 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace OolioTunnelMonitor
+namespace CloudflaredMonitor
 {
     public partial class MainForm : Form
     {
@@ -18,7 +19,7 @@ namespace OolioTunnelMonitor
         {
             this.toolTip          = new ToolTip();
             this.pnlSidebar       = new Panel();
-            this.oolioLogo        = new OolioSidebarLogo();
+            this.oolioLogo        = new OolioLogoBrand();
             this.btnCreateTunnel  = new ModernButton();
             this.btnTunnelStatus  = new ModernButton();
             this.btnOpenLogs      = new ModernButton();
@@ -27,9 +28,8 @@ namespace OolioTunnelMonitor
             this.chkReinstall     = new CheckBox();
             this.btnCheckUpdates  = new ModernButton();
             this.lblVersion       = new Label();
-            this.contentPanel     = new ContentPanel();
             this.tblMain          = new TableLayoutPanel();
-            this.pnlStatusCard    = new Panel();
+            this.pnlStatusCard    = new RoundedPanel();
             this.lblCardTitle     = new Label();
             this.tblStatus        = new TableLayoutPanel();
             this.lblServiceLabel  = new Label();
@@ -40,25 +40,22 @@ namespace OolioTunnelMonitor
             this.lblTunnelId      = new Label();
             this.lblRemoteLabel   = new Label();
             this.lblRemoteStatus  = new PillLabel();
-            this.pnlIngressCard   = new Panel();
+            this.pnlIngressCard   = new RoundedPanel();
             this.lblIngressTitle  = new Label();
             this.dgvIngress       = new DataGridView();
             this.colCloud         = new DataGridViewTextBoxColumn();
             this.colLocal         = new DataGridViewTextBoxColumn();
-            this.pnlTokenCard     = new Panel();
+            this.pnlTokenCard     = new RoundedPanel();
             this.lblTokenTitle    = new Label();
-            this.pnlTokenWrap     = new BorderPanel();
             this.txtApiToken      = new TextBox();
-            this.tglShowToken     = new ToggleSwitch();
+            this.chkShowToken     = new CheckBox();
             this.btnTestToken     = new PillButton();
-            this.pnlLogCard       = new Panel();
+            this.pnlLogCard       = new RoundedPanel();
             this.lblLogTitle      = new Label();
             this.txtLog           = new RichTextBox();
 
             this.pnlSidebar.SuspendLayout();
-            this.contentPanel.SuspendLayout();
             this.tblMain.SuspendLayout();
-            this.pnlTokenWrap.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).BeginInit();
             this.SuspendLayout();
 
@@ -67,63 +64,60 @@ namespace OolioTunnelMonitor
             this.toolTip.ReshowDelay  = 200;
 
             // ── Sidebar ──────────────────────────────────────────────────────
-            this.pnlSidebar.BackColor = System.Drawing.Color.Transparent;
-            this.pnlSidebar.Dock      = DockStyle.Left;
-            this.pnlSidebar.Width     = 224;
-            this.pnlSidebar.Padding   = new Padding(0);
+            this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
+            this.pnlSidebar.Dock  = DockStyle.Left;
+            this.pnlSidebar.Width = 224;
 
-            this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 200);
+            this.oolioLogo.Location  = new System.Drawing.Point(12, 12);
+            this.oolioLogo.Size      = new System.Drawing.Size(200, 106);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 208);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 256);
+            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 178);
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
             this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 304);
+            this.btnOpenLogs.Location = new System.Drawing.Point(12, 226);
             this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
 
             this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 352);
+            this.btnOpenConfig.Location = new System.Drawing.Point(12, 274);
             this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
             this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 400);
+            this.btnRepair.Location = new System.Drawing.Point(12, 322);
             this.btnRepair.Size     = new System.Drawing.Size(200, 40);
             this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
 
             this.chkReinstall.Text      = "Reinstall MSI on repair";
             this.chkReinstall.Font      = new System.Drawing.Font("Segoe UI", 8.5f);
             this.chkReinstall.ForeColor = System.Drawing.Color.FromArgb(180, 190, 210);
-            this.chkReinstall.Location  = new System.Drawing.Point(20, 448);
+            this.chkReinstall.Location  = new System.Drawing.Point(20, 372);
             this.chkReinstall.Size      = new System.Drawing.Size(196, 20);
             this.chkReinstall.Checked   = true;
             this.chkReinstall.FlatStyle = FlatStyle.Flat;
-            this.chkReinstall.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
-            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 626);
+            this.btnCheckUpdates.Location = new System.Drawing.Point(12, 404);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor   = AnchorStyles.None;
+            this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
             this.lblVersion.Text      = "v1.2.1.0";
             this.lblVersion.Font      = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblVersion.ForeColor = System.Drawing.Color.FromArgb(90, 105, 130);
-            this.lblVersion.Location  = new System.Drawing.Point(14, 668);
+            this.lblVersion.Location  = new System.Drawing.Point(14, 446);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.None;
-            this.lblVersion.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
@@ -135,20 +129,16 @@ namespace OolioTunnelMonitor
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── ContentPanel: hidden until OnLoad positions it (flicker fix)
-            this.contentPanel.Controls.Add(this.tblMain);
-            this.contentPanel.Visible = false;
-
             // ── Main layout ──────────────────────────────────────────────────
             this.tblMain.Dock        = DockStyle.Fill;
-            this.tblMain.BackColor   = System.Drawing.Color.Transparent;
+            this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 116));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 114));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  72));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ──────────────────────────────────────────────────
@@ -210,10 +200,10 @@ namespace OolioTunnelMonitor
             this.tblStatus.Controls.Add(this.lblRemoteLabel,  2, 1);
             this.tblStatus.Controls.Add(this.lblRemoteStatus, 3, 1);
 
-            // ── Ingress card ──────────────────────────────────────────────────
+            // ── Ingress card ── padding keeps dgv inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(10, 32, 10, 10);
+            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -237,8 +227,10 @@ namespace OolioTunnelMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            this.dgvIngress.Dock       = DockStyle.Fill;
-            this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
+            this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
+            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
+            this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
             this.dgvIngress.ColumnHeadersHeight         = 26;
@@ -270,12 +262,12 @@ namespace OolioTunnelMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card ── rounded + dark-purple border ───────────────────
+            // ── Token card ───────────────────────────────────────────────────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
             this.lblTokenTitle.Text      = "Cloudflare API Token";
-            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblTokenTitle.Location  = new System.Drawing.Point(14, 6);
             this.lblTokenTitle.Size      = new System.Drawing.Size(175, 18);
@@ -283,35 +275,32 @@ namespace OolioTunnelMonitor
             this.lblTokenTitle.Cursor    = Cursors.Help;
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
 
-            // txtApiToken inside BorderPanel wrapper — gives rounded corners + purple border
-            this.txtApiToken.BorderStyle           = BorderStyle.None;
+            this.txtApiToken.Location              = new System.Drawing.Point(14, 28);
+            this.txtApiToken.Size                  = new System.Drawing.Size(490, 24);
+            this.txtApiToken.Anchor                = AnchorStyles.Top | AnchorStyles.Left;
             this.txtApiToken.UseSystemPasswordChar = true;
-            this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 9f);
-            this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(237, 233, 254);
-            this.txtApiToken.ForeColor             = System.Drawing.Color.FromArgb(109,  40, 217);
-            this.txtApiToken.Location              = new System.Drawing.Point(5, 4);
-            this.txtApiToken.Size                  = new System.Drawing.Size(378, 20);
-            this.txtApiToken.Anchor                = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+            this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.txtApiToken.BorderStyle           = BorderStyle.FixedSingle;
+            this.txtApiToken.BackColor             = System.Drawing.Color.FromArgb(248, 250, 252);
 
-            this.pnlTokenWrap.Location  = new System.Drawing.Point(14, 28);
-            this.pnlTokenWrap.Size      = new System.Drawing.Size(390, 28);
-            this.pnlTokenWrap.BackColor = System.Drawing.Color.FromArgb(237, 233, 254);
-            this.pnlTokenWrap.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
-            this.pnlTokenWrap.Controls.Add(this.txtApiToken);
-
-            this.tglShowToken.Location = new System.Drawing.Point(410, 29);
-            this.tglShowToken.Size     = new System.Drawing.Size(46, 22);
-            this.tglShowToken.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
+            this.chkShowToken.Text      = "Show";
+            this.chkShowToken.Font      = new System.Drawing.Font("Segoe UI", 8f);
+            this.chkShowToken.ForeColor = System.Drawing.Color.FromArgb(100, 116, 139);
+            this.chkShowToken.Location  = new System.Drawing.Point(510, 30);
+            this.chkShowToken.Size      = new System.Drawing.Size(52, 18);
+            this.chkShowToken.BackColor = System.Drawing.Color.Transparent;
+            this.chkShowToken.FlatStyle = FlatStyle.Flat;
+            this.chkShowToken.CheckedChanged += (_, _) => { txtApiToken.UseSystemPasswordChar = !chkShowToken.Checked; };
 
             this.btnTestToken.Text     = "Test Token";
-            this.btnTestToken.Location = new System.Drawing.Point(540, 24);
+            this.btnTestToken.Location = new System.Drawing.Point(568, 16);
             this.btnTestToken.Size     = new System.Drawing.Size(106, 30);
             this.btnTestToken.Click   += new EventHandler(this.btnTestToken_Click);
 
             this.pnlTokenCard.Controls.Add(this.lblTokenTitle);
-            this.pnlTokenCard.Controls.Add(this.pnlTokenWrap);
-            this.pnlTokenCard.Controls.Add(this.tglShowToken);
+            this.pnlTokenCard.Controls.Add(this.txtApiToken);
             this.pnlTokenCard.Controls.Add(this.btnTestToken);
+            this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
             // ── Log card ─────────────────────────────────────────────────────
@@ -341,25 +330,56 @@ namespace OolioTunnelMonitor
             // ── Form ─────────────────────────────────────────────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
-            this.ClientSize          = new System.Drawing.Size(1040, 720);
-            this.MinimumSize         = new System.Drawing.Size(1000, 640);
-            this.Padding             = new Padding(0);
-            this.Controls.Add(this.contentPanel);
+            this.ClientSize          = new System.Drawing.Size(1040, 700);
+            this.MinimumSize         = new System.Drawing.Size(1000, 600);
+            this.Controls.Add(this.tblMain);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
             this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor     = System.Drawing.Color.FromArgb(39, 46, 63);
-            this.Resize       += (_, _) => ResizeContentPanel();
+            this.BackColor     = System.Drawing.Color.FromArgb(226, 232, 240);
 
             this.pnlSidebar.ResumeLayout(false);
-            this.contentPanel.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
-            this.pnlTokenWrap.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).EndInit();
             this.ResumeLayout(false);
         }
 
-
+        private ToolTip          toolTip;
+        private Panel            pnlSidebar;
+        private OolioLogoBrand   oolioLogo;
+        private ModernButton     btnCreateTunnel;
+        private ModernButton     btnTunnelStatus;
+        private ModernButton     btnOpenLogs;
+        private ModernButton     btnOpenConfig;
+        private ModernButton     btnRepair;
+        private CheckBox         chkReinstall;
+        private ModernButton     btnCheckUpdates;
+        private Label            lblVersion;
+        private TableLayoutPanel tblMain;
+        private RoundedPanel     pnlStatusCard;
+        private Label            lblCardTitle;
+        private TableLayoutPanel tblStatus;
+        private Label            lblServiceLabel;
+        private PillLabel        lblService;
+        private Label            lblNameLabel;
+        private Label            lblTunnelName;
+        private Label            lblIdLabel;
+        private Label            lblTunnelId;
+        private Label            lblRemoteLabel;
+        private PillLabel        lblRemoteStatus;
+        private RoundedPanel     pnlIngressCard;
+        private Label            lblIngressTitle;
+        private DataGridView     dgvIngress;
+        private DataGridViewTextBoxColumn colCloud;
+        private DataGridViewTextBoxColumn colLocal;
+        private RoundedPanel     pnlTokenCard;
+        private Label            lblTokenTitle;
+        private TextBox          txtApiToken;
+        private CheckBox         chkShowToken;
+        private PillButton       btnTestToken;
+        private RoundedPanel     pnlLogCard;
+        private Label            lblLogTitle;
+        private RichTextBox      txtLog;
     }
 }
