@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.ServiceProcess;
 
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     /// <summary>
     ///  Provides methods for interacting with the Windows service that hosts
