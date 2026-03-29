@@ -231,8 +231,8 @@ namespace OolioTunnelMonitor
         private readonly Label          _reviewLabel = new();
 
         // Buttons — OK is a purple PillButton-style, Cancel is rounded grey on the right
-        private readonly RoundedButton _btnOk     = new(purple: true)  { Text = "Create Tunnel", DialogResult = DialogResult.OK,     Width = 140, Height = 34 };
-        private readonly RoundedButton _btnCancel = new(purple: false) { Text = "Cancel",        DialogResult = DialogResult.Cancel, Width = 90,  Height = 34 };
+        private readonly PillButton _btnOk     = new(purple: true)  { Text = "Create Tunnel", DialogResult = DialogResult.OK,     Width = 140, Height = 34 };
+        private readonly PillButton _btnCancel = new(purple: false) { Text = "Cancel",        DialogResult = DialogResult.Cancel, Width = 90,  Height = 34 };
 
         private readonly Panel _scrollContainer;
 
