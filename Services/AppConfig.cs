@@ -1,4 +1,4 @@
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     /// <summary>
     ///  Centralised configuration.  The Cloudflare API token is NOT stored
