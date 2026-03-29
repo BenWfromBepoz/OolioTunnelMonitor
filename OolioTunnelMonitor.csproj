@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <RootNamespace>CloudflaredMonitor</RootNamespace>
+    <RootNamespace>OolioTunnelMonitor</RootNamespace>
     <AssemblyName>TunnelMonitor</AssemblyName>
     <Product>Oolio Tunnel Monitor</Product>
     <Company>Oolio Group</Company>
@@ -24,22 +24,22 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Images\oolio_taskbar_256x256.png">
-      <LogicalName>CloudflaredMonitor.Resources.OolioTaskbar256.png</LogicalName>
+      <LogicalName>OolioTunnelMonitor.Resources.OolioTaskbar256.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\Oolio Primary.png">
-      <LogicalName>CloudflaredMonitor.Resources.Oolio.png</LogicalName>
+      <LogicalName>OolioTunnelMonitor.Resources.Oolio.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\Oolio White.png">
-      <LogicalName>CloudflaredMonitor.Resources.OolioWhite.png</LogicalName>
+      <LogicalName>OolioTunnelMonitor.Resources.OolioWhite.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\Oolio Black.png">
-      <LogicalName>CloudflaredMonitor.Resources.OolioBlack.png</LogicalName>
+      <LogicalName>OolioTunnelMonitor.Resources.OolioBlack.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\oolio_taskbar.ico">
-      <LogicalName>CloudflaredMonitor.Resources.IconTaskbar.ico</LogicalName>
+      <LogicalName>OolioTunnelMonitor.Resources.IconTaskbar.ico</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\oolio_SystemTray.ico">
-      <LogicalName>CloudflaredMonitor.Resources.IconTray.ico</LogicalName>
+      <LogicalName>OolioTunnelMonitor.Resources.IconTray.ico</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
