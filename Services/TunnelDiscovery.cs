@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     /// <summary>
     ///  Responsible for locating the installed cloudflared service, extracting
