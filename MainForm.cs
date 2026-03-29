@@ -29,7 +29,7 @@ namespace OolioTunnelMonitor
             try
             {
                 var stream = System.Reflection.Assembly.GetExecutingAssembly()
-                    .GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
+                    .GetManifestResourceStream("OolioTunnelMonitor.Resources.Oolio.png");
                 return stream != null ? Image.FromStream(stream) : null;
             }
             catch { return null; }
@@ -303,11 +303,11 @@ namespace OolioTunnelMonitor
 
         private static readonly string _updateCheckFile = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "Bepoz", "CloudflaredMonitor", "last-update-check.txt");
+            "Bepoz", "OolioTunnelMonitor", "last-update-check.txt");
 
         private static string TunnelDetailsDir =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "Bepoz", "CloudflaredMonitor", "tunnel-details");
+                "Bepoz", "OolioTunnelMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
         // ── AppMode ───────────────────────────────────────────────────────────
