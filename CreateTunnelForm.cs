@@ -230,8 +230,9 @@ namespace OolioTunnelMonitor
         private readonly List<RouteRow> _rows        = new();
         private readonly Label          _reviewLabel = new();
 
-        private readonly RoundedButton _installBtn = new RoundedButton(purple: true);
-        private readonly RoundedButton _cancelBtn  = new RoundedButton(purple: false);
+        // Buttons — OK is a purple PillButton-style, Cancel is rounded grey on the right
+        private readonly RoundedButton _btnOk     = new(purple: true)  { Text = "Create Tunnel", DialogResult = DialogResult.OK,     Width = 140, Height = 34 };
+        private readonly RoundedButton _btnCancel = new(purple: false) { Text = "Cancel",        DialogResult = DialogResult.Cancel, Width = 90,  Height = 34 };
 
         private readonly Panel _scrollContainer;
 
