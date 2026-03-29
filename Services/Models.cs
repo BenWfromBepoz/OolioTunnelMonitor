@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     internal sealed class TunnelServiceStatus
     {
