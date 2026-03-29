@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CloudflaredMonitor.Services
+namespace OolioTunnelMonitor.Services
 {
     internal sealed class CloudflareApi
     {
