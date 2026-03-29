@@ -230,8 +230,8 @@ namespace OolioTunnelMonitor
         private readonly List<RouteRow> _rows        = new();
         private readonly Label          _reviewLabel = new();
 
-        private readonly ModernButton _installBtn = new ModernButton();
-        private readonly ModernButton _cancelBtn  = new ModernButton();
+        private readonly PillButton _installBtn = new PillButton();
+        private readonly PillButton _cancelBtn  = new PillButton();
 
         private readonly Panel _scrollContainer;
 
