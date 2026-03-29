@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CloudflaredMonitor.Services;
 
-namespace CloudflaredMonitor
+namespace OolioTunnelMonitor
 {
     // ── New enums for AppMode architecture ────────────────────────────────────
     public enum PillButtonStyle   { Normal, Active }
