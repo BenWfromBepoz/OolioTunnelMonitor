@@ -10,7 +10,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CloudflaredMonitor.Services;
+using OolioTunnelMonitor.Services;
 
 namespace OolioTunnelMonitor
 {
