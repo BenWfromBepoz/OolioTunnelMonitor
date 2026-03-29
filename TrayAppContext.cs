@@ -45,8 +45,8 @@ namespace OolioTunnelMonitor
             try
             {
                 var asm    = System.Reflection.Assembly.GetExecutingAssembly();
-                var stream = asm.GetManifestResourceStream("CloudflaredMonitor.Resources.OolioTaskbar256.png")
-                          ?? asm.GetManifestResourceStream("CloudflaredMonitor.Resources.Oolio.png");
+                var stream = asm.GetManifestResourceStream("OolioTunnelMonitor.Resources.OolioTaskbar256.png")
+                          ?? asm.GetManifestResourceStream("OolioTunnelMonitor.Resources.Oolio.png");
                 if (stream != null)
                 {
                     using var src = Image.FromStream(stream);
@@ -116,8 +116,8 @@ namespace OolioTunnelMonitor
 
         public TrayAppContext(bool startMinimised = false)
         {
-            _trayIco    = LoadIcon("CloudflaredMonitor.Resources.IconTray.ico",    16);
-            _taskbarIco = LoadIcon("CloudflaredMonitor.Resources.IconTaskbar.ico", 48);
+            _trayIco    = LoadIcon("OolioTunnelMonitor.Resources.IconTray.ico",    16);
+            _taskbarIco = LoadIcon("OolioTunnelMonitor.Resources.IconTaskbar.ico", 48);
 
             _mainForm      = new MainForm();
             _mainForm.Icon = _taskbarIco;
