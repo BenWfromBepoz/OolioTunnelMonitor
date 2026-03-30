@@ -142,10 +142,11 @@ namespace OolioTunnelMonitor
             Color baseCol = gC > r && gC > b ? Color.FromArgb(34, 197, 94) : r > gC && r > b ? Color.FromArgb(239, 68, 68) : Color.FromArgb(234, 179, 8);
             Color endCol = Color.FromArgb(14, 26, 119);
             using var grad = new LinearGradientBrush(
-                new Point(rect.Left, rect.Top),
-                new Point(rect.Right, rect.Top + (int)(rect.Height * 0.35f)), // ~30°
+                rect,
                 Color.Empty,
-                Color.Empty);
+                Color.Empty,
+                15f,   // shallower angle
+                true);
             var blend = new ColorBlend
             {
                 Colors = new[]
@@ -159,8 +160,8 @@ namespace OolioTunnelMonitor
                 {
                     0.0f,
                     0.2f,
-                    0.45f,
-                    0.9f
+                    0.65f,
+                    1.0f
                 }
             };
             grad.InterpolationColors = blend;
