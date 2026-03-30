@@ -267,11 +267,11 @@ namespace OolioTunnelMonitor
 
             // BorderPanel wraps the token textbox for rounded purple look
             this.tokenBorder.Location = new System.Drawing.Point(14, 30);
-            this.tokenBorder.Size     = new System.Drawing.Size(490, 24);
+            this.tokenBorder.Size     = new System.Drawing.Size(390, 24);
             this.tokenBorder.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
             this.txtApiToken.Location              = new System.Drawing.Point(6, 5);
-            this.txtApiToken.Size                  = new System.Drawing.Size(480, 22);
+            this.txtApiToken.Size                  = new System.Drawing.Size(380, 22);
             this.txtApiToken.UseSystemPasswordChar = true;
             this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 8.5f);
             this.txtApiToken.BorderStyle           = BorderStyle.None;
