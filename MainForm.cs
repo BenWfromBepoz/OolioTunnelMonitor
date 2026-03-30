@@ -89,17 +89,23 @@ internal sealed class ContentPanel : Panel
             Region = new Region(path);
         }
     
-        protected override void OnPaint(PaintEventArgs e)
+    protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.CompositingQuality = CompositingQuality.HighQuality;
             g.Clear(_formBg);
-    
-            using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+        
+            var rect = new Rectangle(1, 1, Width - 3, Height - 3);
+        
+            using var path = ShapeHelper.RoundedPath(rect, Radius);
             using var brush = new SolidBrush(_cardBg);
             g.FillPath(brush, path);
+        
+            using var border = new Pen(Color.FromArgb(35, 255, 255, 255), 1f);
+            g.DrawPath(border, path);
         }
-    }
 
     internal static class ShapeHelper
     {
