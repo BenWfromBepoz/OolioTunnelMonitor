@@ -143,7 +143,7 @@ namespace OolioTunnelMonitor
             Color endCol = Color.FromArgb(14, 26, 119);
             using var grad = new LinearGradientBrush(
                 new Point(rect.Left, rect.Top),
-                new Point(rect.Right, rect.Bottom + ph),
+                new Point(rect.Right, rect.Bottom + ph * 2),
                 Color.Empty,
                 Color.Empty);
             var blend = new ColorBlend // Build a smoother, offset gradient
@@ -153,7 +153,7 @@ namespace OolioTunnelMonitor
                     ControlPaint.Light(baseCol, 0.35f),
                     ControlPaint.Light(baseCol, 0.25f),
                     ControlPaint.Light(baseCol, 0.15f),
-                    ControlPaint.Dark(baseCol, 0.1f),   // transition tone
+                    ControlPaint.Dark(baseCol, 0.5f),   // transition tone
                     endCol
                 },
                 Positions = new[]
