@@ -365,12 +365,12 @@ namespace OolioTunnelMonitor
         // ── BuildSidebars ─────────────────────────────────────────────────────
         private void BuildSidebars()
         {
-            const int btnX = 12, btnW = 200, btnH = 40, btnGap = 4;
+            const int btnX = 12, btnW = 200, btnH = 40;
             PillButton Btn(string text, PillButtonStyle style = PillButtonStyle.Normal) =>
                 new PillButton { Text = text, Size = new Size(btnW, btnH), Style = style };
 
             // ── Main sidebar panel ────────────────────────────────────────────
-            pnlSidebarMain = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 120) };
+            pnlSidebarMain = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 0) };
 
             // Lay out the existing Designer buttons vertically with Tools/Help inserted
             // Designer already placed btnCreateTunnel, btnTunnelStatus etc — we add Tools/Help
@@ -391,8 +391,17 @@ namespace OolioTunnelMonitor
             btnCheckUpdates.Location = new Point(btnX, 490);
             lblVersion.Location    = new Point(14,   532);
 
-            pnlSidebar.Controls.Add(btnToolsNav);
-            pnlSidebar.Controls.Add(btnHelpNav);
+            pnlSidebarMain.Controls.Add(btnCreateTunnel);
+            pnlSidebarMain.Controls.Add(btnTunnelStatus);
+            pnlSidebarMain.Controls.Add(btnToolsNav);
+            pnlSidebarMain.Controls.Add(btnHelpNav);
+            pnlSidebarMain.Controls.Add(btnOpenLogs);
+            pnlSidebarMain.Controls.Add(btnOpenConfig);
+            pnlSidebarMain.Controls.Add(btnRepair);
+            pnlSidebarMain.Controls.Add(chkReinstall);
+            pnlSidebarMain.Controls.Add(btnCheckUpdates);
+            pnlSidebarMain.Controls.Add(lblVersion);
+            pnlSidebar.Controls.Add(pnlSidebarMain);
 
             // ── Install sidebar ───────────────────────────────────────────────
             pnlSidebarInstall = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 120), Visible = false };
@@ -719,7 +728,20 @@ namespace OolioTunnelMonitor
                 var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
                 if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
                 LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
-                var ingressRules = spec.Routes.Select(r => new CfIngressRule { Hostname = r.Hostname, Path = string.IsNullOrEmpty(r.Path) ? null : r.Path, Service = r.Service }).ToList();
+                var ingressRules = spec.Routes
+                    .Select(r =>
+                    {
+                        var host = CreateTunnelForm.BuildHostname(r, spec);
+                        if (string.IsNullOrWhiteSpace(host) || r.Port <= 0) return null;
+                        return new CfIngressRule
+                        {
+                            Hostname = host,
+                            Service = "http://localhost:" + r.Port
+                        };
+                    })
+                    .Where(r => r != null)
+                    .Cast<CfIngressRule>()
+                    .ToList();
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token); LogInfo("Configured " + ingressRules.Count + " route(s).");
                 await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
