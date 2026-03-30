@@ -287,7 +287,8 @@ namespace OolioTunnelMonitor
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
         private AppMode _mode = AppMode.Main;
-        private FlowLayoutPanel pnlSidebarMain = null!, pnlSidebarInstall = null!, pnlSidebarTools = null!, pnlSidebarHelp = null!;
+        private FlowLayoutPanel pnlSidebarMain = null!;
+        private Panel pnlSidebarInstall = null!, pnlSidebarTools = null!, pnlSidebarHelp = null!;
         private Panel pnlInstall = null!, pnlTools = null!, pnlHelp = null!;
         private ModernButton btnBackFromInstall = null!, btnBackFromTools = null!, btnBackFromHelp = null!;
         private ModernButton btnToolsNav = null!, btnHelpNav = null!;
