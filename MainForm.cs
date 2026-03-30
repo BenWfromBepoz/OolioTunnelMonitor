@@ -140,7 +140,7 @@ namespace OolioTunnelMonitor
             var rect = new Rectangle(0, py, pw, ph);
             var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
             Color baseCol = gC > r && gC > b ? Color.FromArgb(34, 197, 94) : r > gC && r > b ? Color.FromArgb(239, 68, 68) : Color.FromArgb(234, 179, 8);
-            using var grad = new LinearGradientBrush(new Point(0, py), new Point(pw, py + ph), ControlPaint.Light(baseCol, 0.3f), Colour.FromArgb(14, 26, 119)); // ControlPaint.Dark(baseCol, 0.15f));
+            using var grad = new LinearGradientBrush(new Point(0, py), new Point(pw, py + ph), ControlPaint.Light(baseCol, 0.3f), Color.FromArgb(14, 26, 119)); // ControlPaint.Dark(baseCol, 0.15f));
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
             g.FillPath(grad, path);
             var glossRect = new Rectangle(0, py, pw, ph / 2);
