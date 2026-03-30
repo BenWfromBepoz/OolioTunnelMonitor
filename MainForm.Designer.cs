@@ -144,6 +144,7 @@ namespace CloudflaredMonitor
             // ── Status card ──────────────────────────────────────────────────
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
+            this.pnlStatusCard.Padding = new Padding(10, 30, 10, 10);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
