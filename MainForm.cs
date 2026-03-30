@@ -143,7 +143,7 @@ namespace OolioTunnelMonitor
             Color endCol = Color.FromArgb(14, 26, 119);
             using var grad = new LinearGradientBrush(
                 new Point(rect.Left, rect.Top),
-                new Point(rect.Right, rect.Bottom),
+                new Point(rect.Right, rect.Top + (int)(rect.Height * 0.35f)), // ~30°
                 Color.Empty,
                 Color.Empty);
             var blend = new ColorBlend
@@ -159,7 +159,7 @@ namespace OolioTunnelMonitor
                 {
                     0.0f,
                     0.2f,
-                    0.5f,
+                    0.65f,
                     1.0f
                 }
             };
