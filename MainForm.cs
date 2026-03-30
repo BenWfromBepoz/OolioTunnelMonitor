@@ -45,7 +45,7 @@ namespace OolioTunnelMonitor
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             if (_logo == null) return;
-            const int subtitleH = 24;
+            const int subtitleH = 16;
             int imgArea = Height - subtitleH;
             int availW = Width - 24, availH = imgArea -24;
             if (availW <= 0 || availH <= 0) return;
