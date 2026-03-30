@@ -143,7 +143,7 @@ namespace OolioTunnelMonitor
             Color endCol = Color.FromArgb(14, 26, 119);
             using var grad = new LinearGradientBrush(
                 new Point(rect.Left, rect.Top),
-                new Point(rect.Right, rect.Bottom + ph / 3)
+                new Point(rect.Right, rect.Bottom + ph / 3),
                 Color.Empty,
                 Color.Empty);
             var blend = new ColorBlend // Build a smoother, offset gradient
