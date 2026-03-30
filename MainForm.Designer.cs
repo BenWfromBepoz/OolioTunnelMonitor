@@ -73,7 +73,7 @@ namespace OolioTunnelMonitor
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, imageArea + 30);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
@@ -117,15 +117,15 @@ namespace OolioTunnelMonitor
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 114));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ────────────────────────────────────────────────
             this.pnlStatusCard.Dock    = DockStyle.Fill;
             this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlStatusCard.Padding = new Padding(0, 0, 16, 0);  // Fix #3: right padding
+            this.pnlStatusCard.Padding = new Padding(10, 30, 10, 10);  // Fix #3: right padding
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -146,7 +146,7 @@ namespace OolioTunnelMonitor
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 90));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
@@ -185,12 +185,11 @@ namespace OolioTunnelMonitor
             // ── Ingress card ── Fix #4: right padding inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(12, 10, 16, 10);
+            this.pnlIngressCard.Padding = new Padding(10, 30, 10, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
 
-            // Fix #10: "Routes" instead of "Published Routes"
             this.lblIngressTitle.Text      = "Routes";
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
@@ -248,19 +247,19 @@ namespace OolioTunnelMonitor
             // ── Token card ── Fix #5: BorderPanel with rounded purple border
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
-
+            this.pnlTokenCard.Padding = new Padding(10, 30, 10, 10);
             this.lblTokenTitle.Text      = "Cloudflare API Token";
-            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
+            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblTokenTitle.Location  = new System.Drawing.Point(14, 6);
             this.lblTokenTitle.Size      = new System.Drawing.Size(175, 18);
             this.lblTokenTitle.BackColor = System.Drawing.Color.Transparent;
             this.lblTokenTitle.Cursor    = Cursors.Help;
-            this.toolTip.SetToolTip(this.lblTokenTitle, "Found in LastPass or the HubSpot Company Record under Network & Environment");
+            this.toolTip.SetToolTip(this.lblTokenTitle, "Found on the Company Record in HubSpot, under Network & Environment. Installer tokens are in LastPass");
 
             // BorderPanel wraps the token textbox for rounded purple look
             this.tokenBorder.Location = new System.Drawing.Point(14, 26);
-            this.tokenBorder.Size     = new System.Drawing.Size(490, 30);
+            this.tokenBorder.Size     = new System.Drawing.Size(490, 24);
             this.tokenBorder.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
             this.txtApiToken.Location              = new System.Drawing.Point(4, 3);
@@ -284,7 +283,7 @@ namespace OolioTunnelMonitor
             // ── Log card ───────────────────────────────────────────────────
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
-            this.pnlLogCard.Padding = new Padding(12, 30, 12, 12);
+            this.pnlLogCard.Padding = new Padding(10, 30, 10, 10);
             this.pnlLogCard.Controls.Add(this.lblLogTitle);
             this.pnlLogCard.Controls.Add(this.txtLog);
             this.tblMain.Controls.Add(this.pnlLogCard, 0, 3);
