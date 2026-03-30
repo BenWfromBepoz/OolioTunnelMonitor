@@ -19,15 +19,14 @@ namespace OolioTunnelMonitor
         {
             this.toolTip          = new ToolTip();
             this.pnlSidebar       = new Panel();
-            this.oolioLogo        = new OolioLogoBrand();
+            this.oolioLogo        = new OolioSidebarLogo();
             this.btnCreateTunnel  = new ModernButton();
             this.btnTunnelStatus  = new ModernButton();
-            this.btnOpenLogs      = new ModernButton();
-            this.btnOpenConfig    = new ModernButton();
             this.btnRepair        = new ModernButton();
             this.chkReinstall     = new CheckBox();
             this.btnCheckUpdates  = new ModernButton();
             this.lblVersion       = new Label();
+            this.contentPanel     = new ContentPanel();
             this.tblMain          = new TableLayoutPanel();
             this.pnlStatusCard    = new RoundedPanel();
             this.lblCardTitle     = new Label();
@@ -55,6 +54,7 @@ namespace OolioTunnelMonitor
             this.txtLog           = new RichTextBox();
 
             this.pnlSidebar.SuspendLayout();
+            this.contentPanel.SuspendLayout();
             this.tblMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).BeginInit();
             this.SuspendLayout();
@@ -63,13 +63,14 @@ namespace OolioTunnelMonitor
             this.toolTip.InitialDelay = 400;
             this.toolTip.ReshowDelay  = 200;
 
-            // ── Sidebar ──────────────────────────────────────────────────────
+            // ── Sidebar ────────────────────────────────────────────────────
             this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(39, 46, 63);
             this.pnlSidebar.Dock  = DockStyle.Left;
             this.pnlSidebar.Width = 224;
 
-            this.oolioLogo.Location  = new System.Drawing.Point(12, 12);
-            this.oolioLogo.Size      = new System.Drawing.Size(200, 106);
+            // Logo: OolioSidebarLogo — displays taskbar 256×256 icon
+            this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 120);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
@@ -82,15 +83,8 @@ namespace OolioTunnelMonitor
             this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
             this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
 
-            this.btnOpenLogs.Text     = "\u2261  Open Logfile Folder";
-            this.btnOpenLogs.Location = new System.Drawing.Point(12, 226);
-            this.btnOpenLogs.Size     = new System.Drawing.Size(200, 40);
-            this.btnOpenLogs.Click   += new EventHandler(this.btnOpenLogs_Click);
-
-            this.btnOpenConfig.Text     = "\u25a4  Open Config Folder";
-            this.btnOpenConfig.Location = new System.Drawing.Point(12, 274);
-            this.btnOpenConfig.Size     = new System.Drawing.Size(200, 40);
-            this.btnOpenConfig.Click   += new EventHandler(this.btnOpenConfig_Click);
+            // NOTE: btnOpenLogs and btnOpenConfig are NOT created here.
+            // They are created dynamically in BuildSidebars() for the Tools panel only.
 
             this.btnRepair.Text     = "\u2699  Repair Tunnel";
             this.btnRepair.Location = new System.Drawing.Point(12, 322);
@@ -108,7 +102,6 @@ namespace OolioTunnelMonitor
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
             this.btnCheckUpdates.Location = new System.Drawing.Point(12, 404);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
-            this.btnCheckUpdates.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCheckUpdates.Click   += new EventHandler(this.btnCheckUpdates_Click);
 
             this.lblVersion.Text      = "v1.2.1.0";
@@ -117,19 +110,21 @@ namespace OolioTunnelMonitor
             this.lblVersion.Location  = new System.Drawing.Point(14, 446);
             this.lblVersion.Size      = new System.Drawing.Size(196, 16);
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
-            this.lblVersion.Anchor    = AnchorStyles.Top | AnchorStyles.Left;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
             this.pnlSidebar.Controls.Add(this.btnTunnelStatus);
-            this.pnlSidebar.Controls.Add(this.btnOpenLogs);
-            this.pnlSidebar.Controls.Add(this.btnOpenConfig);
             this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.chkReinstall);
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
-            // ── Main layout ──────────────────────────────────────────────────
+            // ── ContentPanel (floating, all-corners rounded) ───────────────
+            // Position and size are set dynamically in ResizeContentPanel()
+            this.contentPanel.Visible = false; // prevent startup flicker
+            this.contentPanel.Controls.Add(this.tblMain);
+
+            // ── Main layout (inside contentPanel) ──────────────────────────
             this.tblMain.Dock        = DockStyle.Fill;
             this.tblMain.BackColor   = System.Drawing.Color.FromArgb(226, 232, 240);
             this.tblMain.Padding     = new Padding(10, 10, 10, 10);
@@ -141,7 +136,7 @@ namespace OolioTunnelMonitor
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
-            // ── Status card ──────────────────────────────────────────────────
+            // ── Status card ────────────────────────────────────────────────
             this.pnlStatusCard.Dock   = DockStyle.Fill;
             this.pnlStatusCard.Margin = new Padding(0, 0, 0, 8);
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
@@ -230,7 +225,7 @@ namespace OolioTunnelMonitor
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
             this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
-            this.dgvIngress.Font       = new System.Drawing.Font("Cascadia Mono", 8.5f);
+            this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
             this.dgvIngress.ColumnHeadersHeight         = 26;
@@ -262,7 +257,7 @@ namespace OolioTunnelMonitor
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
 
-            // ── Token card ───────────────────────────────────────────────────
+            // ── Token card ─────────────────────────────────────────────────
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
 
@@ -303,7 +298,7 @@ namespace OolioTunnelMonitor
             this.pnlTokenCard.Controls.Add(this.chkShowToken);
             this.tblMain.Controls.Add(this.pnlTokenCard, 0, 2);
 
-            // ── Log card ─────────────────────────────────────────────────────
+            // ── Log card ───────────────────────────────────────────────────
             this.pnlLogCard.Dock    = DockStyle.Fill;
             this.pnlLogCard.Margin  = new Padding(0, 0, 0, 0);
             this.pnlLogCard.Padding = new Padding(12, 30, 12, 12);
@@ -327,35 +322,36 @@ namespace OolioTunnelMonitor
             this.txtLog.ForeColor   = System.Drawing.Color.FromArgb(203, 213, 225);
             this.txtLog.WordWrap    = false;
 
-            // ── Form ─────────────────────────────────────────────────────────
+            // ── Form ───────────────────────────────────────────────────────
             this.AutoScaleDimensions = new System.Drawing.SizeF(7f, 15f);
             this.AutoScaleMode       = AutoScaleMode.Font;
             this.ClientSize          = new System.Drawing.Size(1040, 700);
-            this.MinimumSize         = new System.Drawing.Size(1000, 600);
-            this.Controls.Add(this.tblMain);
+            this.MinimumSize         = new System.Drawing.Size(1000, 620);
+            this.Controls.Add(this.contentPanel);
             this.Controls.Add(this.pnlSidebar);
             this.Name          = "MainForm";
             this.Text          = "Oolio Tunnel Monitor";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor     = System.Drawing.Color.FromArgb(226, 232, 240);
+            this.BackColor     = System.Drawing.Color.FromArgb(39, 46, 63);  // Dark sidebar colour as form bg
 
             this.pnlSidebar.ResumeLayout(false);
+            this.contentPanel.ResumeLayout(false);
             this.tblMain.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.dgvIngress).EndInit();
             this.ResumeLayout(false);
         }
 
+        // ── Field declarations ─────────────────────────────────────────────
         private ToolTip          toolTip;
         private Panel            pnlSidebar;
-        private OolioLogoBrand   oolioLogo;
+        private OolioSidebarLogo oolioLogo;
         private ModernButton     btnCreateTunnel;
         private ModernButton     btnTunnelStatus;
-        private ModernButton     btnOpenLogs;
-        private ModernButton     btnOpenConfig;
         private ModernButton     btnRepair;
         private CheckBox         chkReinstall;
         private ModernButton     btnCheckUpdates;
         private Label            lblVersion;
+        private ContentPanel     contentPanel;
         private TableLayoutPanel tblMain;
         private RoundedPanel     pnlStatusCard;
         private Label            lblCardTitle;

@@ -14,27 +14,29 @@ using OolioTunnelMonitor.Services;
 
 namespace OolioTunnelMonitor
 {
-    // ── New enums for AppMode architecture ────────────────────────────────────
+    // ── Enums ────────────────────────────────────────────────────────────────
     public enum PillButtonStyle   { Normal, Active }
     public enum ModernButtonStyle { Primary, Muted }
     public enum AppMode           { Main, Install, Tools, Help }
 
-    // ── Helper classes from main (unchanged) ──────────────────────────────────
-    internal sealed class OolioLogoBrand : Control
+    // ── OolioSidebarLogo ─────────────────────────────────────────────────────
+    // Displays the taskbar 256×256 icon with its glossy border intact,
+    // plus "Oolio Tunnel Monitor" subtitle text underneath.
+    internal sealed class OolioSidebarLogo : Control
     {
         private static readonly Image? _logo = LoadLogo();
-        private const int Radius = 10;
         private static Image? LoadLogo()
         {
             try
             {
-                var stream = System.Reflection.Assembly.GetExecutingAssembly()
-                    .GetManifestResourceStream("OolioTunnelMonitor.Resources.Oolio.png");
+                var asm = System.Reflection.Assembly.GetExecutingAssembly();
+                var stream = asm.GetManifestResourceStream("OolioTunnelMonitor.Resources.OolioTaskbar256.png")
+                          ?? asm.GetManifestResourceStream("OolioTunnelMonitor.Resources.Oolio.png");
                 return stream != null ? Image.FromStream(stream) : null;
             }
             catch { return null; }
         }
-        public OolioLogoBrand()
+        public OolioSidebarLogo()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
@@ -43,48 +45,70 @@ namespace OolioTunnelMonitor
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
-            for (int i = 3; i >= 1; i--)
-            { using var sb = new SolidBrush(Color.FromArgb(35, 0, 0, 0)); using var sp = Rnd(bounds, Radius, i); g.FillPath(sb, sp); }
-            using (var path = Rnd(bounds, Radius, 0)) using (var b = new SolidBrush(Color.White)) g.FillPath(b, path);
-            if (_logo != null)
-            {
-                var lr = new Rectangle(12, 10, Width - 24, Height - 42);
-                float sc = Math.Min(lr.Width / (float)_logo.Width, lr.Height / (float)_logo.Height);
-                int w = (int)(_logo.Width * sc), h = (int)(_logo.Height * sc);
-                g.DrawImage(_logo, new Rectangle(lr.X + (lr.Width - w) / 2, lr.Y + (lr.Height - h) / 2, w, h));
-            }
-            else
-            {
-                using var f = new Font("Segoe UI", 18f, FontStyle.Bold);
-                using var b = new SolidBrush(Color.FromArgb(103, 58, 182));
-                g.DrawString("oolio", f, b, new RectangleF(0, 0, Width, Height - 26),
-                    new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-            }
-            using var sf = new Font("Segoe UI", 8.5f);
-            using var sb2 = new SolidBrush(Color.FromArgb(100, 116, 139));
-            g.DrawString("ZeroTrust Tunnel Monitor", sf, sb2, new RectangleF(0, Height - 26, Width, 22),
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            if (_logo == null) return;
+
+            const int pad       = 8;
+            const int subtitleH = 24;
+            int imgArea = Height - subtitleH;
+            int avail   = Math.Min(Width, imgArea) - pad * 2;
+            if (avail <= 0) return;
+
+            float scale = Math.Min(avail / (float)_logo.Width, avail / (float)_logo.Height);
+            int w = (int)(_logo.Width  * scale);
+            int h = (int)(_logo.Height * scale);
+            int x = (Width - w) / 2;
+            int y = pad;
+            g.DrawImage(_logo, new Rectangle(x, y, w, h));
+
+            using var sf  = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            using var sb  = new SolidBrush(Color.FromArgb(180, 195, 220));
+            g.DrawString("Oolio Tunnel Monitor", sf, sb,
+                new RectangleF(0, imgArea, Width, subtitleH),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-        }
-        private static GraphicsPath Rnd(Rectangle r, int radius, int inset)
-        {
-            var rect = new Rectangle(r.X + inset, r.Y + inset, r.Width - inset * 2, r.Height - inset * 2);
-            int d = radius * 2; var p = new GraphicsPath();
-            p.AddArc(rect.X, rect.Y, d, d, 180, 90); p.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
-            p.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90); p.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
-            p.CloseFigure(); return p;
         }
     }
 
+    // ── ContentPanel ─────────────────────────────────────────────────────────
+    // Floating panel with all-corners rounded (radius 16).
+    // Paints a light card surface over the dark form background.
+    internal sealed class ContentPanel : Panel
+    {
+        private const int Radius = 16;
+        private static readonly Color _cardBg = Color.FromArgb(226, 232, 240);
+        private static readonly Color _formBg = Color.FromArgb(39, 46, 63);
+
+        public ContentPanel()
+        {
+            DoubleBuffered = true;
+            ResizeRedraw   = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = _cardBg;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(_formBg);
+
+            var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
+            using var path  = ShapeHelper.RoundedPath(bounds, Radius);
+            using var brush = new SolidBrush(_cardBg);
+            g.FillPath(brush, path);
+        }
+    }
+
+    // ── ShapeHelper ──────────────────────────────────────────────────────────
     internal static class ShapeHelper
     {
         public static GraphicsPath RoundedPath(Rectangle r, int rad)
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── PillLabel ────────────────────────────────────────────────────────────
     internal sealed class PillLabel : Label
     {
         private const int PillRadius = 9;
@@ -131,6 +155,7 @@ namespace OolioTunnelMonitor
         }
     }
 
+    // ── PillButton ───────────────────────────────────────────────────────────
     internal sealed class PillButton : Button
     {
         private const int Radius = 13;
@@ -153,13 +178,12 @@ namespace OolioTunnelMonitor
         {
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-            g.Clear(Parent?.BackColor ?? Color.White);
+            g.Clear(Parent?.BackColor ?? Color.FromArgb(39, 46, 63));
             var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
             using var path = ShapeHelper.RoundedPath(bounds, Radius);
             Color topCol, botCol, fgCol;
             if (_style == PillButtonStyle.Active)
             {
-                // Lighter violet + dark text for "Back to Monitor"
                 topCol = _hovered ? Color.FromArgb(196, 181, 253) : Color.FromArgb(167, 139, 250);
                 botCol = _hovered ? Color.FromArgb(167, 139, 250) : Color.FromArgb(124,  58, 237);
                 fgCol  = Color.FromArgb(30, 10, 80);
@@ -184,6 +208,7 @@ namespace OolioTunnelMonitor
         }
     }
 
+    // ── ModernButton ─────────────────────────────────────────────────────────
     internal sealed class ModernButton : Button
     {
         private static readonly Color _normal = Color.FromArgb(45, 52, 68);
@@ -220,6 +245,7 @@ namespace OolioTunnelMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── RoundedPanel ─────────────────────────────────────────────────────────
     internal sealed class RoundedPanel : Panel
     {
         private const int Radius = 10;
@@ -249,6 +275,7 @@ namespace OolioTunnelMonitor
         { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
     }
 
+    // ── TrayIconGenerator ────────────────────────────────────────────────────
     internal static class TrayIconGenerator
     {
         public static System.Drawing.Icon CreateOolioIcon()
@@ -261,6 +288,7 @@ namespace OolioTunnelMonitor
         }
     }
 
+    // ── IngressItem / IngressHelper ──────────────────────────────────────────
     internal sealed class IngressItem
     {
         public string CloudEndpoint { get; }
@@ -286,12 +314,12 @@ namespace OolioTunnelMonitor
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
     // MainForm
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
     public partial class MainForm : Form
     {
-        // ── Core services (from main) ─────────────────────────────────────────
+        // ── Core services ────────────────────────────────────────────────────
         private readonly CloudflaredServiceManager _serviceManager = new();
         private readonly CloudflaredInstaller      _installer      = new();
         private readonly FileLogger                _logger         = new();
@@ -310,30 +338,30 @@ namespace OolioTunnelMonitor
                 "Bepoz", "OolioTunnelMonitor", "tunnel-details");
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
-        // ── AppMode ───────────────────────────────────────────────────────────
+        // ── AppMode ──────────────────────────────────────────────────────────
         private AppMode _mode = AppMode.Main;
 
-        // ── Sidebar panels ────────────────────────────────────────────────────
+        // ── Sidebar panels ───────────────────────────────────────────────────
         private Panel pnlSidebarMain    = null!;
         private Panel pnlSidebarInstall = null!;
         private Panel pnlSidebarTools   = null!;
         private Panel pnlSidebarHelp    = null!;
 
-        // ── Content panels ────────────────────────────────────────────────────
+        // ── Content panels ───────────────────────────────────────────────────
         private Panel pnlInstall = null!;
         private Panel pnlTools   = null!;
         private Panel pnlHelp    = null!;
 
-        // ── Back buttons (one per secondary sidebar) ──────────────────────────
+        // ── Back buttons (PillButton Active style) ───────────────────────────
         private PillButton btnBackFromInstall = null!;
         private PillButton btnBackFromTools   = null!;
         private PillButton btnBackFromHelp    = null!;
 
-        // ── Tools/Help nav buttons (on main sidebar) ──────────────────────────
-        private PillButton btnToolsNav = null!;
-        private PillButton btnHelpNav  = null!;
+        // ── Tools/Help nav buttons (ModernButton on main sidebar) ────────────
+        private ModernButton btnToolsNav = null!;
+        private ModernButton btnHelpNav  = null!;
 
-        // ── Constructor ───────────────────────────────────────────────────────
+        // ── Constructor ──────────────────────────────────────────────────────
         public MainForm()
         {
             InitializeComponent();
@@ -346,9 +374,42 @@ namespace OolioTunnelMonitor
             BuildHelpPanel();
             SetMode(AppMode.Main);
             WireNavEvents();
+            // Prevent startup flicker
+            contentPanel.Visible = false;
         }
 
-        // ── SetMode ───────────────────────────────────────────────────────────
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            BeginInvoke(() => {
+                ResizeContentPanel();
+                contentPanel.Visible = true;
+            });
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            ResizeContentPanel();
+        }
+
+        // ── ResizeContentPanel ───────────────────────────────────────────────
+        // Positions the floating contentPanel and bottom-anchored sidebar items
+        private void ResizeContentPanel()
+        {
+            if (contentPanel == null) return;
+            const int sidebarW = 224;
+            const int margin   = 12;
+            contentPanel.Location = new Point(sidebarW + margin, margin);
+            contentPanel.Size     = new Size(ClientSize.Width - sidebarW - margin * 2, ClientSize.Height - margin * 2);
+
+            // Position CheckUpdates + version at bottom of sidebar
+            int bottomY = ClientSize.Height;
+            lblVersion.Location      = new Point(14, bottomY - 24);
+            btnCheckUpdates.Location = new Point(12, bottomY - 62);
+        }
+
+        // ── SetMode ──────────────────────────────────────────────────────────
         private void SetMode(AppMode mode)
         {
             _mode = mode;
@@ -362,59 +423,57 @@ namespace OolioTunnelMonitor
             pnlHelp.Visible    = (mode == AppMode.Help);
         }
 
-        // ── BuildSidebars ─────────────────────────────────────────────────────
+        // ── BuildSidebars ────────────────────────────────────────────────────
         private void BuildSidebars()
         {
             const int btnX = 12, btnW = 200, btnH = 40;
-            PillButton Btn(string text, PillButtonStyle style = PillButtonStyle.Normal) =>
-                new PillButton { Text = text, Size = new Size(btnW, btnH), Style = style };
 
-            // ── Main sidebar panel ────────────────────────────────────────────
+            // Helper: back buttons use PillButton Active style
+            PillButton BackBtn(string text) =>
+                new PillButton { Text = text, Size = new Size(btnW, btnH), Style = PillButtonStyle.Active };
+
+            // Nav buttons on main sidebar use ModernButton
+            btnToolsNav = new ModernButton { Text = "\u2630  Tools",  Size = new Size(btnW, btnH) };
+            btnHelpNav  = new ModernButton { Text = "?  Help",   Size = new Size(btnW, btnH) };
+
+            // ── Main sidebar panel ───────────────────────────────────────────
             pnlSidebarMain = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 0) };
 
-            // Lay out the existing Designer buttons vertically with Tools/Help inserted
-            // Designer already placed btnCreateTunnel, btnTunnelStatus etc — we add Tools/Help
-            btnToolsNav = Btn("\u2630  Tools");
-            btnHelpNav  = Btn("?  Help");
+            // Layout: Logo is in Designer at top. Buttons start below logo.
+            // Per architecture: Install, Status, Tools, Help, Repair, chkReinstall
+            // CheckUpdates + Version are bottom-anchored (positioned in ResizeContentPanel)
+            btnCreateTunnel.Location = new Point(btnX, 130);
+            btnTunnelStatus.Location = new Point(btnX, 178);
+            btnToolsNav.Location     = new Point(btnX, 226);
+            btnHelpNav.Location      = new Point(btnX, 274);
+            btnRepair.Location       = new Point(btnX, 322);
+            chkReinstall.Location    = new Point(20,   370);
 
-            // Position below the existing sidebar buttons
-            // Designer has: Create(130), Status(178), Logs(226), Config(274), Repair(322), chk(372), Updates(404)
-            // We insert Tools and Help after Status, moving the rest down
-            btnToolsNav.Location = new Point(btnX, 226);
-            btnHelpNav.Location  = new Point(btnX, 270);
-
-            // Shift existing buttons down to make room
-            btnOpenLogs.Location   = new Point(btnX, 318);
-            btnOpenConfig.Location = new Point(btnX, 362);
-            btnRepair.Location     = new Point(btnX, 410);
-            chkReinstall.Location  = new Point(20,   458);
-            btnCheckUpdates.Location = new Point(btnX, 490);
-            lblVersion.Location    = new Point(14,   532);
+            // NOTE: btnOpenLogs and btnOpenConfig are NOT on the main sidebar.
+            // They only appear in the Tools sidebar.
 
             pnlSidebarMain.Controls.Add(btnCreateTunnel);
             pnlSidebarMain.Controls.Add(btnTunnelStatus);
             pnlSidebarMain.Controls.Add(btnToolsNav);
             pnlSidebarMain.Controls.Add(btnHelpNav);
-            pnlSidebarMain.Controls.Add(btnOpenLogs);
-            pnlSidebarMain.Controls.Add(btnOpenConfig);
             pnlSidebarMain.Controls.Add(btnRepair);
             pnlSidebarMain.Controls.Add(chkReinstall);
             pnlSidebarMain.Controls.Add(btnCheckUpdates);
             pnlSidebarMain.Controls.Add(lblVersion);
             pnlSidebar.Controls.Add(pnlSidebarMain);
 
-            // ── Install sidebar ───────────────────────────────────────────────
+            // ── Install sidebar ──────────────────────────────────────────────
             pnlSidebarInstall = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 120), Visible = false };
-            btnBackFromInstall = Btn("\u2190  Back to Monitor", PillButtonStyle.Active);
+            btnBackFromInstall = BackBtn("\u2190  Back to Monitor");
             btnBackFromInstall.Location = new Point(btnX, 0);
             pnlSidebarInstall.Controls.Add(btnBackFromInstall);
             pnlSidebar.Controls.Add(pnlSidebarInstall);
 
-            // ── Tools sidebar ─────────────────────────────────────────────────
+            // ── Tools sidebar ────────────────────────────────────────────────
             pnlSidebarTools = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 120), Visible = false };
-            btnBackFromTools = Btn("\u2190  Back to Monitor", PillButtonStyle.Active);
-            var btnLogsTools   = Btn("\u2261  Open Logfile Folder");
-            var btnConfigTools = Btn("\u25a4  Open Config Folder");
+            btnBackFromTools = BackBtn("\u2190  Back to Monitor");
+            var btnLogsTools   = new ModernButton { Text = "\u2261  Open Logfile Folder", Size = new Size(btnW, btnH) };
+            var btnConfigTools = new ModernButton { Text = "\u25a4  Open Config Folder",  Size = new Size(btnW, btnH) };
             btnBackFromTools.Location  = new Point(btnX,  0);
             btnLogsTools.Location      = new Point(btnX, 52);
             btnConfigTools.Location    = new Point(btnX, 96);
@@ -423,15 +482,15 @@ namespace OolioTunnelMonitor
             pnlSidebarTools.Controls.AddRange(new Control[] { btnBackFromTools, btnLogsTools, btnConfigTools });
             pnlSidebar.Controls.Add(pnlSidebarTools);
 
-            // ── Help sidebar ──────────────────────────────────────────────────
+            // ── Help sidebar ─────────────────────────────────────────────────
             pnlSidebarHelp = new Panel { BackColor = Color.Transparent, Size = new Size(224, 600), Location = new Point(0, 120), Visible = false };
-            btnBackFromHelp = Btn("\u2190  Back to Monitor", PillButtonStyle.Active);
+            btnBackFromHelp = BackBtn("\u2190  Back to Monitor");
             btnBackFromHelp.Location = new Point(btnX, 0);
             pnlSidebarHelp.Controls.Add(btnBackFromHelp);
             pnlSidebar.Controls.Add(pnlSidebarHelp);
         }
 
-        // ── BuildInstallPanel ─────────────────────────────────────────────────
+        // ── BuildInstallPanel ────────────────────────────────────────────────
         private void BuildInstallPanel()
         {
             pnlInstall = new Panel { Visible = false, BackColor = Color.Transparent, Dock = DockStyle.Fill };
@@ -439,7 +498,7 @@ namespace OolioTunnelMonitor
             Controls.Add(pnlInstall);
         }
 
-        // ── BuildToolsPanel ───────────────────────────────────────────────────
+        // ── BuildToolsPanel ──────────────────────────────────────────────────
         private void BuildToolsPanel()
         {
             pnlTools = new Panel { Visible = false, BackColor = Color.FromArgb(226, 232, 240), Dock = DockStyle.Fill };
@@ -456,7 +515,6 @@ namespace OolioTunnelMonitor
                 ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Cascadia Mono", 8.5f),
                 BorderStyle = BorderStyle.None, ScrollBars = RichTextBoxScrollBars.Vertical, WordWrap = false
             };
-            // Mirror existing log content
             logBox.Text = txtLog.Text;
             txtLog.TextChanged += (_, _) => { if (!pnlTools.IsDisposed) logBox.Text = txtLog.Text; };
             pnlTools.Controls.Add(logBox);
@@ -464,7 +522,7 @@ namespace OolioTunnelMonitor
             Controls.Add(pnlTools);
         }
 
-        // ── BuildHelpPanel ────────────────────────────────────────────────────
+        // ── BuildHelpPanel ───────────────────────────────────────────────────
         private void BuildHelpPanel()
         {
             pnlHelp = new Panel { Visible = false, BackColor = Color.FromArgb(226, 232, 240), Dock = DockStyle.Fill };
@@ -479,7 +537,7 @@ namespace OolioTunnelMonitor
             Controls.Add(pnlHelp);
         }
 
-        // ── WireNavEvents ─────────────────────────────────────────────────────
+        // ── WireNavEvents ────────────────────────────────────────────────────
         private void WireNavEvents()
         {
             btnToolsNav.Click += (_, _) => SetMode(AppMode.Tools);
@@ -489,7 +547,7 @@ namespace OolioTunnelMonitor
             btnBackFromHelp.Click    += (_, _) => SetMode(AppMode.Main);
         }
 
-        // ── All original MainForm methods from main (unchanged) ───────────────
+        // ── OnShown ──────────────────────────────────────────────────────────
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
@@ -672,7 +730,7 @@ namespace OolioTunnelMonitor
                 var tid = localStatus.TunnelId;
                 if (!HasToken())
                 {
-                    LogWarn("No API token — running HTTP endpoint check only.");
+                    LogWarn("No API token \u2014 running HTTP endpoint check only.");
                     if (tid != null) { var jp = TunnelDetailsPath(tid); if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details."); } else LogInfo("No cached details. Add an API token and re-run."); }
                     var endpointUrl = tid != null ? GetFirstEndpointUrl(tid) : null;
                     if (endpointUrl != null)
@@ -687,17 +745,17 @@ namespace OolioTunnelMonitor
                             bool hasCf = resp.Headers.Contains("CF-RAY") || (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
                             string cfRay  = resp.Headers.Contains("CF-RAY")  ? resp.Headers.GetValues("CF-RAY").First()  : "";
                             string server = resp.Headers.Contains("Server")   ? resp.Headers.GetValues("Server").First()  : "unknown";
-                            if (hasCf) { ApplyBadge(lblRemoteStatus, "Tunnel OK"); LogInfo("HTTP " + code + " — Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")"); }
-                            else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " — endpoint responded. Server: " + server); }
-                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " — endpoint may not be functioning."); }
+                            if (hasCf) { ApplyBadge(lblRemoteStatus, "Tunnel OK"); LogInfo("HTTP " + code + " \u2014 Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")"); }
+                            else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " \u2014 endpoint responded. Server: " + server); }
+                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " \u2014 endpoint may not be functioning."); }
                         }
                         catch (HttpRequestException hrEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check failed: " + hrEx.Message); }
                         catch (TaskCanceledException)    { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check timed out after 10s."); }
                     }
                     else LogInfo("No endpoint URL available. Add an API token to fetch route config.");
-                    LogInfo("Check complete (no API token — limited detail)."); return;
+                    LogInfo("Check complete (no API token \u2014 limited detail)."); return;
                 }
-                LogInfo("API token found — querying Cloudflare...");
+                LogInfo("API token found \u2014 querying Cloudflare...");
                 var api = new CloudflareApi(GetToken());
                 using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 var tunnel = await api.GetTunnelAsync(tid!, cts1.Token);
@@ -844,8 +902,6 @@ namespace OolioTunnelMonitor
         private async void btnCreateTunnel_Click(object? sender, EventArgs e)   => await CreateTunnelAsync();
         private async void btnTunnelStatus_Click(object? sender, EventArgs e)    => await CheckTunnelStatusAsync();
         private async void btnTestToken_Click(object? sender, EventArgs e)       => await TestTokenAsync();
-        private void btnOpenLogs_Click(object? sender, EventArgs e)               => OpenLogFolder();
-        private void btnOpenConfig_Click(object? sender, EventArgs e)             => OpenConfigFolder();
         private async void btnRepair_Click(object? sender, EventArgs e)           => await RepairAsync();
         private async void btnCheckUpdates_Click(object? sender, EventArgs e)     => await CheckForUpdatesAsync(silent: false);
     }
