@@ -159,8 +159,8 @@ namespace OolioTunnelMonitor
                 {
                     0.0f,
                     0.2f,
-                    0.65f,
-                    1.0f
+                    0.45f,
+                    0.9f
                 }
             };
             grad.InterpolationColors = blend;
