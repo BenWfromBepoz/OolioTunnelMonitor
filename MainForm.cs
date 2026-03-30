@@ -140,6 +140,11 @@ namespace OolioTunnelMonitor
             var rect = new Rectangle(0, py, pw, ph);
             var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
             Color baseCol = gC > r && gC > b ? Color.FromArgb(34, 197, 94) : r > gC && r > b ? Color.FromArgb(239, 68, 68) : Color.FromArgb(234, 179, 8);
+            using var grad = new LinearGradientBrush(
+                new Point(0, py),
+                new Point(pw, py + ph),
+                Color.Empty,
+                Color.Empty);
             var blend = new ColorBlend // Build a smoother, offset gradient
             {
                 Colors = new[]
