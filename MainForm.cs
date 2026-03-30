@@ -146,22 +146,20 @@ namespace OolioTunnelMonitor
                 new Point(rect.Right, rect.Bottom),
                 Color.Empty,
                 Color.Empty);
-            var blend = new ColorBlend // Build a smoother, offset gradient
+            var blend = new ColorBlend
             {
                 Colors = new[]
                 {
-                    ControlPaint.Light(baseCol, 0.35f),
-                    ControlPaint.Light(baseCol, 0.25f),
-                    ControlPaint.Light(baseCol, 0.15f),
-                    ControlPaint.Dark(endCol, 0.5f),   // transition tone
-                    endCol
+                    ControlPaint.Light(baseCol, 0.4f),   // 0% light green
+                    baseCol,                             // 20% normal green
+                    ControlPaint.Dark(baseCol, 0.2f),    // 50% deeper green
+                    Color.FromArgb(14, 26, 119)          // 100% dark blue
                 },
                 Positions = new[]
                 {
                     0.0f,
+                    0.2f,
                     0.5f,
-                    0.7f,
-                    0.85f,
                     1.0f
                 }
             };
