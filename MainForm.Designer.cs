@@ -72,21 +72,6 @@ namespace OolioTunnelMonitor
             this.oolioLogo.Size      = new System.Drawing.Size(224, 240);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
-            this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, 240);
-            this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
-            this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
-
-            this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
-            this.btnTunnelStatus.Location = new System.Drawing.Point(12, 248);
-            this.btnTunnelStatus.Size     = new System.Drawing.Size(200, 40);
-            this.btnTunnelStatus.Click   += new EventHandler(this.btnTunnelStatus_Click);
-
-            this.btnRepair.Text     = "\u2699  Repair Tunnel";
-            this.btnRepair.Location = new System.Drawing.Point(12, 344);
-            this.btnRepair.Size     = new System.Drawing.Size(200, 40);
-            this.btnRepair.Click   += new EventHandler(this.btnRepair_Click);
-
             this.btnCheckUpdates.Text     = "\u21bb  Check for Updates";
             this.btnCheckUpdates.Location = new System.Drawing.Point(12, 404);
             this.btnCheckUpdates.Size     = new System.Drawing.Size(200, 36);
@@ -100,9 +85,6 @@ namespace OolioTunnelMonitor
             this.lblVersion.BackColor = System.Drawing.Color.Transparent;
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
-            this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
-            this.pnlSidebar.Controls.Add(this.btnTunnelStatus);
-            this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
 
