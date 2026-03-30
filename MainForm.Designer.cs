@@ -185,7 +185,7 @@ namespace OolioTunnelMonitor
             // ── Ingress card ── Fix #4: right padding inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(10, 10, 10, 10);
+            this.pnlIngressCard.Padding = new Padding(10, 30, 10, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
