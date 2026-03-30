@@ -69,7 +69,7 @@ namespace OolioTunnelMonitor
 
             // Logo: OolioSidebarLogo — full sidebar width, taskbar 256x256 icon
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 180);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 120);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
@@ -117,15 +117,15 @@ namespace OolioTunnelMonitor
             this.tblMain.ColumnCount = 1;
             this.tblMain.RowCount    = 4;
             this.tblMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 114));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   35));
-            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  76));
+            this.tblMain.RowStyles.Add(new RowStyle(SizeType.Absolute,  68));
             this.tblMain.RowStyles.Add(new RowStyle(SizeType.Percent,   65));
 
             // ── Status card ────────────────────────────────────────────────
             this.pnlStatusCard.Dock    = DockStyle.Fill;
             this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlStatusCard.Padding = new Padding(10, 30, 10, 10);  // Fix #3: right padding
+            this.pnlStatusCard.Padding = new Padding(0, 0, 16, 0);  // Fix #3: right padding
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -185,7 +185,7 @@ namespace OolioTunnelMonitor
             // ── Ingress card ── Fix #4: right padding inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(10, 30, 10, 10);
+            this.pnlIngressCard.Padding = new Padding(12, 10, 16, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -211,7 +211,8 @@ namespace OolioTunnelMonitor
             this.colLocal.ReadOnly     = true;
 
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
-            this.dgvIngress.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
@@ -247,9 +248,9 @@ namespace OolioTunnelMonitor
             // ── Token card ── Fix #5: BorderPanel with rounded purple border
             this.pnlTokenCard.Dock   = DockStyle.Fill;
             this.pnlTokenCard.Margin = new Padding(0, 0, 0, 8);
-            this.pnlTokenCard.Padding = new Padding(10, 30, 10, 10);
+
             this.lblTokenTitle.Text      = "Cloudflare API Token";
-            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
+            this.lblTokenTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 9f, System.Drawing.FontStyle.Bold);
             this.lblTokenTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblTokenTitle.Location  = new System.Drawing.Point(14, 6);
             this.lblTokenTitle.Size      = new System.Drawing.Size(175, 18);
