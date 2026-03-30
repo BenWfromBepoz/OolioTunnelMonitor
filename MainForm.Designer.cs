@@ -75,7 +75,6 @@ namespace OolioTunnelMonitor
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
             this.btnCreateTunnel.Location = new System.Drawing.Point(12, 130);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
-            this.btnCreateTunnel.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
             this.btnTunnelStatus.Text     = "\u25cb  Check Tunnel Status";
