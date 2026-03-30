@@ -49,7 +49,8 @@ namespace OolioTunnelMonitor
             int imgArea = Height - subtitleH;
             int availW = Width - 24, availH = imgArea - 8;
             if (availW <= 0 || availH <= 0) return;
-            float scale = Math.Min(availW / (float)_logo.Width, availH / (float)_logo.Height);
+            float baseScale = Math.Min(availW / (float)_logo.Width, availH / (float)_logo.Height);
+            float scale = baseScale * 1.5f; // +50%
             int w = (int)(_logo.Width * scale), h = (int)(_logo.Height * scale);
             int x = (Width - w) / 2, y = 4 + (availH - h) / 2;
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
