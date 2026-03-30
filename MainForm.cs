@@ -62,11 +62,20 @@ namespace OolioTunnelMonitor
 
     internal sealed class ContentPanel : Panel
     {
-        public ContentPanel() {
+        private const int Radius = 16;
+        private static readonly Color _cardBg = Color.FromArgb(226, 232, 240);
+        private static readonly Color _formBg = Color.FromArgb(39, 46, 63);
+        public ContentPanel()
+        {
             this.ResizeRedraw = true;
             this.SizeChanged += (_, __) => ApplyRegion();
+            DoubleBuffered = true; ResizeRedraw = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = _cardBg;
         }
-        private void ApplyRegion() {
+        private void ApplyRegion()
+        {
+            if (Width < 1 || Height < 1) return;
             int r = 16;
             var path = new System.Drawing.Drawing2D.GraphicsPath();
             path.AddArc(0, 0, r*2, r*2, 180, 90);
@@ -75,15 +84,6 @@ namespace OolioTunnelMonitor
             path.AddArc(0, Height - r*2, r*2, r*2, 90, 90);
             path.CloseFigure();
             Region = new Region(path);
-        }
-        private const int Radius = 16;
-        private static readonly Color _cardBg = Color.FromArgb(226, 232, 240);
-        private static readonly Color _formBg = Color.FromArgb(39, 46, 63);
-        public ContentPanel()
-        {
-            DoubleBuffered = true; ResizeRedraw = true;
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
-            BackColor = _cardBg;
         }
         protected override void OnPaint(PaintEventArgs e)
         {
