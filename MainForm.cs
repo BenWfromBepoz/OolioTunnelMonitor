@@ -343,7 +343,11 @@ namespace OolioTunnelMonitor
             btnToolsNav = new ModernButton { Text = "\u2630  Tools", Size = new Size(btnW, btnH) };
             btnHelpNav = new ModernButton { Text = "?  Help", Size = new Size(btnW, btnH) };
             tglReinstall = new ToggleSwitch { Checked = true, Location = new Point(20, 210) };
-            tglShowToken = new ToggleSwitch { Checked = false, Location = new Point(tokenBorderRight - 54, tokenBorderY + 2), Size = new Size(44, 22) };
+            tglShowToken = new ToggleSwitch { Checked = false, Size = new Size(44, 22) };
+            tokenBorder.Controls.Add(tglShowToken);
+            tglShowToken.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+            tglShowToken.Location = new Point(tokenBorder.Width - 48, (tokenBorder.Height - 22) / 2);
+            tglShowToken.CheckedChanged += (_, __) => { txtApiToken.UseSystemPasswordChar = !tglShowToken.Checked; };
             tglShowToken.CheckedChanged += (_, __) => { txtApiToken.UseSystemPasswordChar = !tglShowToken.Checked; };
             var lblReinstall = new Label { Text = "Reinstall MSI", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(180, 190, 210), BackColor = Color.Transparent, Location = new Point(66, 208), Size = new Size(140, 20) };
             pnlSidebarMain = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill };
