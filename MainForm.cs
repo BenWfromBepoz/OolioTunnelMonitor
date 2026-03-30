@@ -142,25 +142,27 @@ namespace OolioTunnelMonitor
             Color baseCol = gC > r && gC > b ? Color.FromArgb(34, 197, 94) : r > gC && r > b ? Color.FromArgb(239, 68, 68) : Color.FromArgb(234, 179, 8);
             Color endCol = Color.FromArgb(14, 26, 119);
             using var grad = new LinearGradientBrush(
-                new Point(0, py),
-                new Point(pw, py + ph /8),
+                new Point(rect.Left, rect.Top),
+                new Point(rect.Right, rect.Bottom + ph / 3)
                 Color.Empty,
                 Color.Empty);
             var blend = new ColorBlend // Build a smoother, offset gradient
             {
                 Colors = new[]
                 {
-                    ControlPaint.Light(baseCol, 0.35f),  // brighter start
-                    ControlPaint.Light(baseCol, 0.25f),  // subtle shift
-                    ControlPaint.Light(baseCol, 0.15f),  // extended fade
-                    endCol                              // your dark blue end
+                    ControlPaint.Light(baseCol, 0.35f),
+                    ControlPaint.Light(baseCol, 0.25f),
+                    ControlPaint.Light(baseCol, 0.15f),
+                    ControlPaint.Dark(baseCol, 0.1f),   // transition tone
+                    endCol
                 },
                 Positions = new[]
                 {
-                    0.0f,   // start
-                    0.5f,   // still mostly light
-                    0.75f,  // "centre" shifted right (3/4)
-                    1.0f    // full dark
+                    0.0f,
+                    0.5f,
+                    0.7f,
+                    0.85f,
+                    1.0f
                 }
             };
             grad.InterpolationColors = blend;
