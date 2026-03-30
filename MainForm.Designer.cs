@@ -69,7 +69,7 @@ namespace OolioTunnelMonitor
 
             // Logo: OolioSidebarLogo — full sidebar width, taskbar 256x256 icon
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 160);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 180);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
@@ -211,8 +211,8 @@ namespace OolioTunnelMonitor
             this.colLocal.ReadOnly     = true;
 
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
-            this.dgvIngress.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
+            this.dgvIngress.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
