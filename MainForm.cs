@@ -49,13 +49,13 @@ namespace OolioTunnelMonitor
             int imgArea = Height - subtitleH;
             int availW = Width - 24, availH = imgArea - 8;
             if (availW <= 0 || availH <= 0) return;
-            float scale = Math.Min(availW / (float)_logo.Width, availH / (float)_logo.Height);
+            float scale = Math.Max(availW / (float)_logo.Width, availH / (float)_logo.Height);
             int w = (int)(_logo.Width * scale), h = (int)(_logo.Height * scale);
             int x = (Width - w) / 2, y = 4 + (availH - h) / 2;
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
             using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
-            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea, Width, subtitleH),
+            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea - 26, Width, subtitleH),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
