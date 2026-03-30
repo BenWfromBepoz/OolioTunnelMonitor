@@ -193,8 +193,8 @@ namespace OolioTunnelMonitor
             this.lblIngressTitle.Text      = "Routes";
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Height    = 20;
-            this.lblIngressTitle.Dock      = DockStyle.Top + 20;   // instead of Location/Size
+            this.lblIngressTitle.Location  = new System.Drawing.Point(12, 8);
+            this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
             this.colCloud.HeaderText   = "Cloud Endpoint";
