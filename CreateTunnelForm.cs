@@ -223,9 +223,6 @@ namespace OolioTunnelMonitor
         private readonly TextBox _customBox    = new() { PlaceholderText = "Custom tunnel name" };
         private readonly Label   _previewLabel = new();
 
-        private bool  _customToggleOn = false;
-        private Panel _toggleTrack    = null!;
-        private Panel _toggleThumb    = null!;
 
         private readonly Panel          _routesPanel = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
         private readonly List<RouteRow> _rows        = new();
@@ -293,14 +290,12 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, 20, cy, 320));
             cy += 38;
 
-            BuildToggle(card1, 20, cy, "Custom name");
-            cy += 32;
-
-            _customBox.Enabled   = false;
-            _customBox.BackColor = UiFactory.Lavender;
-            var customWrap = UiFactory.StyledTextBox(_customBox, 20, cy, 320);
-            customWrap.Visible = false;
-            card1.Controls.Add(customWrap);
+            var tglCustom = new ToggleSwitch { Location = new Point(20, cy), Size = new Size(44, 22) };
+            var lblCustom = new Label { Text = "Custom name", Location = new Point(70, cy + 3), AutoSize = true,
+                Font = new Font("Segoe UI", 9f), ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent };
+            tglCustom.CheckedChanged += (_, __) => { UseCustom = tglCustom.Checked; RefreshPreview(); };
+            card1.Controls.Add(tglCustom);
+            card1.Controls.Add(lblCustom);
             cy += 34;
 
             _previewLabel.Location  = new Point(20, cy);
@@ -410,76 +405,6 @@ namespace OolioTunnelMonitor
                 BackColor = Color.Transparent
             });
             return card;
-        }
-
-        private void BuildToggle(Panel parent, int x, int y, string labelText)
-        {
-            _toggleTrack = new Panel
-            {
-                Location  = new Point(x, y + 2),
-                Size      = new Size(40, 22),
-                BackColor = UiFactory.SlateKey,
-                Cursor    = Cursors.Hand
-            };
-            PaintRoundedPanel(_toggleTrack, 11);
-
-            _toggleThumb = new Panel
-            {
-                Size      = new Size(16, 16),
-                Location  = new Point(3, 3),
-                BackColor = Color.White,
-                Cursor    = Cursors.Hand
-            };
-            PaintRoundedPanel(_toggleThumb, 8);
-
-            _toggleTrack.Controls.Add(_toggleThumb);
-            parent.Controls.Add(_toggleTrack);
-
-            parent.Controls.Add(new Label
-            {
-                Text      = labelText,
-                Location  = new Point(x + 48, y + 4),
-                Size      = new Size(200, 18),
-                Font      = new Font("Segoe UI", 9f, FontStyle.Regular),
-                ForeColor = UiFactory.SlateKey,
-                BackColor = Color.Transparent
-            });
-        }
-
-        private static void PaintRoundedPanel(Panel p, int radius)
-        {
-            p.Paint += (_, e) =>
-            {
-                var g = e.Graphics;
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                var rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
-                using var path  = RoundedPath(rect, radius);
-                using var brush = new SolidBrush(p.BackColor);
-                g.FillPath(brush, path);
-            };
-            p.Region = new Region(RoundedPath(new Rectangle(0, 0, p.Width, p.Height), radius));
-        }
-
-        private void ToggleCustom(Panel customWrap)
-        {
-            _customToggleOn = !_customToggleOn;
-            if (_customToggleOn)
-            {
-                _toggleTrack.BackColor = UiFactory.Purple700;
-                _toggleThumb.Location  = new Point(_toggleTrack.Width - _toggleThumb.Width - 3, 3);
-                _customBox.Enabled     = true;
-                customWrap.Visible     = true;
-            }
-            else
-            {
-                _toggleTrack.BackColor = UiFactory.SlateKey;
-                _toggleThumb.Location  = new Point(3, 3);
-                _customBox.Enabled     = false;
-                customWrap.Visible     = false;
-                _customBox.Text        = "";
-            }
-            _toggleTrack.Invalidate();
-            RefreshPreview();
         }
 
         private void AddRoute(Panel card, Label addBtn)
