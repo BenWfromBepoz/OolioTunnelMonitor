@@ -211,7 +211,7 @@ namespace OolioTunnelMonitor
     {
         private static readonly Color _normal = Color.FromArgb(45, 52, 68), _hover = Color.FromArgb(60, 68, 88), _accent = Color.FromArgb(103, 58, 182);
         private static readonly Color _muted = Color.FromArgb(108, 117, 125), _mutedH = Color.FromArgb(120, 128, 140);
-        private static readonly Color _back = Color.FromArgb(167, 139, 250), _backH = Color.FromArgb(196, 181, 253);
+        private static readonly Color _back = Color.FromArgb(223, 218, 242), _backH = Color.FromArgb(171, 155, 232), _accent = Color.FromArgb(103, 58, 182);
         private const int Radius = 8; private bool _hovered;
         private ModernButtonStyle _style = ModernButtonStyle.Primary;
         public ModernButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
