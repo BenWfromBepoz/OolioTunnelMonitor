@@ -61,16 +61,17 @@ namespace OolioTunnelMonitor
             return wrap;
         }
 
-        private static void ComboDrawItem(object sender, DrawItemEventArgs e)
+        private static void ComboDrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0) return;
-            var cmb = (ComboBox)sender;
+            if (sender is not ComboBox cmb) return;
             bool selected = (e.State & DrawItemState.Selected) != 0;
             using var bgBrush = new SolidBrush(selected ? Purple200 : Lavender);
             e.Graphics.FillRectangle(bgBrush, e.Bounds);
             using var fgBrush = new SolidBrush(Slate900);
             var sf = new StringFormat { LineAlignment = StringAlignment.Center };
-            e.Graphics.DrawString(cmb.Items[e.Index].ToString(), cmb.Font, fgBrush,
+            var text = cmb.Items[e.Index]?.ToString() ?? "";
+            e.Graphics.DrawString(text, cmb.Font, fgBrush,
                 new RectangleF(e.Bounds.X + 4, e.Bounds.Y, e.Bounds.Width - 4, e.Bounds.Height), sf);
         }
     }
@@ -230,9 +231,9 @@ namespace OolioTunnelMonitor
         private readonly List<RouteRow> _rows        = new();
         private readonly Label          _reviewLabel = new();
 
-        // Buttons — OK is a purple PillButton-style, Cancel is rounded grey on the right
-        private readonly PillButton _btnOk     = new(purple: true)  { Text = "Create Tunnel", DialogResult = DialogResult.OK,     Width = 140, Height = 34 };
-        private readonly PillButton _btnCancel = new(purple: false) { Text = "Cancel",        DialogResult = DialogResult.Cancel, Width = 90,  Height = 34 };
+        // Buttons
+        private readonly PillButton _installBtn = new() { Text = "Create Tunnel", DialogResult = DialogResult.OK, Width = 140, Height = 34, Style = PillButtonStyle.Normal };
+        private readonly PillButton _cancelBtn  = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34, Style = PillButtonStyle.Active };
 
         private readonly Panel _scrollContainer;
 
