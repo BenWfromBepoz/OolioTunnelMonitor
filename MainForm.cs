@@ -55,7 +55,7 @@ namespace OolioTunnelMonitor
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
             using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
-            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea - 26, Width, subtitleH),
+            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea, Width, subtitleH),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
@@ -287,8 +287,7 @@ namespace OolioTunnelMonitor
         private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
 
         private AppMode _mode = AppMode.Main;
-        private FlowLayoutPanel pnlSidebarMain = null!;
-        private Panel pnlSidebarInstall = null!, pnlSidebarTools = null!, pnlSidebarHelp = null!;
+        private Panel pnlSidebarMain = null!, pnlSidebarInstall = null!, pnlSidebarTools = null!, pnlSidebarHelp = null!;
         private Panel pnlInstall = null!, pnlTools = null!, pnlHelp = null!;
         private ModernButton btnBackFromInstall = null!, btnBackFromTools = null!, btnBackFromHelp = null!;
         private ModernButton btnToolsNav = null!, btnHelpNav = null!;
@@ -307,7 +306,8 @@ namespace OolioTunnelMonitor
 
         protected override void OnLoad(EventArgs e) { base.OnLoad(e); BeginInvoke(() => { ResizeContentPanel(); contentPanel.Visible = true; }); }
         protected override void OnResize(EventArgs e) { base.OnResize(e); ResizeContentPanel(); }
-    private void ResizeContentPanel()
+
+        private void ResizeContentPanel()
         {
             if (contentPanel == null) return;
             const int sW = 224, m = 12;
@@ -331,27 +331,31 @@ namespace OolioTunnelMonitor
         {
             const int btnX = 12, btnW = 200, btnH = 40;
             ModernButton BackBtn(string text) => new ModernButton { Text = text, Size = new Size(btnW, btnH), IsBack = true };
-            btnToolsNav = new ModernButton { Text = "\u2630  Tools", Size = new Size(btnW, btnH), Margin = new Padding(0, 0, 0, 4) };
-            btnHelpNav = new ModernButton { Text = "?  Help", Size = new Size(btnW, btnH), Margin = new Padding(0, 0, 0, 4) };
-            tglReinstall = new ToggleSwitch { Checked = true, Location = new Point(20, 258) };
-            var lblReinstall = new Label { Text = "Reinstall MSI", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(180, 190, 210), BackColor = Color.Transparent, Location = new Point(66, 256), Size = new Size(140, 20) };
-            pnlSidebarMain = new FlowLayoutPanel { BackColor = Color.Transparent, Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = false, Padding = new Padding(0, 8, 0, 0) };
+            btnToolsNav = new ModernButton { Text = "\u2630  Tools", Size = new Size(btnW, btnH) };
+            btnHelpNav = new ModernButton { Text = "?  Help", Size = new Size(btnW, btnH) };
+            tglReinstall = new ToggleSwitch { Checked = true, Location = new Point(20, 376) };
+            var lblReinstall = new Label { Text = "Reinstall MSI", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(180, 190, 210), BackColor = Color.Transparent, Location = new Point(66, 374), Size = new Size(140, 20) };
+            pnlSidebarMain = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill };
+            btnCreateTunnel.Location = new Point(btnX, 130); btnTunnelStatus.Location = new Point(btnX, 178);
+            btnToolsNav.Location = new Point(btnX, 226); btnHelpNav.Location = new Point(btnX, 274);
+            btnRepair.Location = new Point(btnX, 322);
             pnlSidebarMain.Controls.AddRange(new Control[] { btnCreateTunnel, btnTunnelStatus, btnToolsNav, btnHelpNav, btnRepair, tglReinstall, lblReinstall, btnCheckUpdates, lblVersion });
             pnlSidebar.Controls.Add(pnlSidebarMain);
 
             pnlSidebarInstall = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill, Visible = false };
-            btnBackFromInstall = BackBtn("\u2190  Back to Monitor");
+            btnBackFromInstall = BackBtn("\u2190  Back to Monitor"); btnBackFromInstall.Location = new Point(btnX, 130);
             pnlSidebarInstall.Controls.Add(btnBackFromInstall); pnlSidebar.Controls.Add(pnlSidebarInstall);
 
             pnlSidebarTools = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill, Visible = false };
             btnBackFromTools = BackBtn("\u2190  Back to Monitor");
             var btnLogsTools = new ModernButton { Text = "\u2261  Open Logfile Folder", Size = new Size(btnW, btnH) };
             var btnConfigTools = new ModernButton { Text = "\u25a4  Open Config Folder", Size = new Size(btnW, btnH) };
+            btnBackFromTools.Location = new Point(btnX, 130); btnLogsTools.Location = new Point(btnX, 182); btnConfigTools.Location = new Point(btnX, 230);
             btnLogsTools.Click += (_, _) => OpenLogFolder(); btnConfigTools.Click += (_, _) => OpenConfigFolder();
             pnlSidebarTools.Controls.AddRange(new Control[] { btnBackFromTools, btnLogsTools, btnConfigTools }); pnlSidebar.Controls.Add(pnlSidebarTools);
 
             pnlSidebarHelp = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill, Visible = false };
-            btnBackFromHelp = BackBtn("\u2190  Back to Monitor");
+            btnBackFromHelp = BackBtn("\u2190  Back to Monitor"); btnBackFromHelp.Location = new Point(btnX, 130);
             pnlSidebarHelp.Controls.Add(btnBackFromHelp); pnlSidebar.Controls.Add(pnlSidebarHelp);
         }
 
