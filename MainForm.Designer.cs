@@ -146,7 +146,7 @@ namespace OolioTunnelMonitor
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 90));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
@@ -193,8 +193,9 @@ namespace OolioTunnelMonitor
             this.lblIngressTitle.Text      = "Routes";
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
-            this.lblIngressTitle.Location  = new System.Drawing.Point(12, 8);
-            this.lblIngressTitle.Size      = new System.Drawing.Size(200, 20);
+            this.lblIngressTitle.Height    = 20;
+            this.lblIngressTitle.Dock      = DockStyle.Top;   // instead of Location/Size
+            this.lblIngressTitle.Margin    = new Padding(0, 0, 0, 4);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
             this.colCloud.HeaderText   = "Cloud Endpoint";
@@ -209,9 +210,8 @@ namespace OolioTunnelMonitor
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             this.colLocal.ReadOnly     = true;
 
-            this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
-            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
+            this.dgvIngress.Dock   = DockStyle.Fill;
+            this.dgvIngress.Margin = new Padding(0);
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
@@ -243,6 +243,15 @@ namespace OolioTunnelMonitor
             this.dgvIngress.BackgroundColor       = System.Drawing.Color.White;
             this.dgvIngress.Columns.Add(this.colCloud);
             this.dgvIngress.Columns.Add(this.colLocal);
+            
+            this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            this.colCloud.Width = 100;
+            this.colCloud.MinimumWidth = 100;
+            this.colCloud.ReadOnly = true;
+            
+            this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            this.colLocal.MinimumWidth = 80; // optional safety
+            this.colLocal.ReadOnly = true;
 
             // ── Token card ── Fix #5: BorderPanel with rounded purple border
             this.pnlTokenCard.Dock   = DockStyle.Fill;
@@ -258,11 +267,11 @@ namespace OolioTunnelMonitor
             this.toolTip.SetToolTip(this.lblTokenTitle, "Found on the Company Record in HubSpot, under Network & Environment. Installer tokens are in LastPass");
 
             // BorderPanel wraps the token textbox for rounded purple look
-            this.tokenBorder.Location = new System.Drawing.Point(14, 26);
+            this.tokenBorder.Location = new System.Drawing.Point(14, 30);
             this.tokenBorder.Size     = new System.Drawing.Size(490, 24);
             this.tokenBorder.Anchor   = AnchorStyles.Top | AnchorStyles.Left;
 
-            this.txtApiToken.Location              = new System.Drawing.Point(4, 3);
+            this.txtApiToken.Location              = new System.Drawing.Point(6, 5);
             this.txtApiToken.Size                  = new System.Drawing.Size(480, 22);
             this.txtApiToken.UseSystemPasswordChar = true;
             this.txtApiToken.Font                  = new System.Drawing.Font("Cascadia Mono", 8.5f);
