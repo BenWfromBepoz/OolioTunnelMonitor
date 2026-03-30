@@ -111,25 +111,6 @@ namespace OolioTunnelMonitor
         }
     }
 
-    internal sealed class BorderPanel : Panel
-    {
-        private const int Radius = 6;
-        private static readonly Color _borderCol = Color.FromArgb(139, 92, 246);
-        private static readonly Color _fillCol = Color.FromArgb(245, 243, 255);
-        public BorderPanel()
-        {
-            DoubleBuffered = true; SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
-            BackColor = _fillCol; Padding = new Padding(6, 4, 6, 4);
-        }
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(Parent?.BackColor ?? Color.White);
-            using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
-            using var fill = new SolidBrush(_fillCol); g.FillPath(fill, path);
-            using var pen = new Pen(_borderCol, 1.2f); g.DrawPath(pen, path);
-        }
-    }
 
     internal sealed class PillLabel : Label
     {
