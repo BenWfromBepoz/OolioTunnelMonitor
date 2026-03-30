@@ -212,7 +212,6 @@ namespace OolioTunnelMonitor
 
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
             this.dgvIngress.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
             this.dgvIngress.ColumnHeadersBorderStyle    = DataGridViewHeaderBorderStyle.Single;
