@@ -139,14 +139,14 @@ namespace OolioTunnelMonitor
 
             this.tblStatus.Location    = new System.Drawing.Point(16, 30);
             this.tblStatus.Anchor      = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            this.tblStatus.Size        = new System.Drawing.Size(200, 68);
+            this.tblStatus.Size        = new System.Drawing.Size(180, 62);
             this.tblStatus.BackColor   = System.Drawing.Color.Transparent;
             this.tblStatus.ColumnCount = 4;
             this.tblStatus.RowCount    = 2;
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
             this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,  90));
-            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
+            this.tblStatus.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             this.tblStatus.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
