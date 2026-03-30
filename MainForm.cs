@@ -347,7 +347,7 @@ namespace OolioTunnelMonitor
             btnToolsNav = new ModernButton { Text = "\u2630  Tools", Size = new Size(btnW, btnH) };
             btnHelpNav = new ModernButton { Text = "?  Help", Size = new Size(btnW, btnH) };
             tglReinstall = new ToggleSwitch { Checked = true, Location = new Point(20, 258) };
-            var lblReinstall = new Label { Text = "Reinstall MSI", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(180, 190, 210), BackColor = Color.Transparent, Location = new Point(66, 374), Size = new Size(140, 20) };
+            var lblReinstall = new Label { Text = "Reinstall MSI", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(180, 190, 210), BackColor = Color.Transparent, Location = new Point(66, 256), Size = new Size(140, 20) };
             pnlSidebarMain = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill };
             btnCreateTunnel.Location = new Point(btnX, 12); btnTunnelStatus.Location = new Point(btnX, 60);
             btnToolsNav.Location = new Point(btnX, 108); btnHelpNav.Location = new Point(btnX, 156);
