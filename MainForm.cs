@@ -46,8 +46,8 @@ namespace OolioTunnelMonitor
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             if (_logo == null) return;
             const int subtitleH = 24;
-            int imgArea = Height - subtitleH;
-            int availW = Width - 24, availH = imgArea -8;
+            int imgArea = (Height * 2) - subtitleH;
+            int availW = Width - 24, availH = Height -8;
             if (availW <= 0 || availH <= 0) return;
             float baseScale = Math.Min(availW / (float)_logo.Width, availH / (float)_logo.Height);
             float scale = baseScale * 2f; // +50%
