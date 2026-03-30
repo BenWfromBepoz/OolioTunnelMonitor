@@ -69,7 +69,7 @@ namespace OolioTunnelMonitor
 
             // Logo: OolioSidebarLogo — full sidebar width, taskbar 256x256 icon
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 120);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 160);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
@@ -125,7 +125,7 @@ namespace OolioTunnelMonitor
             // ── Status card ────────────────────────────────────────────────
             this.pnlStatusCard.Dock    = DockStyle.Fill;
             this.pnlStatusCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlStatusCard.Padding = new Padding(0, 0, 16, 0);  // Fix #3: right padding
+            this.pnlStatusCard.Padding = new Padding(0, 0, 12, 0);  // Fix #3: right padding
             this.pnlStatusCard.Controls.Add(this.lblCardTitle);
             this.pnlStatusCard.Controls.Add(this.tblStatus);
             this.tblMain.Controls.Add(this.pnlStatusCard, 0, 0);
@@ -185,7 +185,7 @@ namespace OolioTunnelMonitor
             // ── Ingress card ── Fix #4: right padding inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(12, 10, 16, 10);
+            this.pnlIngressCard.Padding = new Padding(12, 10, 12, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -211,7 +211,7 @@ namespace OolioTunnelMonitor
             this.colLocal.ReadOnly     = true;
 
             this.dgvIngress.Location   = new System.Drawing.Point(12, 32);
-            this.dgvIngress.Anchor     = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            this.dgvIngress.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvIngress.Size       = new System.Drawing.Size(200, 80);
             this.dgvIngress.Font       = new System.Drawing.Font("Segoe UI", 8.5f);
             this.dgvIngress.EnableHeadersVisualStyles   = false;
