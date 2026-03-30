@@ -73,7 +73,7 @@ namespace OolioTunnelMonitor
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
-            this.btnCreateTunnel.Location = new System.Drawing.Point(12, imageArea + 30);
+            this.btnCreateTunnel.Location = new System.Drawing.Point(12, imgArea + 30);
             this.btnCreateTunnel.Size     = new System.Drawing.Size(200, 40);
             this.btnCreateTunnel.Click   += new EventHandler(this.btnCreateTunnel_Click);
 
