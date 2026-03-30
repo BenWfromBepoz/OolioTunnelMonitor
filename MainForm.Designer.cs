@@ -194,7 +194,7 @@ namespace OolioTunnelMonitor
             this.lblIngressTitle.Font      = new System.Drawing.Font("Segoe UI Semibold", 10f, System.Drawing.FontStyle.Bold);
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblIngressTitle.Height    = 20;
-            this.lblIngressTitle.Dock      = DockStyle.Top;   // instead of Location/Size
+            this.lblIngressTitle.Dock      = DockStyle.Top + 20;   // instead of Location/Size
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
             this.colCloud.HeaderText   = "Cloud Endpoint";
@@ -244,8 +244,8 @@ namespace OolioTunnelMonitor
             this.dgvIngress.Columns.Add(this.colLocal);
             
             this.colCloud.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-            this.colCloud.Width = 100;
-            this.colCloud.MinimumWidth = 100;
+            this.colCloud.Width = 390;
+            this.colCloud.MinimumWidth = 200;
             this.colCloud.ReadOnly = true;
             
             this.colLocal.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
