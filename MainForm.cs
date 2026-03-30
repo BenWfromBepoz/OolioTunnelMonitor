@@ -159,7 +159,7 @@ namespace OolioTunnelMonitor
             };
             grad.InterpolationColors = blend;
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
-            g.FillPath(blend, path);
+            g.FillPath(grad, path);
             var glossRect = new Rectangle(0, py, pw, ph / 2);
             using var gloss = new LinearGradientBrush(glossRect, Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
             g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
