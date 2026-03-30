@@ -86,7 +86,7 @@ namespace OolioTunnelMonitor
 
             this.pnlSidebar.Controls.Add(this.oolioLogo);
             this.pnlSidebar.Controls.Add(this.btnCreateTunnel);
-            this.pnlSidebar.Controls.Add(this.btnTunnelStatu);
+            this.pnlSidebar.Controls.Add(this.btnTunnelStatus);
             this.pnlSidebar.Controls.Add(this.btnRepair);
             this.pnlSidebar.Controls.Add(this.btnCheckUpdates);
             this.pnlSidebar.Controls.Add(this.lblVersion);
