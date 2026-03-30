@@ -47,7 +47,7 @@ namespace OolioTunnelMonitor
             if (_logo == null) return;
             const int subtitleH = 24;
             int imgArea = Height - subtitleH;
-            int availW = Width - 24, availH = imgArea + 30;
+            int availW = Width - 24, availH = imgArea;
             if (availW <= 0 || availH <= 0) return;
             float baseScale = Math.Min(availW / (float)_logo.Width, availH / (float)_logo.Height);
             float scale = baseScale * 2f; // +50%
