@@ -307,6 +307,25 @@ namespace OolioTunnelMonitor
         protected override void OnLoad(EventArgs e) { base.OnLoad(e); BeginInvoke(() => { ResizeContentPanel(); contentPanel.Visible = true; }); }
         protected override void OnResize(EventArgs e) { base.OnResize(e); ResizeContentPanel(); }
 
+        private void UpdateFormRegion()
+    {
+        int r = 10;
+        using var path = new System.Drawing.Drawing2D.GraphicsPath();
+        path.AddArc(0, 0, r * 2, r * 2, 180, 90);
+        path.AddArc(Width - r * 2, 0, r * 2, r * 2, 270, 90);
+        path.AddArc(Width - r * 2, Height - r * 2, r * 2, r * 2, 0, 90);
+        path.AddArc(0, Height - r * 2, r * 2, r * 2, 90, 90);
+        path.CloseFigure();
+        Region = new Region(path);
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        UpdateFormRegion();
+        ResizeContentPanel();
+    }
+
         private void ResizeContentPanel()
         {
             if (contentPanel == null) return;
