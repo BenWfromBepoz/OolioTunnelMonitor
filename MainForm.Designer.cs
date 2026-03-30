@@ -69,7 +69,7 @@ namespace OolioTunnelMonitor
 
             // Logo: OolioSidebarLogo — full sidebar width, taskbar 256x256 icon
             this.oolioLogo.Location  = new System.Drawing.Point(0, 0);
-            this.oolioLogo.Size      = new System.Drawing.Size(224, 120);
+            this.oolioLogo.Size      = new System.Drawing.Size(224, 180);
             this.oolioLogo.BackColor = System.Drawing.Color.Transparent;
 
             this.btnCreateTunnel.Text     = "+  Install New Tunnel";
