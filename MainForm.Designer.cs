@@ -185,7 +185,7 @@ namespace OolioTunnelMonitor
             // ── Ingress card ── Fix #4: right padding inside rounded corners
             this.pnlIngressCard.Dock    = DockStyle.Fill;
             this.pnlIngressCard.Margin  = new Padding(0, 0, 0, 8);
-            this.pnlIngressCard.Padding = new Padding(10, 30, 10, 10);
+            this.pnlIngressCard.Padding = new Padding(10, 10, 10, 10);
             this.pnlIngressCard.Controls.Add(this.lblIngressTitle);
             this.pnlIngressCard.Controls.Add(this.dgvIngress);
             this.tblMain.Controls.Add(this.pnlIngressCard, 0, 1);
@@ -195,7 +195,6 @@ namespace OolioTunnelMonitor
             this.lblIngressTitle.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblIngressTitle.Height    = 20;
             this.lblIngressTitle.Dock      = DockStyle.Top;   // instead of Location/Size
-            this.lblIngressTitle.Margin    = new Padding(0, 0, 0, 4);
             this.lblIngressTitle.BackColor = System.Drawing.Color.Transparent;
 
             this.colCloud.HeaderText   = "Cloud Endpoint";
