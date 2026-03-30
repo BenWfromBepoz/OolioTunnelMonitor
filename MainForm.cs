@@ -143,7 +143,7 @@ namespace OolioTunnelMonitor
             Color endCol = Color.FromArgb(14, 26, 119);
             using var grad = new LinearGradientBrush(
                 new Point(0, py),
-                new Point(pw, py + ph /3),
+                new Point(pw, py + ph /8),
                 Color.Empty,
                 Color.Empty);
             var blend = new ColorBlend // Build a smoother, offset gradient
@@ -152,14 +152,14 @@ namespace OolioTunnelMonitor
                 {
                     ControlPaint.Light(baseCol, 0.35f),  // brighter start
                     ControlPaint.Light(baseCol, 0.25f),  // subtle shift
-                    ControlPaint.Light(endCol, 0.35f),  // extended fade
+                    ControlPaint.Light(baseCol, 0.15f),  // extended fade
                     endCol                              // your dark blue end
                 },
                 Positions = new[]
                 {
                     0.0f,   // start
                     0.5f,   // still mostly light
-                    0.66f,  // "centre" shifted right (~2/3)
+                    0.75f,  // "centre" shifted right (3/4)
                     1.0f    // full dark
                 }
             };
