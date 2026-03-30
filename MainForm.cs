@@ -55,7 +55,7 @@ namespace OolioTunnelMonitor
             g.DrawImage(_logo, new Rectangle(x, y, w, h));
             using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
             using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
-            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea, Width, subtitleH),
+            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea - 26, Width, subtitleH),
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
     }
