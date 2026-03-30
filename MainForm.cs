@@ -105,7 +105,7 @@ internal sealed class ContentPanel : Panel
         
             using var border = new Pen(Color.FromArgb(35, 255, 255, 255), 1f);
             g.DrawPath(border, path);
-        }
+        };
 
     internal static class ShapeHelper
     {
