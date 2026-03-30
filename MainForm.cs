@@ -140,7 +140,7 @@ namespace OolioTunnelMonitor
             var rect = new Rectangle(0, py, pw, ph);
             var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
             Color baseCol = gC > r && gC > b ? Color.FromArgb(34, 197, 94) : r > gC && r > b ? Color.FromArgb(239, 68, 68) : Color.FromArgb(234, 179, 8);
-            var grad = new ColorBlend // Build a smoother, offset gradient
+            var blend = new ColorBlend // Build a smoother, offset gradient
             {
                 Colors = new[]
                 {
@@ -157,9 +157,9 @@ namespace OolioTunnelMonitor
                     1.0f    // full dark
                 }
             };
-            grad.InterpolationColors = grad;
+            grad.InterpolationColors = blend;
             using var path = ShapeHelper.RoundedPath(rect, PillRadius);
-            g.FillPath(grad, path);
+            g.FillPath(blend, path);
             var glossRect = new Rectangle(0, py, pw, ph / 2);
             using var gloss = new LinearGradientBrush(glossRect, Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
             g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
