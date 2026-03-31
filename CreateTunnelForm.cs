@@ -281,7 +281,7 @@ namespace OolioTunnelMonitor
             int y = 24;
 
             var card1 = MakeCard("1 - Tunnel Identity", ref y, 220);
-            int cardInner = _scrollContainer.Width - 96; // available width inside card
+            int cardInner = _scrollContainer.Width - 120; // available width inside card
             int lw = 200;        // left column width
             int rx = 240;        // right column x
             int rw = cardInner - rx; // right column width
