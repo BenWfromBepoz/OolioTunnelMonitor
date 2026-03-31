@@ -1,511 +1,783 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using OolioTunnelMonitor.Services;
 
 namespace OolioTunnelMonitor
 {
-    // -- Shared styling helpers
-    internal static class UiFactory
+    public enum PillButtonStyle   { Normal, Active }
+    public enum ModernButtonStyle { Primary, Muted }
+    public enum AppMode           { Main, Install, Tools, Help }
+
+    internal sealed class OolioSidebarLogo : Control
     {
-        public static readonly Color Lavender   = Color.FromArgb(237, 233, 254);
-        public static readonly Color Purple200  = Color.FromArgb(196, 181, 253);
-        public static readonly Color Purple700  = Color.FromArgb(109,  40, 217);
-        public static readonly Color SlateKey   = Color.FromArgb(100, 116, 139);
-        public static readonly Color Slate900   = Color.FromArgb( 15,  23,  42);
-        public static readonly Color PageBg     = Color.FromArgb(226, 232, 240);
-        public static readonly Color White      = Color.White;
-
-        public static Panel StyledTextBox(TextBox txt, int x, int y, int w, int h = 28)
+        private static readonly Image? _logo = LoadLogo();
+        private static Image? LoadLogo()
         {
-            txt.BorderStyle = BorderStyle.None;
-            txt.BackColor   = Lavender;
-            txt.ForeColor   = Slate900;
-            txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
-            txt.Dock        = DockStyle.Fill;
-            txt.Margin      = new Padding(10, 0, 6, 0);
-            var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
-            wrap.Controls.Add(txt);
-            return wrap;
-        }
-
-        public static Label MakeLabel(string text, int x, int y, int w = 300)
-        {
-            return new Label
+            try
             {
-                Text      = text,
-                Location  = new Point(x, y),
-                Size      = new Size(w, 18),
-                ForeColor = SlateKey,
-                Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular),
-                BackColor = Color.Transparent
-            };
+                var asm = System.Reflection.Assembly.GetExecutingAssembly();
+                var stream = asm.GetManifestResourceStream("OolioTunnelMonitor.Resources.OolioTaskbar256.png")
+                          ?? asm.GetManifestResourceStream("OolioTunnelMonitor.Resources.Oolio.png");
+                return stream != null ? Image.FromStream(stream) : null;
+            }
+            catch { return null; }
         }
-
-        public static Panel StyledCombo(ComboBox cmb, int x, int y, int w, int h = 28)
+        public OolioSidebarLogo()
         {
-            cmb.FlatStyle     = FlatStyle.Flat;
-            cmb.BackColor     = Lavender;
-            cmb.ForeColor     = Slate900;
-            cmb.Font          = new Font("Segoe UI", 9.5f, FontStyle.Regular);
-            cmb.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmb.Dock          = DockStyle.Fill;
-            cmb.Margin        = new Padding(4, 2, 4, 2);
-            cmb.DrawMode      = DrawMode.OwnerDrawFixed;
-            cmb.ItemHeight    = 20;
-            cmb.DrawItem     += ComboDrawItem;
-            var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
-            wrap.Controls.Add(cmb);
-            return wrap;
-        }
-
-        private static void ComboDrawItem(object? sender, DrawItemEventArgs e)
-        {
-            if (e.Index < 0) return;
-            if (sender is not ComboBox cmb) return;
-            bool selected = (e.State & DrawItemState.Selected) != 0;
-            using var bgBrush = new SolidBrush(selected ? Purple200 : Lavender);
-            e.Graphics.FillRectangle(bgBrush, e.Bounds);
-            using var fgBrush = new SolidBrush(Slate900);
-            var sf = new StringFormat { LineAlignment = StringAlignment.Center };
-            var text = cmb.Items[e.Index]?.ToString() ?? "";
-            e.Graphics.DrawString(text, cmb.Font, fgBrush,
-                new RectangleF(e.Bounds.X + 4, e.Bounds.Y, e.Bounds.Width - 4, e.Bounds.Height), sf);
-        }
-    }
-
-    internal class BorderPanel : Panel
-    {
-        public BorderPanel() { Padding = new Padding(4, 2, 4, 2); }
-
-        protected override void OnControlAdded(ControlEventArgs e)
-        {
-            base.OnControlAdded(e);
-            e.Control.BackColor = UiFactory.Lavender;
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-            var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using var pen  = new Pen(UiFactory.Purple700, 1.5f);
-            using var path = RoundedRect(rect, 6);
-            using var fill = new SolidBrush(UiFactory.Lavender);
-            g.FillPath(fill, path);
-            g.DrawPath(pen, path);
-        }
-
-        private static GraphicsPath RoundedRect(Rectangle r, int radius)
-        {
-            var path = new GraphicsPath();
-            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
-            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-            path.CloseFigure();
-            return path;
-        }
-    }
-
-    // FIX: public so CreateTunnelForm.Result property is accessible from MainForm
-    public class RouteSpec
-    {
-        public string Service { get; set; } = "TSPlus";
-        public int    Port    { get; set; }
-        public string Prefix  { get; set; } = "";
-        public string Domain  { get; set; } = "";
-    }
-
-    public class InstallSpec
-    {
-        public string NetSuiteId { get; set; } = "";
-        public string GroupName  { get; set; } = "";
-        public string VenueName  { get; set; } = "";
-        public string CustomName { get; set; } = "";
-        public bool   UseCustom  { get; set; }
-        public List<RouteSpec> Routes { get; set; } = new();
-        public string TunnelName => UseCustom && !string.IsNullOrWhiteSpace(CustomName) ? CustomName : string.Join("-", new[]{GroupName, VenueName, NetSuiteId}.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.ToLower().Replace(" ", "-")));
-    }
-
-    internal class RouteRow : Panel
-    {
-        private readonly ComboBox _svcCombo;
-        private readonly TextBox  _portBox;
-        private readonly TextBox  _prefixBox;
-        private readonly TextBox  _domainBox;
-        private readonly Panel    _svcWrap;
-        private readonly Panel    _portWrap;
-        private readonly Panel    _prefixWrap;
-        private readonly Panel    _domainWrap;
-
-        public event EventHandler? RemoveClicked;
-        public RouteSpec Spec => BuildSpec();
-
-        private static readonly string[] Services = { "TSPlus", "YourOrder", "MyPlace", "Other" };
-
-        public RouteRow()
-        {
-            this.Size   = new Size(660, 38);
-            this.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-            Height    = 36;
-            Dock      = DockStyle.Top;
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint |
+                     ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             BackColor = Color.Transparent;
-
-            _svcCombo  = new ComboBox();
-            _portBox   = new TextBox { PlaceholderText = "Port" };
-            _prefixBox = new TextBox { PlaceholderText = "Prefix" };
-            _domainBox = new TextBox { PlaceholderText = "Domain" };
-
-            foreach (var s in Services) _svcCombo.Items.Add(s);
-            _svcCombo.SelectedIndex         = 0;
-            _svcCombo.SelectedIndexChanged += OnServiceChanged;
-
-            _svcWrap    = UiFactory.StyledCombo(_svcCombo,    0, 4, 130);
-            _portWrap   = UiFactory.StyledTextBox(_portBox, 138, 4,  80);
-            _prefixWrap = UiFactory.StyledTextBox(_prefixBox, 226, 4, 100);
-            _domainWrap = UiFactory.StyledTextBox(_domainBox, 334, 4, 260);
-
-            var removeBtn = new Label
-            {
-                Text      = "X",
-                Location  = new Point(600, 8),
-                Size      = new Size(22, 22),
-                ForeColor = Color.FromArgb(239, 68, 68),
-                Font      = new Font("Segoe UI", 9f, FontStyle.Bold),
-                Cursor    = Cursors.Hand,
-                TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.Transparent
-            };
-            removeBtn.Click += (_, _) => RemoveClicked?.Invoke(this, EventArgs.Empty);
-            Controls.AddRange(new Control[] { _svcWrap, _portWrap, _prefixWrap, _domainWrap, removeBtn });
-            OnServiceChanged(null, EventArgs.Empty);
         }
-
-        private void OnServiceChanged(object? sender, EventArgs e)
-        {
-            var svc = _svcCombo.SelectedItem?.ToString() ?? "";
-            switch (svc)
-            {
-                case "TSPlus":
-                    _portBox.Text = "54363"; _prefixBox.Text = ""; _domainBox.Text = "";
-                    _prefixWrap.Visible = false; _domainWrap.Visible = false;
-                    break;
-                case "YourOrder":
-                    _portBox.Text = "8080"; _prefixBox.Text = "yo"; _domainBox.Text = "bepozcloud.com";
-                    _prefixWrap.Visible = true; _domainWrap.Visible = true;
-                    break;
-                case "MyPlace":
-                    _portBox.Text = "3434"; _prefixBox.Text = ""; _domainBox.Text = "bepozcloud.com";
-                    _prefixWrap.Visible = false; _domainWrap.Visible = true;
-                    break;
-                default:
-                    _prefixWrap.Visible = true; _domainWrap.Visible = true;
-                    break;
-            }
-        }
-
-        private RouteSpec BuildSpec() => new RouteSpec
-        {
-            Service = _svcCombo.SelectedItem?.ToString() ?? "",
-            Port    = int.TryParse(_portBox.Text, out var p) ? p : 0,
-            Prefix  = _prefixBox.Text.Trim(),
-            Domain  = _domainBox.Text.Trim()
-        };
-    }
-
-
-    public class CreateTunnelForm : Form
-    {
-        private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
-        private readonly TextBox _groupBox     = new() { PlaceholderText = "e.g. Oolio Group (Leave blank for standalone venue)" };
-        private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Super Deluxe" };
-        private readonly TextBox _customBox    = new() { PlaceholderText = "Custom tunnel name" };
-        private readonly Label   _previewLabel = new();
-
-
-        private readonly Panel          _routesPanel = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
-        private readonly List<RouteRow> _rows        = new();
-        private ToggleSwitch _tglCustom = null!;
-        private readonly Label          _reviewLabel = new();
-
-        // Buttons
-        private readonly PillButton _installBtn = new() { Text = "Create Tunnel", DialogResult = DialogResult.OK, Width = 140, Height = 34, Style = PillButtonStyle.Normal };
-        private readonly PillButton _cancelBtn  = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34, Style = PillButtonStyle.Active };
-
-        private readonly Panel _scrollContainer;
-
-        public InstallSpec? Result { get; private set; }
-
-        public CreateTunnelForm()
-        {
-            FormBorderStyle  = FormBorderStyle.None;
-            BackColor        = UiFactory.PageBg;
-            _tbl.Dock        = DockStyle.Fill;
-            _tbl.Padding     = new Padding(10);
-            _tbl.ColumnCount = 1;
-            _tbl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            _tbl.RowCount    = 4;
-            _tbl.RowStyles.Add(new RowStyle(SizeType.Percent, 26));  // Identity
-            _tbl.RowStyles.Add(new RowStyle(SizeType.Percent, 44));  // Routes
-            _tbl.RowStyles.Add(new RowStyle(SizeType.Percent, 20));  // Review
-            _tbl.RowStyles.Add(new RowStyle(SizeType.Absolute, 58)); // Buttons
-            Controls.Add(_tbl);
-            BuildUI();
-        }
-
-        private void BuildUI()
-        {
-            // ── Card 1: Tunnel Identity ──────────────────────────────────────
-            var card1 = MakeCard("1 - Tunnel Identity");
-            
-            // Left column: NetSuite ID
-            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, 44));
-            card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, 20, 64, 180));
-            
-            // Left column: Custom name toggle
-            _tglCustom = new ToggleSwitch { Location = new Point(20, 110), Size = new Size(44, 22) };
-            var lblCustom = new Label {
-                Text = "Custom name", Location = new Point(70, 113), AutoSize = true,
-                Font = new Font("Segoe UI", 9f), ForeColor = UiFactory.SlateKey,
-                BackColor = Color.Transparent
-            };
-            _tglCustom.CheckedChanged += (_, __) => { RefreshPreview(); };
-            card1.Controls.Add(_tglCustom);
-            card1.Controls.Add(lblCustom);
-            
-            // Right column: Group Name + Venue Name
-            int rx = 240;
-            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rx, 44, 260));
-            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, rx, 64, 400));  // -1 = stretch to right
-            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", rx, 108, 260));
-            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, rx, 128, 400));
-            
-            // Preview label
-            _previewLabel.Location  = new Point(20, 175);
-            _previewLabel.Size      = new Size(500, 18);
-            _previewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Italic);
-            _previewLabel.ForeColor = UiFactory.Purple700;
-            _previewLabel.BackColor = Color.Transparent;
-            card1.Controls.Add(_previewLabel);
-            _tbl.Controls.Add(card1, 0, 0);
-            
-            // ── Card 2: Published Routes ──────────────────────────────────────
-            var card2 = MakeCard("2 - Published Routes");
-            int hx = 20;
-            foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
-            {
-                card2.Controls.Add(new Label {
-                    Text = col, Location = new Point(hx, 42), Size = new Size(w, 16),
-                    Font = new Font("Segoe UI Semibold", 8f, FontStyle.Bold),
-                    ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent
-                });
-                hx += w;
-            }
-            card2.Controls.Add(_routesPanel);
-            var addBtn = new Label {
-                Text = "+ Add Route", AutoSize = true, Location = new Point(20, 0),
-                Font = new Font("Segoe UI Semibold", 9f, FontStyle.Bold),
-                ForeColor = UiFactory.Purple700, BackColor = Color.Transparent,
-                Cursor = Cursors.Hand
-            };
-            addBtn.MouseClick += (_, __) => AddRoute(card2, addBtn);
-            card2.Controls.Add(addBtn);
-            AddRoute(card2, addBtn);
-            _tbl.Controls.Add(card2, 0, 1);
-            
-            // ── Card 3: Review & Install ──────────────────────────────────────
-            var card3 = MakeCard("3 - Review & Install");
-            _reviewLabel.Location  = new Point(20, 44);
-            _reviewLabel.Size      = new Size(500, 200);
-            _reviewLabel.Font      = new Font("Segoe UI", 8.5f);
-            _reviewLabel.ForeColor = UiFactory.SlateKey;
-            _reviewLabel.BackColor = Color.Transparent;
-            card3.Controls.Add(_reviewLabel);
-            _tbl.Controls.Add(card3, 0, 2);
-            
-            // ── Button row ────────────────────────────────────────────────────
-            var btnPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
-            _installBtn.Size     = new Size(160, 38);
-            _cancelBtn.Size      = new Size(120, 38);
-            _installBtn.Anchor   = AnchorStyles.Right | AnchorStyles.Top;
-            _cancelBtn.Anchor    = AnchorStyles.Right | AnchorStyles.Top;
-            btnPanel.Controls.Add(_installBtn);
-            btnPanel.Controls.Add(_cancelBtn);
-            _tbl.Controls.Add(btnPanel, 0, 3);
-        }
-
-        private static RoundedCardPanel MakeCard(string title)
-        {
-            var card = new RoundedCardPanel { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 8) };
-            card.Controls.Add(new Label {
-                Text = title, Location = new Point(20, 14), Size = new Size(500, 22),
-                Font = new Font("Segoe UI Semibold", 10.5f, FontStyle.Bold),
-                ForeColor = UiFactory.Slate900, BackColor = Color.Transparent
-            });
-            return card;
-        }
-
-        private void AddRoute(Panel card, Label addBtn)
-        {
-            var row = new RouteRow();
-            row.RemoveClicked += (s, _) =>
-            {
-                _rows.Remove((RouteRow)s!);
-                _routesPanel.Controls.Remove((RouteRow)s!);
-                RefreshRouteLayout(card, addBtn);
-                RefreshPreview();
-            };
-            _rows.Add(row);
-            _routesPanel.Controls.Add(row);
-            RefreshRouteLayout(card, addBtn);
-            RefreshPreview();
-        }
-
-        private void RefreshRouteLayout(Panel card, Label addBtn)
-        {
-            int ry = 0;
-            foreach (var row in _rows)
-            {
-                row.Location = new Point(0, ry);
-                ry += row.Height + 4;
-            }
-            _routesPanel.Height = Math.Max(ry, 4);
-            addBtn.Location     = new Point(20, _routesPanel.Bottom + 72);
-            card.Height         = addBtn.Bottom + 20;
-        }
-
-        private void RefreshPreview()
-        {
-            var spec = BuildSpec();
-            _previewLabel.Text = "Preview: " + BuildTunnelName(spec);
-
-            var lines = new List<string>();
-            foreach (var r in spec.Routes)
-            {
-                string host = BuildHostname(r, spec);
-                if (!string.IsNullOrEmpty(host))
-                    lines.Add("https://" + host + "  ->  http://localhost:" + r.Port);
-            }
-            _reviewLabel.Text = string.Join(Environment.NewLine, lines);
-        }
-
-        private string BuildTunnelName(InstallSpec spec)
-        {
-            if (spec.UseCustom && !string.IsNullOrWhiteSpace(spec.CustomName))
-                return spec.CustomName;
-            var parts = new List<string>();
-            if (!string.IsNullOrWhiteSpace(spec.GroupName))  parts.Add(spec.GroupName.ToLower().Replace(" ", "-"));
-            if (!string.IsNullOrWhiteSpace(spec.VenueName))  parts.Add(spec.VenueName.ToLower().Replace(" ", "-"));
-            if (!string.IsNullOrWhiteSpace(spec.NetSuiteId)) parts.Add(spec.NetSuiteId);
-            return parts.Count > 0 ? string.Join("-", parts) : "(pending)";
-        }
-
-        internal static string BuildHostname(RouteSpec r, InstallSpec spec)
-        {
-            if (string.IsNullOrEmpty(r.Domain)) return "";
-            string slug = "";
-            if (!string.IsNullOrWhiteSpace(spec.GroupName))
-                slug += spec.GroupName.ToLower().Replace(" ", "") + "-";
-            if (!string.IsNullOrWhiteSpace(spec.VenueName))
-                slug += spec.VenueName.ToLower().Replace(" ", "");
-            if (!string.IsNullOrWhiteSpace(spec.NetSuiteId))
-                slug += "-" + spec.NetSuiteId;
-            string prefix = string.IsNullOrWhiteSpace(r.Prefix) ? "" : r.Prefix + "-";
-            return prefix + slug + "." + r.Domain;
-        }
-
-        private InstallSpec BuildSpec() => new InstallSpec
-        {
-            NetSuiteId = _netSuiteBox.Text.Trim(),
-            GroupName  = _groupBox.Text.Trim(),
-            VenueName  = _venueBox.Text.Trim(),
-            CustomName = _customBox.Text.Trim(),
-            UseCustom  = _tglCustom?.Checked ?? false,
-            Routes     = _rows.Select(r => r.Spec).ToList()
-        };
-
-        private void OnInstall(object? sender, EventArgs e)
-        {
-            var spec = BuildSpec();
-            if (string.IsNullOrWhiteSpace(spec.NetSuiteId))
-            {
-                MessageBox.Show("Please enter a NetSuite ID.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(spec.VenueName))
-            {
-                MessageBox.Show("Please enter a Venue Name.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (!spec.Routes.Any())
-            {
-                MessageBox.Show("Please add at least one route.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            Result       = spec;
-            DialogResult = DialogResult.OK;
-            Close();
-        }
-
-        private static GraphicsPath RoundedPath(Rectangle r, int radius)
-        {
-            var path = new GraphicsPath();
-            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
-            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-            path.CloseFigure();
-            return path;
-        }
-    }
-
-    internal class RoundedCardPanel : Panel
-    {
-        public RoundedCardPanel()
-        {
-            BackColor      = Color.White;
-            DoubleBuffered = true;
-        }
-
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-                                                using var sp     = RoundedPath(new Rectangle(2, 3, Width - 3, Height - 2), 12);
-            using var shadow = new SolidBrush(Color.FromArgb(18, 0, 0, 0));
-            g.FillPath(shadow, sp);
-            using var fp   = RoundedPath(rect, 12);
-            using var fill = new SolidBrush(Color.White);
-            g.FillPath(fill, fp);
-            using var pen = new Pen(Color.FromArgb(220, 220, 235), 1f);
-            g.DrawPath(pen, fp);
+            g.SmoothingMode     = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            if (_logo == null) return;
+            const int subtitleH = 10;
+            int imgArea = Height - subtitleH;
+            int availW = Width - 24, availH = imgArea -24;
+            if (availW <= 0 || availH <= 0) return;
+            float baseScale = Math.Min(availW / (float)_logo.Width, availH / (float)_logo.Height);
+            float scale = baseScale * 1f;
+            int w = (int)(_logo.Width * scale), h = (int)(_logo.Height * scale);
+            int x = (Width - w) / 2, y = 4 + (availH - h) / 2;
+            g.DrawImage(_logo, new Rectangle(x, y, w, h));
+            using var sf = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+            using var sb = new SolidBrush(Color.FromArgb(180, 195, 220));
+            g.DrawString("Oolio Tunnel Monitor", sf, sb, new RectangleF(0, imgArea - 40, Width, subtitleH),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
         }
+    }
 
-        protected override void OnResize(EventArgs e)
+internal sealed class ContentPanel : Panel
+    {
+        private const int Radius = 16;
+        private static readonly Color _cardBg = Color.FromArgb(226, 232, 240);
+        private static readonly Color _formBg = Color.FromArgb(39, 46, 63);
+    
+        public ContentPanel()
         {
-            base.OnResize(e);
-            var rect = new Rectangle(0, 0, Width, Height);
-            using var path = RoundedPath(rect, 12);
+            DoubleBuffered = true;
+            ResizeRedraw = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = _cardBg;
+            UpdateRegion();
+        }
+    
+        protected override void OnResize(EventArgs eventargs)
+        {
+            base.OnResize(eventargs);
+            UpdateRegion();
+        }
+    
+        private void UpdateRegion()
+        {
+            Region?.Dispose();
+            using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
             Region = new Region(path);
         }
-
-        private static GraphicsPath RoundedPath(Rectangle r, int radius)
+    
+    protected override void OnPaint(PaintEventArgs e)
         {
-            var path = new GraphicsPath();
-            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
-            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
-            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
-            path.CloseFigure();
-            return path;
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.CompositingQuality = CompositingQuality.HighQuality;
+            g.Clear(_formBg);
+        
+            var rect = new Rectangle(1, 1, Width - 3, Height - 3);
+        
+            using var path = ShapeHelper.RoundedPath(rect, Radius);
+            using var brush = new SolidBrush(_cardBg);
+            g.FillPath(brush, path);
+        
+            using var border = new Pen(Color.FromArgb(35, 255, 255, 255), 1f);
+            g.DrawPath(border, path);
         }
+    }
+
+    internal static class ShapeHelper
+    {
+        public static GraphicsPath RoundedPath(Rectangle r, int rad)
+        { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+    }
+
+    internal sealed class ToggleSwitch : Control
+    {
+        private bool _checked; private bool _hovered;
+        public bool Checked { get => _checked; set { _checked = value; CheckedChanged?.Invoke(this, EventArgs.Empty); Invalidate(); } }
+        public event EventHandler? CheckedChanged;
+        public ToggleSwitch()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent; Size = new Size(40, 20); Cursor = Cursors.Hand;
+        }
+        protected override void OnMouseEnter(EventArgs e) { _hovered = true; Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnClick(EventArgs e) { Checked = !Checked; base.OnClick(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            Color trackCol = _checked ? (_hovered ? Color.FromArgb(130, 80, 220) : Color.FromArgb(109, 40, 217)) : (_hovered ? Color.FromArgb(90, 100, 120) : Color.FromArgb(71, 85, 105));
+            using var tp = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Height / 2);
+            using var tb = new SolidBrush(trackCol); g.FillPath(tb, tp);
+            int d = Height - 6, tx = _checked ? Width - d - 3 : 3;
+            using var thb = new SolidBrush(Color.White); g.FillEllipse(thb, tx, 3, d, d);
+        }
+    }
+
+
+    internal sealed class PillLabel : Label
+    {
+        private const int PillRadius = 9, PillWidth = 120;
+        private Color _pillColour = Color.Transparent;
+        public Color PillColour { get => _pillColour; set { _pillColour = value; Invalidate(); } }
+        public PillLabel()
+        {
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+            BackColor = Color.Transparent; TextAlign = ContentAlignment.MiddleLeft; AutoSize = false;
+            Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold);
+        }
+        protected override void OnPaintBackground(PaintEventArgs e) { e.Graphics.Clear(Color.White); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            bool hasPill = _pillColour != Color.Transparent && Text.Length > 0 && Text != "-";
+            if (!hasPill)
+            {
+                using var fg = new SolidBrush(Color.FromArgb(100, 116, 139));
+                g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height), new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
+                return;
+            }
+            int pw = PillWidth, ph = (int)g.MeasureString(Text, Font).Height + 8, py = (Height - ph) / 2;
+            var rect = new Rectangle(0, py, pw, ph);
+            var r = _pillColour.R; var gC = _pillColour.G; var b = _pillColour.B;
+            Color baseCol = gC > r && gC > b ? Color.FromArgb(34, 197, 94) : r > gC && r > b ? Color.FromArgb(239, 68, 68) : Color.FromArgb(234, 179, 8);
+            Color endCol = Color.FromArgb(14, 26, 119);
+            using var grad = new LinearGradientBrush(
+                rect,
+                Color.Empty,
+                Color.Empty,
+                15f,   // shallower angle
+                true);
+            var blend = new ColorBlend
+            {
+                Colors = new[]
+                {
+                    ControlPaint.Light(baseCol, 0.4f),   // 0% light green
+                    baseCol,                             // 20% normal green
+                    ControlPaint.Dark(baseCol, 0.2f),    // 50% deeper green
+                    Color.FromArgb(14, 26, 119)          // 100% dark blue
+                },
+                Positions = new[]
+                {
+                    0.0f,
+                    0.2f,
+                    0.65f,
+                    1.0f
+                }
+            };
+            grad.InterpolationColors = blend;
+            using var path = ShapeHelper.RoundedPath(rect, PillRadius);
+            g.FillPath(grad, path);
+            var glossRect = new Rectangle(0, py, pw, ph / 2);
+            using var gloss = new LinearGradientBrush(glossRect, Color.FromArgb(70, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical);
+            g.SetClip(path); g.FillRectangle(gloss, glossRect); g.ResetClip();
+            using var fgB = new SolidBrush(Color.White);
+            g.DrawString(Text, Font, fgB, new RectangleF(0, py, pw, ph), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+        }
+    }
+
+    internal sealed class PillButton : Button
+    {
+        private const int Radius = 13; private bool _hovered;
+        private PillButtonStyle _style = PillButtonStyle.Normal;
+        public PillButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
+        public PillButton()
+        {
+            FlatStyle = FlatStyle.Flat; FlatAppearance.BorderSize = 0; BackColor = Color.Transparent; ForeColor = Color.White;
+            Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold); Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleCenter;
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.Opaque, true);
+        }
+        protected override void OnMouseEnter(EventArgs e) { _hovered = true; Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _hovered = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnPaintBackground(PaintEventArgs e) { }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            g.Clear(Parent?.BackColor ?? Color.FromArgb(39, 46, 63));
+            using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+            Color topCol, botCol, fgCol;
+            if (_style == PillButtonStyle.Active) { topCol = _hovered ? Color.FromArgb(196, 181, 253) : Color.FromArgb(167, 139, 250); botCol = _hovered ? Color.FromArgb(167, 139, 250) : Color.FromArgb(124, 58, 237); fgCol = Color.FromArgb(30, 10, 80); }
+            else { topCol = _hovered ? Color.FromArgb(160, 115, 240) : Color.FromArgb(140, 95, 220); botCol = _hovered ? Color.FromArgb(90, 50, 160) : Color.FromArgb(75, 40, 140); fgCol = Color.White; }
+            using var grad = new LinearGradientBrush(new Point(0, 0), new Point(Width, Height), topCol, botCol);
+            g.FillPath(grad, path);
+            if (Height > 4 && _style == PillButtonStyle.Normal)
+            { var gr = new Rectangle(0, 0, Width, Height / 2); using var gloss = new LinearGradientBrush(gr, Color.FromArgb(80, Color.White), Color.FromArgb(0, Color.White), LinearGradientMode.Vertical); g.SetClip(path); g.FillRectangle(gloss, gr); g.ResetClip(); }
+            using var fg = new SolidBrush(fgCol);
+            g.DrawString(Text, Font, fg, new RectangleF(0, 0, Width, Height), new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+        }
+    }
+
+    internal sealed class ModernButton : Button
+    {
+        private static readonly Color _normal = Color.FromArgb(45, 52, 68), _hover = Color.FromArgb(60, 68, 88), _accent = Color.FromArgb(103, 58, 182);
+        private static readonly Color _muted = Color.FromArgb(108, 117, 125), _mutedH = Color.FromArgb(120, 128, 140);
+        private static readonly Color _back = Color.FromArgb(223, 218, 242), _backH = Color.FromArgb(60, 68, 88);
+        private const int Radius = 8; private bool _hovered;
+        private ModernButtonStyle _style = ModernButtonStyle.Primary;
+        public ModernButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
+        private bool _isBack;
+        public bool IsBack { get => _isBack; set { _isBack = value; ForeColor = value ? Color.FromArgb(30, 10, 60) : Color.White; Invalidate(); } }
+        public ModernButton()
+        {
+            FlatStyle = FlatStyle.Flat; FlatAppearance.BorderSize = 0; BackColor = _normal; ForeColor = Color.White;
+            Font = new Font("Segoe UI", 9.5f); Cursor = Cursors.Hand; TextAlign = ContentAlignment.MiddleLeft; Padding = new Padding(14, 0, 0, 0);
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
+        }
+        protected override void OnMouseEnter(EventArgs e) { _hovered = true; BackColor = _isBack ? _backH : (_style == ModernButtonStyle.Muted ? _mutedH : _hover); Invalidate(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(EventArgs e) { _hovered = false; BackColor = _isBack ? _back : (_style == ModernButtonStyle.Muted ? _muted : _normal); Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.Clear(Color.FromArgb(39, 46, 63));
+            using var path = RR(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
+            Color bgCol = _isBack ? (_hovered ? _backH : _back) : BackColor;
+            using var brush = new SolidBrush(bgCol); g.FillPath(brush, path);
+            if (_style == ModernButtonStyle.Primary)
+                {
+                    var accentCol = _isBack
+                        ? Color.FromArgb(160, _accent)   // subtle version
+                        : _accent;
+                
+                    using var ab = new SolidBrush(accentCol);
+                
+                    g.FillRectangle(ab, new Rectangle(
+                        0,
+                        Radius,
+                        3,
+                        Height - Radius * 2));
+                };
+            using var fg = new SolidBrush(ForeColor);
+            var ta = _isBack ? StringAlignment.Center : StringAlignment.Near;
+            g.DrawString(Text, Font, fg, new RectangleF(_isBack ? 0 : Padding.Left + 4, 0, Width - (_isBack ? 0 : Padding.Left + 8), Height),
+                new StringFormat { Alignment = ta, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap });
+        }
+        private static GraphicsPath RR(Rectangle r, int rad) { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+    }
+
+    internal sealed class RoundedPanel : Panel
+    {
+        private const int Radius = 10;
+        private readonly System.Windows.Forms.Timer _resizeTimer;
+        private static readonly Color _pageBg = Color.FromArgb(226, 232, 240);
+        public RoundedPanel()
+        {
+            DoubleBuffered = true; ResizeRedraw = true;
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            BackColor = Color.White;
+            _resizeTimer = new System.Windows.Forms.Timer { Interval = 50 };
+            _resizeTimer.Tick += (_, _) => { _resizeTimer.Stop(); Invalidate(); };
+        }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); _resizeTimer.Stop(); _resizeTimer.Start(); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.Clear(_pageBg);
+            for (int i = 3; i >= 1; i--) { using var sb = new SolidBrush(Color.FromArgb(18, 0, 0, 0)); using var sp = RRP(new Rectangle(i, i, Width - i * 2, Height - i * 2), Radius); g.FillPath(sb, sp); }
+            using var wb = new SolidBrush(Color.White); using var wp = RRP(new Rectangle(0, 0, Width - 1, Height - 1), Radius); g.FillPath(wb, wp);
+        }
+        protected override void Dispose(bool disposing) { if (disposing) _resizeTimer.Dispose(); base.Dispose(disposing); }
+        private static GraphicsPath RRP(Rectangle r, int rad) { int d = rad * 2; var p = new GraphicsPath(); p.AddArc(r.X, r.Y, d, d, 180, 90); p.AddArc(r.Right - d, r.Y, d, d, 270, 90); p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90); p.CloseFigure(); return p; }
+    }
+
+    internal static class TrayIconGenerator
+    {
+        public static System.Drawing.Icon CreateOolioIcon()
+        {
+            using var bmp = new System.Drawing.Bitmap(32, 32); using var g = Graphics.FromImage(bmp);
+            g.SmoothingMode = SmoothingMode.AntiAlias; g.Clear(Color.FromArgb(39, 46, 63));
+            using var pen = new Pen(Color.White, 3f); g.DrawEllipse(pen, 2, 9, 14, 14); g.DrawEllipse(pen, 16, 9, 14, 14);
+            return System.Drawing.Icon.FromHandle(bmp.GetHicon());
+        }
+    }
+
+    internal sealed class IngressItem
+    {
+        public string CloudEndpoint { get; } public string LocalEndpoint { get; }
+        public IngressItem(string cloud, string local) { CloudEndpoint = cloud; LocalEndpoint = local; }
+        public bool IsCatchAll => LocalEndpoint.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase) || (CloudEndpoint == "*" && string.IsNullOrWhiteSpace(LocalEndpoint));
+    }
+
+    internal static class IngressHelper
+    {
+        public static IngressItem? Build(string? hostname, string? path, string? service)
+        {
+            string svc = service ?? "";
+            if (svc.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase)) return null;
+            string host = hostname ?? "";
+            if (host == "*" && string.IsNullOrWhiteSpace(svc)) return null;
+            string cloud = host;
+            if (!string.IsNullOrWhiteSpace(path) && path != "*") cloud = host.TrimEnd('/') + "/" + path.TrimStart('/');
+            return new IngressItem(cloud, svc);
+        }
+    }
+
+    public partial class MainForm : Form
+    {
+        private readonly CloudflaredServiceManager _serviceManager = new();
+        private readonly CloudflaredInstaller _installer = new();
+        private readonly FileLogger _logger = new();
+        private readonly DiagnosticsExporter _exporter;
+        private TunnelServiceStatus? _currentStatus;
+        private readonly List<string> _uiLogs = new();
+        private const string AppVersion = "1.2.1.0";
+        private const string VersionJsonUrl = "https://raw.githubusercontent.com/BenWfromBepoz/OolioTunnelMonitor/refs/heads/main/version.json";
+        private static readonly string _updateCheckFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "OolioTunnelMonitor", "last-update-check.txt");
+        private static string TunnelDetailsDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Bepoz", "OolioTunnelMonitor", "tunnel-details");
+        private static string TunnelDetailsPath(string id) => Path.Combine(TunnelDetailsDir, id + ".json");
+
+        private AppMode _mode = AppMode.Main;
+        private Panel pnlSidebarMain = null!, pnlSidebarInstall = null!, pnlSidebarTools = null!, pnlSidebarHelp = null!;
+        private Panel pnlInstall = null!, pnlTools = null!, pnlHelp = null!;
+        private ModernButton btnBackFromInstall = null!, btnBackFromTools = null!, btnBackFromHelp = null!;
+        private ModernButton btnToolsNav = null!, btnHelpNav = null!;
+        private ToggleSwitch tglReinstall = null!;
+
+        public MainForm()
+        {
+            InitializeComponent();
+            _exporter = new DiagnosticsExporter(_logger);
+            dgvIngress.CellPainting += DgvIngress_CellPainting;
+            this.FormClosing += (_, e) => { e.Cancel = true; Hide(); };
+            BuildSidebars(); BuildInstallPanel(); BuildToolsPanel(); BuildHelpPanel();
+            SetMode(AppMode.Main); WireNavEvents();
+            contentPanel.Visible = false;
+        }
+
+        protected override void OnLoad(EventArgs e) { base.OnLoad(e); BeginInvoke(() => { ResizeContentPanel(); contentPanel.Visible = true; }); }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); ResizeContentPanel(); }
+
+        private void ResizeContentPanel()
+        {
+            if (contentPanel == null) return;
+            const int sW = 224, m = 12;
+            contentPanel.Location = new Point(sW + m, m);
+            contentPanel.Size = new Size(ClientSize.Width - sW - m * 2, ClientSize.Height - m * 2);
+            int bY = pnlSidebar.Height;
+            lblVersion.Location = new Point(14, bY - 24);
+            btnCheckUpdates.Location = new Point(12, bY - 62);
+        }
+
+        private void SetMode(AppMode mode)
+        {
+            _mode = mode;
+            pnlSidebarMain.Visible = (mode == AppMode.Main); pnlSidebarInstall.Visible = (mode == AppMode.Install);
+            pnlSidebarTools.Visible = (mode == AppMode.Tools); pnlSidebarHelp.Visible = (mode == AppMode.Help);
+            tblMain.Visible = (mode == AppMode.Main); pnlInstall.Visible = (mode == AppMode.Install);
+            pnlTools.Visible = (mode == AppMode.Tools); pnlHelp.Visible = (mode == AppMode.Help);
+        }
+
+        private void BuildSidebars()
+        {
+            const int btnX = 12, btnW = 200, btnH = 40;
+            ModernButton BackBtn(string text) => new ModernButton { Text = text, Size = new Size(btnW, btnH), IsBack = true };
+            btnToolsNav = new ModernButton { Text = "\u2630  Tools", Size = new Size(btnW, btnH) };
+            btnHelpNav = new ModernButton { Text = "?  Help", Size = new Size(btnW, btnH) };
+            tglReinstall = new ToggleSwitch { Checked = true, Location = new Point(20, 466) };
+            var lblReinstall = new Label { Text = "Reinstall MSI", Font = new Font("Segoe UI", 8.5f), ForeColor = Color.FromArgb(180, 190, 210), BackColor = Color.Transparent, Location = new Point(66, 470), Size = new Size(140, 20) };
+            pnlSidebarMain = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill };
+            btnCreateTunnel.Location = new Point(btnX, 220); btnTunnelStatus.Location = new Point(btnX, 268);
+            btnToolsNav.Location = new Point(btnX, 316); btnHelpNav.Location = new Point(btnX, 364);
+            btnRepair.Location = new Point(btnX, 412);
+            pnlSidebarMain.Controls.AddRange(new Control[] { btnCreateTunnel, btnTunnelStatus, btnToolsNav, btnHelpNav, btnRepair, tglReinstall, lblReinstall, btnCheckUpdates, lblVersion });
+            pnlSidebar.Controls.Add(pnlSidebarMain);
+
+            pnlSidebarInstall = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill, Visible = false };
+            btnBackFromInstall = BackBtn("\u2190  Back to Monitor"); btnBackFromInstall.Location = new Point(btnX, 220);
+            pnlSidebarInstall.Controls.Add(btnBackFromInstall); pnlSidebar.Controls.Add(pnlSidebarInstall);
+
+            pnlSidebarTools = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill, Visible = false };
+            btnBackFromTools = BackBtn("\u2190  Back to Monitor");
+            var btnLogsTools = new ModernButton { Text = "\u2261  Open Logfile Folder", Size = new Size(btnW, btnH) };
+            var btnConfigTools = new ModernButton { Text = "\u25a4  Open Config Folder", Size = new Size(btnW, btnH) };
+            btnBackFromTools.Location = new Point(btnX, 220); btnLogsTools.Location = new Point(btnX, 268); btnConfigTools.Location = new Point(btnX, 316);
+            btnLogsTools.Click += (_, _) => OpenLogFolder(); btnConfigTools.Click += (_, _) => OpenConfigFolder();
+            pnlSidebarTools.Controls.AddRange(new Control[] { btnBackFromTools, btnLogsTools, btnConfigTools }); pnlSidebar.Controls.Add(pnlSidebarTools);
+
+            pnlSidebarHelp = new Panel { BackColor = Color.Transparent, Dock = DockStyle.Fill, Visible = false };
+            btnBackFromHelp = BackBtn("\u2190  Back to Monitor"); btnBackFromHelp.Location = new Point(btnX, 220);
+            pnlSidebarHelp.Controls.Add(btnBackFromHelp); pnlSidebar.Controls.Add(pnlSidebarHelp);
+        }
+
+        private void BuildInstallPanel()
+        {
+            pnlInstall = new Panel { Visible = false, BackColor = Color.Transparent, Dock = DockStyle.Fill };
+            contentPanel.Controls.Add(pnlInstall);
+        }
+
+        private void BuildToolsPanel()
+        {
+            pnlTools = new Panel { Visible = false, BackColor = Color.FromArgb(226, 232, 240), Dock = DockStyle.Fill };
+            var header = new Label { Text = "Activity Log", Dock = DockStyle.Top, Height = 40, Font = new Font("Segoe UI Semibold", 12f, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), BackColor = Color.Transparent, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(16, 0, 0, 0) };
+            var logBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.FromArgb(15, 23, 42), ForeColor = Color.FromArgb(203, 213, 225), Font = new Font("Cascadia Mono", 8.5f), BorderStyle = BorderStyle.None, ScrollBars = RichTextBoxScrollBars.Vertical, WordWrap = false };
+            logBox.Text = txtLog.Text;
+            txtLog.TextChanged += (_, _) => { if (!pnlTools.IsDisposed) logBox.Text = txtLog.Text; };
+            pnlTools.Controls.Add(logBox); pnlTools.Controls.Add(header);
+            contentPanel.Controls.Add(pnlTools);
+        }
+
+        private void BuildHelpPanel()
+        {
+            pnlHelp = new Panel { Visible = false, BackColor = Color.FromArgb(226, 232, 240), Dock = DockStyle.Fill, Padding = new Padding(20) };
+            var helpCard = new RoundedPanel { Dock = DockStyle.Fill };
+            var helpBox = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BackColor = Color.White, ForeColor = Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 10f), BorderStyle = BorderStyle.None,
+                Text = "Oolio Tunnel Monitor v" + AppVersion + "\r\n\r\nA Cloudflare Zero Trust tunnel monitoring and management tool.\r\n\r\nFeatures:\r\n  \u2022 Monitor tunnel status and connectivity\r\n  \u2022 Install and configure new tunnels\r\n  \u2022 Repair and reinstall tunnel services\r\n  \u2022 View published routes and endpoints\r\n\r\nFor support, contact Oolio Group IT or visit the\r\nCloudflare Zero Trust dashboard." };
+            helpCard.Controls.Add(helpBox); pnlHelp.Controls.Add(helpCard);
+            contentPanel.Controls.Add(pnlHelp);
+        }
+
+        private void WireNavEvents()
+        {
+            btnToolsNav.Click += (_, _) => SetMode(AppMode.Tools); btnHelpNav.Click += (_, _) => SetMode(AppMode.Help);
+            btnBackFromInstall.Click += (_, _) => SetMode(AppMode.Main); btnBackFromTools.Click += (_, _) => SetMode(AppMode.Main); btnBackFromHelp.Click += (_, _) => SetMode(AppMode.Main);
+        }
+
+        protected override void OnShown(EventArgs e) { base.OnShown(e); ApplyGridHeaderStyles(); _ = LoadTodaysLogAsync(); _ = CheckTunnelStatusAsync(); _ = CheckForUpdatesAsync(silent: true); }
+
+        private void ApplyGridHeaderStyles()
+        {
+            dgvIngress.EnableHeadersVisualStyles = false;
+            var cc = dgvIngress.Columns["colCloud"]; var cl = dgvIngress.Columns["colLocal"];
+            if (cc != null) { cc.HeaderCell.Style.BackColor = Color.FromArgb(237,233,254); cc.HeaderCell.Style.ForeColor = Color.FromArgb(76,29,149); cc.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cc.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cc.HeaderCell.Style.Padding = new Padding(6,0,0,0); }
+            if (cl != null) { cl.HeaderCell.Style.BackColor = Color.FromArgb(241,245,249); cl.HeaderCell.Style.ForeColor = Color.FromArgb(76,29,149); cl.HeaderCell.Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold); cl.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft; cl.HeaderCell.Style.Padding = new Padding(6,0,0,0); }
+            dgvIngress.Invalidate();
+        }
+
+        private void DgvIngress_CellPainting(object? sender, DataGridViewCellPaintingEventArgs e) { if (e.RowIndex < 0) return; e.PaintBackground(e.ClipBounds, false); e.PaintContent(e.ClipBounds); e.Handled = true; }
+
+        private async Task LoadTodaysLogAsync()
+        {
+            try { var logPath = _logger.LogFilePath; if (!File.Exists(logPath)) return; var lines = await File.ReadAllLinesAsync(logPath); if (IsDisposed) return;
+                if (txtLog.InvokeRequired) txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.Lines = lines; ScrollLogToEnd(); } }); else { txtLog.Lines = lines; ScrollLogToEnd(); } } catch { }
+        }
+        private void ScrollLogToEnd() { if (IsDisposed) return; txtLog.SelectionStart = txtLog.TextLength; txtLog.ScrollToCaret(); }
+        private static string Ts() => DateTime.Now.ToString("yy-MM-dd | HH:mm:ss");
+        private void LogInfo(string m) { AppendLog(m); _logger.Info(m); }
+        private void LogWarn(string m) { AppendLog("WARN: " + m); _logger.Warn(m); }
+        private void LogError(string m, Exception? ex = null)
+        {
+            string detail = ex == null ? m : m + " - " + ex.Message;
+            if (ex != null && ex.Message.Contains("403") && ex.Message.Contains("10000")) detail += " | TOKEN SCOPE: Needs Cloudflare Tunnel:Edit permission.";
+            AppendLog("ERROR: " + detail); if (ex == null) _logger.Error(m); else _logger.Error(m, ex);
+        }
+        private void AppendLog(string message)
+        {
+            string line = Ts() + " " + message; _uiLogs.Add(line); if (IsDisposed) return;
+            if (txtLog.InvokeRequired) txtLog.BeginInvoke(() => { if (!IsDisposed) { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); } });
+            else { txtLog.AppendText(line + Environment.NewLine); ScrollLogToEnd(); }
+        }
+
+        private static Color BadgeColour(string? v, bool svc = false)
+        {
+            if (string.IsNullOrWhiteSpace(v) || v == "-") return Color.Transparent; var s = v.ToLowerInvariant();
+            if (svc) return s == "running" ? Color.FromArgb(16,140,60) : s is "stopped" or "notinstalled" ? Color.FromArgb(200,30,30) : Color.FromArgb(180,100,0);
+            return s is "healthy" or "active" or "connected" or "reachable" or "tunnel ok" ? Color.FromArgb(16,140,60) : s is "inactive" or "degraded" or "down" or "unreachable" ? Color.FromArgb(200,30,30) : Color.FromArgb(180,100,0);
+        }
+        private static string ServiceTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "running" => "Service is running.", "notinstalled" => "Service not installed.", "stopped" => "Service stopped.", _ => "Unknown." };
+        private static string RemoteTooltip(string? v) => (v ?? "").ToLowerInvariant() switch { "healthy" or "active" or "connected" or "reachable" or "tunnel ok" => "Tunnel is reachable.", "inactive" or "degraded" or "down" or "unreachable" => "Tunnel is not reachable.", _ => "Status unknown." };
+        private void ApplyBadge(PillLabel lbl, string text, bool isService = false) { lbl.Text = text; lbl.PillColour = BadgeColour(text, isService); toolTip.SetToolTip(lbl, isService ? ServiceTooltip(text) : RemoteTooltip(text)); }
+        private string GetToken() => txtApiToken.Text.Trim();
+        private bool HasToken() => !string.IsNullOrWhiteSpace(txtApiToken.Text);
+        private void PopulateIngress(IEnumerable<IngressItem> items) { dgvIngress.Rows.Clear(); foreach (var item in items) { if (item.IsCatchAll) continue; dgvIngress.Rows.Add(item.CloudEndpoint, item.LocalEndpoint); } }
+        public void OpenLogFolder() { try { Process.Start("explorer.exe", _logger.LogDirectory); } catch (Exception ex) { LogError("Could not open log folder", ex); } }
+        public void OpenConfigFolder() { try { Directory.CreateDirectory(TunnelDetailsDir); Process.Start("explorer.exe", TunnelDetailsDir); } catch (Exception ex) { LogError("Could not open config folder", ex); } }
+
+        private async Task SaveTunnelDetailsAsync(string tunnelId, string? tunnelName, string? status, List<CfIngressRule> ingressRules)
+        {
+            Directory.CreateDirectory(TunnelDetailsDir);
+            await File.WriteAllTextAsync(TunnelDetailsPath(tunnelId), JsonSerializer.Serialize(
+                new { TunnelId = tunnelId, TunnelName = tunnelName, Status = status, Retrieved = DateTime.UtcNow.ToString("o"),
+                      Routes = ingressRules.ConvertAll(r => new { Hostname = r.Hostname ?? "*", Path = r.Path ?? "*", r.Service }) },
+                new JsonSerializerOptions { WriteIndented = true }));
+            LogInfo("Config saved: " + TunnelDetailsPath(tunnelId));
+        }
+
+        private async Task LoadTunnelDetailsFromJsonAsync(string jsonPath)
+        {
+            try
+            {
+                var json = await File.ReadAllTextAsync(jsonPath); using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
+                if (root.TryGetProperty("TunnelName", out var tn)) lblTunnelName.Text = tn.GetString() ?? "-";
+                if (root.TryGetProperty("Status", out var st)) ApplyBadge(lblRemoteStatus, st.GetString() ?? "-");
+                if (root.TryGetProperty("Routes", out var routes))
+                {
+                    var items = new List<IngressItem>();
+                    foreach (var route in routes.EnumerateArray())
+                    {
+                        string h = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "" : "";
+                        string p = route.TryGetProperty("Path", out var pp) ? pp.GetString() ?? "" : "";
+                        string s = route.TryGetProperty("Service", out var sp) ? sp.GetString() ?? "" : "";
+                        var item = IngressHelper.Build(h, p, s); if (item != null) items.Add(item);
+                    }
+                    PopulateIngress(items);
+                }
+            } catch { }
+        }
+
+        private string? GetFirstEndpointUrl(string tunnelId)
+        {
+            try
+            {
+                var jp = TunnelDetailsPath(tunnelId); if (!File.Exists(jp)) return null;
+                using var doc = JsonDocument.Parse(File.ReadAllText(jp)); var root = doc.RootElement;
+                if (!root.TryGetProperty("Routes", out var routes)) return null;
+                foreach (var route in routes.EnumerateArray())
+                {
+                    string svc = route.TryGetProperty("Service", out var sp) ? sp.GetString() ?? "" : "";
+                    if (svc.StartsWith("http_status:", StringComparison.OrdinalIgnoreCase)) continue;
+                    string host = route.TryGetProperty("Hostname", out var hp) ? hp.GetString() ?? "" : "";
+                    string path = route.TryGetProperty("Path", out var pp) ? pp.GetString() ?? "" : "";
+                    if (string.IsNullOrEmpty(host) || host == "*") continue;
+                    string url = "https://" + host; if (!string.IsNullOrEmpty(path) && path != "*") url += "/" + path.TrimStart('/');
+                    return url;
+                }
+            } catch { }
+            return null;
+        }
+
+        private TunnelServiceStatus GetLocalStatus()
+        {
+            var status = new TunnelServiceStatus();
+            if (!_serviceManager.IsInstalled()) { status.ServiceState = "NotInstalled"; status.DiagnosticsNote = "Cloudflared service is not installed."; return status; }
+            status.ServiceState = _serviceManager.GetStatusText();
+            var imagePath = TunnelDiscovery.TryGetServiceImagePath(); var token = TunnelDiscovery.TryExtractTokenFromImagePath(imagePath); var tunnelId = TunnelDiscovery.TryDecodeTunnelIdFromToken(token);
+            status.TunnelId = tunnelId; if (tunnelId == null) status.DiagnosticsNote = "Could not decode tunnel ID.";
+            return status;
+        }
+
+        public async Task TestTokenAsync()
+        {
+            if (!HasToken()) { LogWarn("No API token entered."); return; }
+            LogInfo("Testing API token..."); btnTestToken.Enabled = false;
+            try
+            {
+                var api = new CloudflareApi(GetToken()); var tid = _currentStatus?.TunnelId;
+                using var ctsV = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                try { var v = await api.VerifyTokenAsync(ctsV.Token); LogInfo("Token: " + (v?.Status ?? "unknown") + (v?.ExpiresOn != null ? " | Expires: " + v.ExpiresOn : "")); }
+                catch (Exception vEx) { LogWarn("Could not verify: " + vEx.Message); }
+                if (tid != null)
+                {
+                    using var ctsR = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    var tunnel = await api.GetTunnelAsync(tid, ctsR.Token); LogInfo("Read OK: " + (tunnel?.Name ?? tid));
+                    try { using var ctsW = new CancellationTokenSource(TimeSpan.FromSeconds(10)); await api.GetTunnelTokenAsync(tid, ctsW.Token); LogInfo("Write OK - suitable for Repair"); }
+                    catch (Exception wEx) { if (wEx.Message.Contains("403")) LogWarn("Write DENIED - READ ONLY."); else LogWarn("Write test inconclusive: " + wEx.Message); }
+                }
+                else LogInfo("Token valid. Run Check Tunnel Status to associate with a tunnel.");
+            }
+            catch (Exception ex) { LogError("Token test failed", ex); }
+            finally { btnTestToken.Enabled = true; }
+        }
+
+        public async Task CheckTunnelStatusAsync()
+        {
+            btnTunnelStatus.Enabled = false; dgvIngress.Rows.Clear();
+            try
+            {
+                LogInfo("Checking local service...");
+                var localStatus = GetLocalStatus(); _currentStatus = localStatus;
+                ApplyBadge(lblService, localStatus.ServiceState, isService: true);
+                lblTunnelId.Text = localStatus.TunnelId ?? "-";
+                if (!string.IsNullOrWhiteSpace(localStatus.DiagnosticsNote)) LogInfo(localStatus.DiagnosticsNote!);
+                if (localStatus.ServiceState == "NotInstalled") { ApplyBadge(lblRemoteStatus, "-"); lblTunnelName.Text = "-"; LogWarn("Service not installed."); return; }
+                if (localStatus.ServiceState != "Running") { LogWarn("Service not running. Use Repair Tunnel."); return; }
+                LogInfo("Local service is running.");
+                var tid = localStatus.TunnelId;
+                if (!HasToken())
+                {
+                    LogWarn("No API token \u2014 running HTTP endpoint check only.");
+                    if (tid != null) { var jp = TunnelDetailsPath(tid); if (File.Exists(jp)) { await LoadTunnelDetailsFromJsonAsync(jp); LogInfo("Loaded cached tunnel details."); } else LogInfo("No cached details. Add an API token and re-run."); }
+                    var endpointUrl = tid != null ? GetFirstEndpointUrl(tid) : null;
+                    if (endpointUrl != null)
+                    {
+                        LogInfo("HTTP check: GET " + endpointUrl);
+                        try
+                        {
+                            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                            http.DefaultRequestHeaders.Add("User-Agent", "OolioTunnelMonitor/1.2");
+                            var resp = await http.GetAsync(endpointUrl, HttpCompletionOption.ResponseHeadersRead);
+                            int code = (int)resp.StatusCode;
+                            bool hasCf = resp.Headers.Contains("CF-RAY") || (resp.Headers.Contains("Server") && resp.Headers.GetValues("Server").Any(s => s.Contains("cloudflare")));
+                            string cfRay = resp.Headers.Contains("CF-RAY") ? resp.Headers.GetValues("CF-RAY").First() : "";
+                            string server = resp.Headers.Contains("Server") ? resp.Headers.GetValues("Server").First() : "unknown";
+                            if (hasCf) { ApplyBadge(lblRemoteStatus, "Tunnel OK"); LogInfo("HTTP " + code + " \u2014 Cloudflare responded (Server: " + server + (cfRay != "" ? ", CF-RAY: " + cfRay : "") + ")"); }
+                            else if (code >= 200 && code < 500) { ApplyBadge(lblRemoteStatus, "Reachable"); LogInfo("HTTP " + code + " \u2014 endpoint responded. Server: " + server); }
+                            else { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP " + code + " \u2014 endpoint may not be functioning."); }
+                        }
+                        catch (HttpRequestException hrEx) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check failed: " + hrEx.Message); }
+                        catch (TaskCanceledException) { ApplyBadge(lblRemoteStatus, "Unreachable"); LogWarn("HTTP check timed out after 10s."); }
+                    }
+                    else LogInfo("No endpoint URL available. Add an API token to fetch route config.");
+                    LogInfo("Check complete (no API token \u2014 limited detail)."); return;
+                }
+                LogInfo("API token found \u2014 querying Cloudflare...");
+                var api = new CloudflareApi(GetToken());
+                using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                var tunnel = await api.GetTunnelAsync(tid!, cts1.Token);
+                if (tunnel != null) { lblTunnelName.Text = tunnel.Name ?? "-"; ApplyBadge(lblRemoteStatus, tunnel.Status ?? "-"); LogInfo("Tunnel: " + tunnel.Name + "  |  API status: " + tunnel.Status); }
+                using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                var config = await api.GetTunnelConfigAsync(tid!, cts2.Token);
+                var ingress = config?.Config?.Ingress ?? new List<CfIngressRule>();
+                var items = ingress.Select(r => IngressHelper.Build(r.Hostname, r.Path, r.Service)).Where(i => i != null).Cast<IngressItem>().ToList();
+                PopulateIngress(items); await SaveTunnelDetailsAsync(tid!, tunnel?.Name, tunnel?.Status, ingress);
+                LogInfo("Saved " + items.Count + " route(s) to cache."); LogInfo("Check complete.");
+            }
+            catch (Exception ex) { LogError("Check failed", ex); }
+            finally { btnTunnelStatus.Enabled = true; }
+        }
+
+        public async Task CreateTunnelAsync()
+        {
+            if (!HasToken()) { LogWarn("Enter an API token first."); return; }
+            SetMode(AppMode.Install);
+            pnlInstall.Controls.Clear();
+            var installForm = new CreateTunnelForm();
+            installForm.TopLevel = false;
+            installForm.FormBorderStyle = FormBorderStyle.None;
+            installForm.Dock = DockStyle.Fill;
+            installForm.Visible = true;
+            pnlInstall.Controls.Add(installForm);
+            var tcs = new TaskCompletionSource<DialogResult>();
+            installForm.FormClosed += (_, _) => tcs.TrySetResult(installForm.DialogResult);
+            var result = await tcs.Task;
+            pnlInstall.Controls.Clear();
+            if (result != DialogResult.OK || installForm.Result == null) { LogInfo("Install tunnel cancelled."); SetMode(AppMode.Main); return; }
+            var spec = installForm.Result;
+            LogInfo("Creating tunnel: " + spec.TunnelName);
+            var api = new CloudflareApi(GetToken());
+            try
+            {
+                using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var tunnel = await api.CreateTunnelAsync(spec.TunnelName, cts1.Token);
+                if (tunnel?.Id == null) throw new InvalidOperationException("Tunnel creation returned no ID.");
+                LogInfo("Created: " + tunnel.Name + " (" + tunnel.Id + ")");
+                var ingressRules = spec.Routes
+                    .Select(r => {
+                        var host = CreateTunnelForm.BuildHostname(r, spec);
+                        if (string.IsNullOrWhiteSpace(host) || r.Port <= 0) return null;
+                        return new CfIngressRule { Hostname = host, Service = "http://localhost:" + r.Port };
+                    }).Where(r => r != null).Cast<CfIngressRule>().ToList();
+                using var cts2 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                await api.PutTunnelConfigAsync(tunnel.Id, ingressRules, cts2.Token); LogInfo("Configured " + ingressRules.Count + " route(s).");
+                await SaveTunnelDetailsAsync(tunnel.Id, tunnel.Name, tunnel.Status ?? "pending", ingressRules);
+                using var cts3 = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var token = await api.GetTunnelTokenAsync(tunnel.Id, cts3.Token) ?? throw new InvalidOperationException("Empty token.");
+                LogInfo("Downloading MSI..."); using var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                var msiPath = await _installer.DownloadMsiAsync(dlc.Token);
+                await Task.Run(() => _installer.UninstallExistingMsi());
+                LogInfo("Installing MSI..."); await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
+                var exe = _installer.FindCloudflaredExeOrThrow();
+                LogInfo("Installing service..."); await Task.Run(() => _installer.InstallServiceWithToken(exe, token));
+                _serviceManager.StartService(); LogInfo("Installation complete."); await CheckTunnelStatusAsync();
+            }
+            catch (Exception ex) { LogError("Install tunnel failed", ex); }
+            finally { SetMode(AppMode.Main); }
+        }
+
+        public async Task RepairAsync()
+        {
+            if (!HasToken()) { LogWarn("Enter an API token first."); return; }
+            if (MessageBox.Show(this, "This will stop, uninstall and reinstall the cloudflared service.\n\nContinue?",
+                    "Confirm Repair", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+            { LogInfo("Repair cancelled."); return; }
+            var api = new CloudflareApi(GetToken()); btnRepair.Enabled = false;
+            try
+            {
+                string? tid = _currentStatus?.TunnelId;
+                if (tid == null)
+                {
+                    if (Directory.Exists(TunnelDetailsDir))
+                    {
+                        var files = Directory.GetFiles(TunnelDetailsDir, "*.json");
+                        if (files.Length == 1) { tid = Path.GetFileNameWithoutExtension(files[0]); LogInfo("Using cached ID: " + tid); }
+                        else if (files.Length > 1) { LogWarn("Multiple cached tunnels. Run Check Tunnel Status first."); return; }
+                    }
+                }
+                if (tid == null) { LogError("No tunnel ID found."); return; }
+                LogInfo("Repairing " + tid + "...");
+                _serviceManager.StopServiceBestEffort(); _serviceManager.KillCloudflaredProcess(); _serviceManager.DeleteService();
+                await Task.Run(() => _installer.UninstallExistingMsi());
+                string msiPath; using (var dlc = new CancellationTokenSource(TimeSpan.FromMinutes(5))) msiPath = await _installer.DownloadMsiAsync(dlc.Token);
+                await Task.Run(() => _installer.InstallMsi(msiPath)); try { File.Delete(msiPath); } catch { }
+                var exe = _installer.FindCloudflaredExeOrThrow();
+                string newToken; using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+                    newToken = await api.GetTunnelTokenAsync(tid, cts.Token) ?? throw new InvalidOperationException("Empty token.");
+                await Task.Run(() => _installer.InstallServiceWithToken(exe, newToken));
+                _serviceManager.StartService(); LogInfo("Repair complete."); await CheckTunnelStatusAsync();
+            }
+            catch (Exception ex) { LogError("Repair failed", ex); }
+            finally { btnRepair.Enabled = true; }
+        }
+
+        public void ExportDiagnostics()
+        {
+            try
+            {
+                if (_currentStatus == null) { MessageBox.Show(this, "Check tunnel status first.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+                var lines = new List<string>();
+                foreach (DataGridViewRow row in dgvIngress.Rows) lines.Add((row.Cells[0].Value?.ToString() ?? "") + "  ->  " + (row.Cells[1].Value?.ToString() ?? ""));
+                var zipPath = _exporter.Export(_currentStatus, _uiLogs, lines);
+                MessageBox.Show(this, "Exported to:" + Environment.NewLine + zipPath, "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex) { MessageBox.Show(this, "Export failed: " + ex.Message, "Export", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+        }
+
+        public async Task CheckForUpdatesAsync(bool silent = false)
+        {
+            if (silent) { try { if (File.Exists(_updateCheckFile)) { var lastCheck = File.ReadAllText(_updateCheckFile).Trim(); if (lastCheck == DateTime.Today.ToString("yyyy-MM-dd")) return; } } catch { } }
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+                http.DefaultRequestHeaders.Add("User-Agent", "OolioTunnelMonitor/" + AppVersion);
+                var json = await http.GetStringAsync(VersionJsonUrl);
+                try { Directory.CreateDirectory(Path.GetDirectoryName(_updateCheckFile)!); File.WriteAllText(_updateCheckFile, DateTime.Today.ToString("yyyy-MM-dd")); } catch { }
+                using var doc = JsonDocument.Parse(json); var root = doc.RootElement;
+                string latest = root.TryGetProperty("version", out var v) ? v.GetString() ?? AppVersion : AppVersion;
+                string url = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "";
+                string notes = root.TryGetProperty("releaseNotes", out var n) ? n.GetString() ?? "" : "";
+                if (IsNewerVersion(latest, AppVersion))
+                {
+                    LogInfo("Update available: v" + latest);
+                    string msg = "A new version of Oolio Tunnel Monitor is available!\n\nYour version:\tv" + AppVersion + "\nNew version:\tv" + latest;
+                    if (!string.IsNullOrWhiteSpace(notes)) msg += "\n\n" + notes;
+                    msg += "\n\nOpen the download page?";
+                    if (MessageBox.Show(this, msg, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes && !string.IsNullOrWhiteSpace(url))
+                        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                else if (!silent) { LogInfo("Up to date (v" + AppVersion + ")"); MessageBox.Show(this, "Oolio Tunnel Monitor is up to date.\n\nVersion: v" + AppVersion, "No Updates", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+            }
+            catch (Exception ex) { if (!silent) LogWarn("Update check failed: " + ex.Message); }
+        }
+
+        private static bool IsNewerVersion(string latest, string current) { try { return new Version(latest) > new Version(current); } catch { return latest != current && latest != ""; } }
+
+        private async void btnCreateTunnel_Click(object? sender, EventArgs e) => await CreateTunnelAsync();
+        private async void btnTunnelStatus_Click(object? sender, EventArgs e) => await CheckTunnelStatusAsync();
+        private async void btnTestToken_Click(object? sender, EventArgs e) => await TestTokenAsync();
+        private async void btnRepair_Click(object? sender, EventArgs e) => await RepairAsync();
+        private async void btnCheckUpdates_Click(object? sender, EventArgs e) => await CheckForUpdatesAsync(silent: false);
     }
 }
