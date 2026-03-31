@@ -217,6 +217,26 @@ namespace OolioTunnelMonitor
         };
     }
 
+
+    internal class NoScrollPanel : Panel
+    {
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.Style &= ~0x00200000; // WS_VSCROLL
+                cp.Style &= ~0x00100000; // WS_HSCROLL
+                return cp;
+            }
+        }
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x115 || m.Msg == 0x114) return; // WM_VSCROLL / WM_HSCROLL
+            base.WndProc(ref m);
+        }
+    }
+
     public class CreateTunnelForm : Form
     {
         private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
@@ -248,7 +268,7 @@ namespace OolioTunnelMonitor
             FormBorderStyle = FormBorderStyle.None;
             StartPosition   = FormStartPosition.CenterParent;
 
-            _scrollContainer = new Panel
+            _scrollContainer = new NoScrollPanel
             {
                 Dock       = DockStyle.Fill,
                 AutoScroll = true,
