@@ -280,7 +280,7 @@ namespace OolioTunnelMonitor
         {
             int y = 24;
 
-            var card1 = MakeCard("1 | Tunnel Name", ref y, 140);
+            var card1 = MakeCard("1 | Tunnel Name", ref y, 150);
             int cardInner = _scrollContainer.Width - 120; // available width inside card
             int lw = 200;        // left column width
             int rx = 240;        // right column x
@@ -319,7 +319,7 @@ namespace OolioTunnelMonitor
 
             _scrollContainer.Controls.Add(card1);
             
-            var card2 = MakeCard("2 | Routes", ref y, 310);
+            var card2 = MakeCard("2 | Routes", ref y, 320);
 
             int hx = 20;
             foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
@@ -355,9 +355,9 @@ namespace OolioTunnelMonitor
             card2.Controls.Add(addBtn);
             AddRoute(card2, addBtn);
 
-            y += card2.Height + 14;
+            y += 14 // card2.Height + 14;
 
-            var card3 = MakeCard("3 - Review & Install", ref y, 120);
+            var card3 = MakeCard("3 | Review & Install", ref y, 120);
             _reviewLabel.Location  = new Point(20, 42);
             _reviewLabel.Size      = new Size(card3.Width - 40, 60);
             _reviewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular);
