@@ -25,7 +25,7 @@ namespace OolioTunnelMonitor
             txt.ForeColor   = Slate900;
             txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             txt.Dock        = DockStyle.Fill;
-            txt.Margin      = new Padding(6, 0, 6, 0);
+            txt.Margin      = new Padding(10, 0, 6, 0);
             var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
             wrap.Controls.Add(txt);
             return wrap;
@@ -220,8 +220,8 @@ namespace OolioTunnelMonitor
     public class CreateTunnelForm : Form
     {
         private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
-        private readonly TextBox _groupBox     = new() { PlaceholderText = "blank for standalone venue" };
-        private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Moon Bar" };
+        private readonly TextBox _groupBox     = new() { PlaceholderText = "e.g. Oolio Group (Leave blank for standalone venue)" };
+        private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Super Deluxe" };
         private readonly TextBox _customBox    = new() { PlaceholderText = "Custom tunnel name" };
         private readonly Label   _previewLabel = new();
 
@@ -280,20 +280,20 @@ namespace OolioTunnelMonitor
         {
             int y = 24;
 
-            var card1 = MakeCard("1 - Tunnel Identity", ref y, 220);
+            var card1 = MakeCard("1 | Tunnel Name", ref y, 140);
             int cardInner = _scrollContainer.Width - 120; // available width inside card
             int lw = 200;        // left column width
             int rx = 240;        // right column x
             int rw = cardInner - rx; // right column width
 
-            // Left column: NetSuite ID
-            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, 44));
+            // Left column: NetSuite Company ID
+            card1.Controls.Add(UiFactory.MakeLabel("NetSuite Company ID", 20, 44));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, 20, 64, lw));
 
             // Left column: Custom name toggle
-            _tglCustom = new ToggleSwitch { Location = new Point(20, 110), Size = new Size(44, 22) };
+            _tglCustom = new ToggleSwitch { Location = new Point(20, 120), Size = new Size(44, 22) };
             var lblCustom = new Label {
-                Text = "Custom name", Location = new Point(70, 113),
+                Text = "Custom Tunnel Name", Location = new Point(70, 123),
                 AutoSize = true, Font = new Font("Segoe UI", 9f),
                 ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent
             };
@@ -302,7 +302,7 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(lblCustom);
 
             // Right column: Group Name
-            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rx, 44, rw));
+            card1.Controls.Add(UiFactory.MakeLabel("Group Name", rx, 44, rw));
             card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, rx, 64, rw));
 
             // Right column: Venue Name
@@ -318,7 +318,8 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(_previewLabel);
 
             _scrollContainer.Controls.Add(card1);
-            var card2 = MakeCard("2 - Published Routes", ref y, 320);
+            
+            var card2 = MakeCard("2 | Routes", ref y, 310);
 
             int hx = 20;
             foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
