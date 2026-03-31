@@ -294,7 +294,7 @@ namespace OolioTunnelMonitor
             _tglCustom = new ToggleSwitch { Location = new Point(20, cy), Size = new Size(44, 22) };
             var lblCustom = new Label { Text = "Custom name", Location = new Point(70, cy + 3), AutoSize = true,
                 Font = new Font("Segoe UI", 9f), ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent };
-            _tglCustom.CheckedChanged += (_, __) => { RefreshPreview(); }; RefreshPreview(); };
+            _tglCustom.CheckedChanged += (_, __) => { RefreshPreview(); };
             card1.Controls.Add(_tglCustom);
             card1.Controls.Add(lblCustom);
             cy += 34;
