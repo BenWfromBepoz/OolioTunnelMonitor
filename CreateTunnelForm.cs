@@ -126,7 +126,7 @@ namespace OolioTunnelMonitor
         public string GroupName  { get; set; } = "";
         public string VenueName  { get; set; } = "";
         public string CustomName { get; set; } = "";
-        public bool   UseCustom  { get; set; }
+        public bool   UseCustom  => _tglCustom?.Checked ?? false;
         public List<RouteSpec> Routes { get; set; } = new();
         public string TunnelName => UseCustom && !string.IsNullOrWhiteSpace(CustomName) ? CustomName : string.Join("-", new[]{GroupName, VenueName, NetSuiteId}.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.ToLower().Replace(" ", "-")));
     }
@@ -226,6 +226,7 @@ namespace OolioTunnelMonitor
 
         private readonly Panel          _routesPanel = new() { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
         private readonly List<RouteRow> _rows        = new();
+        private ToggleSwitch _tglCustom = null!;
         private readonly Label          _reviewLabel = new();
 
         // Buttons
@@ -290,11 +291,11 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, 20, cy, 320));
             cy += 38;
 
-            var tglCustom = new ToggleSwitch { Location = new Point(20, cy), Size = new Size(44, 22) };
+            _tglCustom = new ToggleSwitch { Location = new Point(20, cy), Size = new Size(44, 22) };
             var lblCustom = new Label { Text = "Custom name", Location = new Point(70, cy + 3), AutoSize = true,
                 Font = new Font("Segoe UI", 9f), ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent };
-            tglCustom.CheckedChanged += (_, __) => { UseCustom = tglCustom.Checked; RefreshPreview(); };
-            card1.Controls.Add(tglCustom);
+            _tglCustom.CheckedChanged += (_, __) => { RefreshPreview(); }; RefreshPreview(); };
+            card1.Controls.Add(_tglCustom);
             card1.Controls.Add(lblCustom);
             cy += 34;
 
@@ -480,7 +481,7 @@ namespace OolioTunnelMonitor
             GroupName  = _groupBox.Text.Trim(),
             VenueName  = _venueBox.Text.Trim(),
             CustomName = _customBox.Text.Trim(),
-            UseCustom  = UseCustom,
+            UseCustom  = _tglCustom?.Checked ?? false,
             Routes     = _rows.Select(r => r.Spec).ToList()
         };
 
