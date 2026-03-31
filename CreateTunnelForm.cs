@@ -305,8 +305,6 @@ namespace OolioTunnelMonitor
             _previewLabel.BackColor = Color.Transparent;
             card1.Controls.Add(_previewLabel);
 
-            _toggleTrack.Click += (_, _) => ToggleCustom(customWrap);
-            _toggleThumb.Click += (_, _) => ToggleCustom(customWrap);
 
             y += card1.Height + 14;
 
@@ -482,7 +480,7 @@ namespace OolioTunnelMonitor
             GroupName  = _groupBox.Text.Trim(),
             VenueName  = _venueBox.Text.Trim(),
             CustomName = _customBox.Text.Trim(),
-            UseCustom  = _customToggleOn,
+            UseCustom  = UseCustom,
             Routes     = _rows.Select(r => r.Spec).ToList()
         };
 
