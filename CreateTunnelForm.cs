@@ -253,7 +253,7 @@ namespace OolioTunnelMonitor
                 Dock       = DockStyle.Fill,
                 AutoScroll = true,
                 BackColor  = Color.Transparent,
-                Padding    = new Padding(28, 24, 28, 24)
+                Padding    = new Padding(0)
             };
 
             Controls.Add(_scrollContainer);
@@ -278,7 +278,7 @@ namespace OolioTunnelMonitor
 
         private void BuildUI()
         {
-            int y = 0;
+            int y = 24;
 
             var card1 = MakeCard("1 - Tunnel Identity", ref y, 220);
             int cardInner = _scrollContainer.Width - 96; // available width inside card
@@ -368,7 +368,7 @@ namespace OolioTunnelMonitor
 
             var btnPanel = new Panel
             {
-                Location  = new Point(0, y),
+                Location  = new Point(28, y),
                 Size      = new Size(_scrollContainer.Width - 56, 44),
                 BackColor = Color.FromArgb(226, 232, 240),
                 Anchor    = AnchorStyles.Top | AnchorStyles.Right
@@ -398,7 +398,7 @@ namespace OolioTunnelMonitor
         {
             var card = new RoundedCardPanel
             {
-                Location = new Point(0, y),
+                Location = new Point(28, y),
                 Width    = _scrollContainer.Width - 56,
                 Height   = minHeight,
                 Anchor   = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -412,6 +412,7 @@ namespace OolioTunnelMonitor
                 ForeColor = UiFactory.Slate900,
                 BackColor = Color.Transparent
             });
+            y += minHeight + 12;
             return card;
         }
 
