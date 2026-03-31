@@ -302,11 +302,11 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(lblCustom);
 
             // Right column: Group Name
-            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rx, 44));
+            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rx, 44, rw));
             card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, rx, 64, rw));
 
             // Right column: Venue Name
-            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", rx, 108));
+            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", rx, 108, rw));
             card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, rx, 128, rw));
 
             // Preview label - full width at bottom
@@ -370,7 +370,7 @@ namespace OolioTunnelMonitor
             {
                 Location  = new Point(0, y),
                 Size      = new Size(_scrollContainer.Width - 56, 44),
-                BackColor = Color.Transparent,
+                BackColor = Color.FromArgb(226, 232, 240),
                 Anchor    = AnchorStyles.Top | AnchorStyles.Right
             };
 
