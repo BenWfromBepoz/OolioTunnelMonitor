@@ -355,7 +355,7 @@ namespace OolioTunnelMonitor
             card2.Controls.Add(addBtn);
             AddRoute(card2, addBtn);
 
-            y += 14 // card2.Height + 14;
+            y += 14; // card2.Height + 14;
 
             var card3 = MakeCard("3 | Review & Install", ref y, 120);
             _reviewLabel.Location  = new Point(20, 42);
