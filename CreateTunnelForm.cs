@@ -280,38 +280,39 @@ namespace OolioTunnelMonitor
         {
             int y = 0;
 
-            var card1 = MakeCard("1 - Tunnel Identity", ref y, 200);
-            int cy = 44;
+            var card1 = MakeCard("1 - Tunnel Identity", ref y, 220);
+            int cardInner = _scrollContainer.Width - 96; // available width inside card
+            int lw = 200;        // left column width
+            int rx = 240;        // right column x
+            int rw = cardInner - rx; // right column width
 
-            // Left column: NetSuite ID + Custom Name toggle
-            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, cy));
-            cy += 20;
-            card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, 20, cy, 180));
-            cy += 36;
+            // Left column: NetSuite ID
+            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, 44));
+            card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, 20, 64, lw));
 
-            // Custom name toggle (left column, below NetSuite ID)
-            _tglCustom = new ToggleSwitch { Location = new Point(20, cy + 2), Size = new Size(44, 22) };
-            var lblCustom = new Label { Text = "Custom name", Location = new Point(70, cy + 5),
+            // Left column: Custom name toggle
+            _tglCustom = new ToggleSwitch { Location = new Point(20, 110), Size = new Size(44, 22) };
+            var lblCustom = new Label {
+                Text = "Custom name", Location = new Point(70, 113),
                 AutoSize = true, Font = new Font("Segoe UI", 9f),
-                ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent };
+                ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent
+            };
             _tglCustom.CheckedChanged += (_, __) => { RefreshPreview(); };
             card1.Controls.Add(_tglCustom);
             card1.Controls.Add(lblCustom);
 
-            // Right column: Group Name + Venue Name (offset 220px from left)
-            int rCol = 220;
-            int rw = card1.Width - rCol - 20;
-            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rCol, 44));
-            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, rCol, 64, rw));
+            // Right column: Group Name
+            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rx, 44));
+            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, rx, 64, rw));
 
-            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", rCol, 108));
-            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, rCol, 128, rw));
+            // Right column: Venue Name
+            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", rx, 108));
+            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, rx, 128, rw));
 
-            // Preview / custom name box - full width at bottom
-            int bottomY = 172;
-            _previewLabel.Location = new Point(20, bottomY);
-            _previewLabel.Size     = new Size(card1.Width - 40, 18);
-            _previewLabel.Font     = new Font("Segoe UI", 8.5f, FontStyle.Italic);
+            // Preview label - full width at bottom
+            _previewLabel.Location  = new Point(20, 178);
+            _previewLabel.Size      = new Size(cardInner - 20, 18);
+            _previewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Italic);
             _previewLabel.ForeColor = UiFactory.Purple700;
             _previewLabel.BackColor = Color.Transparent;
             card1.Controls.Add(_previewLabel);
