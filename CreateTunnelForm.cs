@@ -317,6 +317,77 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(_previewLabel);
 
             _scrollContainer.Controls.Add(card1);
+            var card2 = MakeCard("2 - Published Routes", ref y, 320);
+
+            int hx = 20;
+            foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
+            {
+                card2.Controls.Add(new Label
+                {
+                    Text      = col,
+                    Location  = new Point(hx, 42),
+                    Size      = new Size(w, 16),
+                    Font      = new Font("Segoe UI Semibold", 8f, FontStyle.Bold),
+                    ForeColor = UiFactory.SlateKey,
+                    BackColor = Color.Transparent
+                });
+                hx += w + 8;
+            }
+
+            _routesPanel.Location  = new Point(14, 62);
+            _routesPanel.Width     = card2.Width - 28;
+            _routesPanel.BackColor = Color.Transparent;
+            card2.Controls.Add(_routesPanel);
+
+            var addBtn = new Label
+            {
+                Text      = "+ Add Route",
+                AutoSize  = true,
+                Location  = new Point(20, 0),
+                Font      = new Font("Segoe UI Semibold", 9f, FontStyle.Bold),
+                ForeColor = UiFactory.Purple700,
+                BackColor = Color.Transparent,
+                Cursor    = Cursors.Hand
+            };
+            addBtn.Click += (_, _) => AddRoute(card2, addBtn);
+            card2.Controls.Add(addBtn);
+            AddRoute(card2, addBtn);
+
+            y += card2.Height + 14;
+
+            var card3 = MakeCard("3 - Review & Install", ref y, 120);
+            _reviewLabel.Location  = new Point(20, 42);
+            _reviewLabel.Size      = new Size(card3.Width - 40, 60);
+            _reviewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular);
+            _reviewLabel.ForeColor = UiFactory.Slate900;
+            _reviewLabel.BackColor = Color.Transparent;
+            card3.Controls.Add(_reviewLabel);
+
+            y += card3.Height + 14;
+
+            var btnPanel = new Panel
+            {
+                Location  = new Point(0, y),
+                Size      = new Size(_scrollContainer.Width - 56, 44),
+                BackColor = Color.Transparent,
+                Anchor    = AnchorStyles.Top | AnchorStyles.Right
+            };
+
+            _installBtn.Size = new Size(160, 38);
+            _cancelBtn.Size  = new Size(100, 38);
+
+            _cancelBtn.Location  = new Point(btnPanel.Width - _cancelBtn.Width, 3);
+            _installBtn.Location = new Point(_cancelBtn.Left - _installBtn.Width - 10, 3);
+
+            _installBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _cancelBtn.Anchor  = AnchorStyles.Top | AnchorStyles.Right;
+
+            _installBtn.Click += OnInstall;
+            _cancelBtn.Click  += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
+
+            btnPanel.Controls.AddRange(new Control[] { _installBtn, _cancelBtn });
+
+            _scrollContainer.Controls.Add(card1);
             _scrollContainer.Controls.Add(card2);
             _scrollContainer.Controls.Add(card3);
             _scrollContainer.Controls.Add(btnPanel);
