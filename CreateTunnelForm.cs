@@ -47,7 +47,7 @@ namespace OolioTunnelMonitor
         private readonly PillButton _installBtn = new() { Text = "Create Tunnel", DialogResult = DialogResult.OK, Width = 140, Height = 34, Style = PillButtonStyle.Normal };
         private readonly PillButton _cancelBtn  = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34, Style = PillButtonStyle.Active };
 
-        private readonly Panel _scrollContainer;
+        private readonly TableLayoutPanel _scrollContainer = new TableLayoutPanel();
 
         public InstallSpec? Result { get; private set; }
 
@@ -60,13 +60,15 @@ namespace OolioTunnelMonitor
             FormBorderStyle = FormBorderStyle.None;
             StartPosition   = FormStartPosition.CenterParent;
 
-            _scrollContainer = new Panel
-            {
-                Dock       = DockStyle.Fill,
-                AutoScroll = true,
-                BackColor  = Color.Transparent,
-                Padding    = new Padding(0)
-            };
+            _scrollContainer.Dock        = DockStyle.Fill;
+            _scrollContainer.Padding     = new Padding(10);
+            _scrollContainer.ColumnCount = 1;
+            _scrollContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _scrollContainer.RowCount    = 4;
+            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  25f));
+            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  44f));
+            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  21f));
+            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 60f));
 
             Controls.Add(_scrollContainer);
 
@@ -90,9 +92,7 @@ namespace OolioTunnelMonitor
 
         private void BuildUI()
         {
-            int y = 24;
-
-            var card1 = MakeCard("1 - Tunnel Identity", ref y, 220);
+            var card1 = MakeCard("1 - Tunnel Identity");
             int cardInner = _scrollContainer.Width - 96; // available width inside card
             int lw = 200;        // left column width
             int rx = 240;        // right column x
@@ -129,8 +129,8 @@ namespace OolioTunnelMonitor
             _previewLabel.BackColor = Color.Transparent;
             card1.Controls.Add(_previewLabel);
 
-            _scrollContainer.Controls.Add(card1);
-            var card2 = MakeCard("2 - Published Routes", ref y, 320);
+            _scrollContainer.Controls.Add(card1, 0, 0);
+            var card2 = MakeCard("2 - Published Routes");
 
             int hx = 20;
             foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
@@ -168,7 +168,7 @@ namespace OolioTunnelMonitor
 
             y += card2.Height + 14;
 
-            var card3 = MakeCard("3 - Review & Install", ref y, 120);
+            var card3 = MakeCard("3 - Review & Install");
             _reviewLabel.Location  = new Point(20, 42);
             _reviewLabel.Size      = new Size(card3.Width - 40, 60);
             _reviewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular);
@@ -201,18 +201,16 @@ namespace OolioTunnelMonitor
             btnPanel.Controls.AddRange(new Control[] { _installBtn, _cancelBtn });
 
             _scrollContainer.Controls.Add(card1);
-            _scrollContainer.Controls.Add(card2);
-            _scrollContainer.Controls.Add(card3);
-            _scrollContainer.Controls.Add(btnPanel);
+            _scrollContainer.Controls.Add(card2, 0, 1);
+            _scrollContainer.Controls.Add(card3, 0, 2);
+            _scrollContainer.Controls.Add(btnPanel, 0, 3);
         }
 
-        private RoundedCardPanel MakeCard(string title, ref int y, int minHeight)
+        private RoundedCardPanel MakeCard(string title)
         {
             var card = new RoundedCardPanel
             {
-                Location = new Point(28, y),
-                Width    = _scrollContainer.Width - 56,
-                Height   = minHeight,
+                Dock = DockStyle.Fill,
                 Anchor   = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             card.Controls.Add(new Label
@@ -224,7 +222,6 @@ namespace OolioTunnelMonitor
                 ForeColor = UiFactory.Slate900,
                 BackColor = Color.Transparent
             });
-            y += minHeight + 12;
             return card;
         }
 
