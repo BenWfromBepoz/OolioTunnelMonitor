@@ -104,7 +104,7 @@ namespace OolioTunnelMonitor
             _tglCustom = new ToggleSwitch { Location = new Point(col1x, 108), Size = new Size(44, 22) };
             var lblCustom = new Label { Text="Custom name", Location=new Point(col1x+50,111), AutoSize=true,
                 Font=new Font("Segoe UI",9f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
-            int previewX=col2x, previewW=col3x+colW-col2x;
+            int previewX=col2x, previewW=400;
             _customBox.Location    = new Point(previewX, 104);
             _customBox.Size        = new Size(previewW, 28);
             _customBox.ReadOnly    = true;
