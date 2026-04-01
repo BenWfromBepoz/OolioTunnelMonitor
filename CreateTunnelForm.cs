@@ -32,9 +32,9 @@ namespace OolioTunnelMonitor
     public class CreateTunnelForm : Form
     {
         private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
-        private readonly TextBox _groupBox     = new() { PlaceholderText = "blank for standalone venue" };
+        private readonly TextBox _groupBox     = new() { PlaceholderText = "Leave blank for standalone venue" };
         private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Moon Bar" };
-        private readonly TextBox _customBox    = new() { PlaceholderText = "Custom tunnel name" };
+        private readonly TextBox _customBox    = new() { PlaceholderText = BuildTunnelName };
         private readonly Label   _previewLabel = new();
 
 
@@ -47,7 +47,7 @@ namespace OolioTunnelMonitor
         private readonly PillButton _installBtn = new() { Text = "Create Tunnel", DialogResult = DialogResult.OK, Width = 140, Height = 34, Style = PillButtonStyle.Normal };
         private readonly PillButton _cancelBtn  = new() { Style = PillButtonStyle.Muted, Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34 };
 
-        private readonly TableLayoutPanel _scrollContainer = new TableLayoutPanel();
+        private readonly TableLayoutPanel _cardContainer = new TableLayoutPanel();
 
         public InstallSpec? Result { get; private set; }
 
@@ -60,16 +60,16 @@ namespace OolioTunnelMonitor
             FormBorderStyle = FormBorderStyle.None;
             StartPosition   = FormStartPosition.CenterParent;
 
-            _scrollContainer.Dock        = DockStyle.Fill;
-            _scrollContainer.Padding     = new Padding(10, 10, 10, 10);
-            _scrollContainer.ColumnCount = 1;
-            _scrollContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            _scrollContainer.RowCount    = 3;
-            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  25f));
-            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  44f));
-            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  21f));
+            _cardContainer.Dock        = DockStyle.Fill;
+            _cardContainer.Padding     = new Padding(10, 10, 10, 10);
+            _cardContainer.ColumnCount = 1;
+            _cardContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            _cardContainer.RowCount    = 3;
+            _cardContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  25f));
+            _cardContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  44f));
+            _cardContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  23f));
 
-            Controls.Add(_scrollContainer);
+            Controls.Add(_cardContainer);
 
             _netSuiteBox.TextChanged += (_, _) => RefreshPreview();
             _groupBox.TextChanged    += (_, _) => RefreshPreview();
@@ -92,7 +92,7 @@ namespace OolioTunnelMonitor
         private void BuildUI()
         {
             // ── Card 1: Tunnel Identity ──────────────────────────────────
-            var card1 = MakeCard("1 - Tunnel Identity");
+            var card1 = MakeCard("1 | Tunnel Name");
             int col1x=20, colW=175, col2x=210;
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, colW));
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, 200));
@@ -102,7 +102,7 @@ namespace OolioTunnelMonitor
             _groupBox.Location = new Point(col2x, 64); _groupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_groupBox);
             _venueBox.Location = new Point(400, 64); _venueBox.Size = new Size(175, 28); card1.Controls.Add(_venueBox);
             _tglCustom = new ToggleSwitch { Location = new Point(col1x, 108), Size = new Size(44, 22) };
-            var lblCustom = new Label { Text="Custom name", Location=new Point(col1x+50,111), AutoSize=true,
+            var lblCustom = new Label { Text="Custom Name", Location=new Point(col1x+50,111), AutoSize=true,
                 Font=new Font("Segoe UI",9f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
             int previewX=col2x, previewW=400;
             _customBox.Location    = new Point(previewX, 104);
@@ -127,7 +127,7 @@ namespace OolioTunnelMonitor
                 // Reposition preview box
                 _customBox.Location = new Point(col2x, 106); _customBox.Size = new Size(card1.Width - col2x - 20, 28);
             };
-            _scrollContainer.Controls.Add(card1, 0, 0);
+            _cardContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
             var card2 = MakeCard("2 - Published Routes");
@@ -149,7 +149,7 @@ namespace OolioTunnelMonitor
             addBtn.MouseClick += (_,__) => AddRoute(card2, addBtn);
             card2.Controls.Add(addBtn);
             AddRoute(card2, addBtn);
-            _scrollContainer.Controls.Add(card2, 0, 1);
+            _cardContainer.Controls.Add(card2, 0, 1);
 
             // ── Card 3: Review & Install (buttons inside) ────────────────
             var card3 = MakeCard("3 - Review & Install");
@@ -168,7 +168,7 @@ namespace OolioTunnelMonitor
                 _cancelBtn.Location  = new Point(bx, card3.Height - bh   - 10);
             };
             card3.Controls.Add(_installBtn); card3.Controls.Add(_cancelBtn);
-            _scrollContainer.Controls.Add(card3, 0, 2);
+            _cardContainer.Controls.Add(card3, 0, 2);
         }
 
         private RoundedCardPanel MakeCard(string title)
@@ -227,9 +227,9 @@ namespace OolioTunnelMonitor
             _customBox.BackColor = on ? Color.FromArgb(237,233,254) : Color.FromArgb(240,240,240);
             _customBox.ForeColor = on ? Color.FromArgb(109,40,217)  : Color.FromArgb(40,40,40);
             var dis = Color.FromArgb(235,235,235); var disfg = Color.FromArgb(130,130,130);
-            _netSuiteBox.ReadOnly=on; _netSuiteBox.BackColor=on?dis:Color.White; _netSuiteBox.ForeColor=on?disfg:Color.FromArgb(40,40,40);
-            _groupBox.ReadOnly   =on; _groupBox.BackColor   =on?dis:Color.White; _groupBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
-            _venueBox.ReadOnly   =on; _venueBox.BackColor   =on?dis:Color.White; _venueBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
+            _netSuiteBox.ReadOnly=on; _netSuiteBox.BackColor=on?dis:Color.FromArgb(40,40,40); _netSuiteBox.ForeColor=on?disfg:Color.FromArgb(40,40,40);
+            _groupBox.ReadOnly   =on; _groupBox.BackColor   =on?dis:Color.FromArgb(40,40,40); _groupBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
+            _venueBox.ReadOnly   =on; _venueBox.BackColor   =on?dis:Color.FromArgb(40,40,40); _venueBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
         }
 
         private void RefreshPreview()
