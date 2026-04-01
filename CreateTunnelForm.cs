@@ -61,7 +61,7 @@ namespace OolioTunnelMonitor
             StartPosition   = FormStartPosition.CenterParent;
 
             _scrollContainer.Dock        = DockStyle.Fill;
-            _scrollContainer.Padding     = new Padding(10);
+            _scrollContainer.Padding     = new Padding(10, 10, 10, 10);
             _scrollContainer.ColumnCount = 1;
             _scrollContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             _scrollContainer.RowCount    = 3;
@@ -93,13 +93,14 @@ namespace OolioTunnelMonitor
         {
             // ── Card 1: Tunnel Identity ──────────────────────────────────
             var card1 = MakeCard("1 - Tunnel Identity");
-            int col1x=20, colW=175, col2x=210, col3x=400;
+            int col1x=20, colW=175, col2x=210;
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, colW));
-            card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, colW));
-            card1.Controls.Add(UiFactory.MakeLabel("Venue Name",  col3x, 44, colW));
+            card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, 200));
+            var lblVenue = new Label { Text="Venue Name", Location=new Point(400,44), Size=new Size(175,16), Font=new Font("Segoe UI",8.5f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
+            card1.Controls.Add(lblVenue);
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, colW));
-            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox,    col2x, 64, colW));
-            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox,    col3x, 64, colW));
+            _groupBox.Location = new Point(col2x, 64); _groupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_groupBox);
+            _venueBox.Location = new Point(400, 64); _venueBox.Size = new Size(175, 28); card1.Controls.Add(_venueBox);
             _tglCustom = new ToggleSwitch { Location = new Point(col1x, 108), Size = new Size(44, 22) };
             var lblCustom = new Label { Text="Custom name", Location=new Point(col1x+50,111), AutoSize=true,
                 Font=new Font("Segoe UI",9f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
@@ -113,6 +114,19 @@ namespace OolioTunnelMonitor
             _customBox.BorderStyle = BorderStyle.FixedSingle;
             _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
             card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
+            // Resize col2/col3 to fill available width evenly
+            card1.SizeChanged += (_,__) => {
+                int avail = card1.Width - col2x - 20;
+                int half  = avail / 2 - 5;
+                int c3x   = col2x + half + 10;
+                _groupBox.Location = new Point(col2x, 64); _groupBox.Size = new Size(half, 28);
+                _venueBox.Location = new Point(c3x,   64); _venueBox.Size = new Size(half, 28);
+                // Reposition venue label
+                foreach(Control c in card1.Controls)
+                    if(c is Label lbl && lbl.Text == "Venue Name") { lbl.Location = new Point(c3x, 44); break; }
+                // Reposition preview box
+                _customBox.Location = new Point(col2x, 106); _customBox.Size = new Size(card1.Width - col2x - 20, 28);
+            };
             _scrollContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
@@ -147,8 +161,11 @@ namespace OolioTunnelMonitor
             _installBtn.Anchor=AnchorStyles.Bottom|AnchorStyles.Right;
             _cancelBtn.Anchor=AnchorStyles.Bottom|AnchorStyles.Right;
             card3.SizeChanged += (_,__) => {
-                _installBtn.Location = new Point(card3.Width-_installBtn.Width-20, card3.Height-_installBtn.Height-14);
-                _cancelBtn.Location  = new Point(card3.Width-_installBtn.Width-_cancelBtn.Width-28, card3.Height-_cancelBtn.Height-14);
+                int bw = 160, bh = 36, bx = card3.Width - bw - 20;
+                _installBtn.Size     = new Size(bw, bh);
+                _cancelBtn.Size      = new Size(bw, bh);
+                _installBtn.Location = new Point(bx, card3.Height - bh*2 - 18);
+                _cancelBtn.Location  = new Point(bx, card3.Height - bh   - 10);
             };
             card3.Controls.Add(_installBtn); card3.Controls.Add(_cancelBtn);
             _scrollContainer.Controls.Add(card3, 0, 2);
