@@ -45,7 +45,7 @@ namespace OolioTunnelMonitor
 
         // Buttons
         private readonly PillButton _installBtn = new() { Text = "Create Tunnel", DialogResult = DialogResult.OK, Width = 140, Height = 34, Style = PillButtonStyle.Normal };
-        private readonly PillButton _cancelBtn  = new() { Style = PillButtonStyle.Muted, Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34, Style = PillButtonStyle.Active };
+        private readonly PillButton _cancelBtn  = new() { Style = PillButtonStyle.Muted, Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34 };
 
         private readonly TableLayoutPanel _scrollContainer = new TableLayoutPanel();
 
