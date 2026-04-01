@@ -45,7 +45,7 @@ namespace OolioTunnelMonitor
 
         // Buttons
         private readonly PillButton _installBtn = new() { Text = "Create Tunnel", DialogResult = DialogResult.OK, Width = 140, Height = 34, Style = PillButtonStyle.Normal };
-        private readonly PillButton _cancelBtn  = new() { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34, Style = PillButtonStyle.Active };
+        private readonly PillButton _cancelBtn  = new() { Style = PillButtonStyle.Muted, Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90, Height = 34, Style = PillButtonStyle.Active };
 
         private readonly TableLayoutPanel _scrollContainer = new TableLayoutPanel();
 
@@ -64,11 +64,10 @@ namespace OolioTunnelMonitor
             _scrollContainer.Padding     = new Padding(10);
             _scrollContainer.ColumnCount = 1;
             _scrollContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            _scrollContainer.RowCount    = 4;
+            _scrollContainer.RowCount    = 3;
             _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  25f));
             _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  44f));
             _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Percent,  21f));
-            _scrollContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 60f));
 
             Controls.Add(_scrollContainer);
 
@@ -92,116 +91,67 @@ namespace OolioTunnelMonitor
 
         private void BuildUI()
         {
+            // ── Card 1: Tunnel Identity ──────────────────────────────────
             var card1 = MakeCard("1 - Tunnel Identity");
-            int cardInner = _scrollContainer.Width - 96; // available width inside card
-            int lw = 200;        // left column width
-            int rx = 240;        // right column x
-            int rw = cardInner - rx; // right column width
-
-            // Left column: NetSuite ID
-            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", 20, 44));
-            card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, 20, 64, lw));
-
-            // Left column: Custom name toggle
-            _tglCustom = new ToggleSwitch { Location = new Point(20, 110), Size = new Size(44, 22) };
-            var lblCustom = new Label {
-                Text = "Custom name", Location = new Point(70, 113),
-                AutoSize = true, Font = new Font("Segoe UI", 9f),
-                ForeColor = UiFactory.SlateKey, BackColor = Color.Transparent
-            };
-            _tglCustom.CheckedChanged += (_, __) => { RefreshPreview(); };
-            card1.Controls.Add(_tglCustom);
-            card1.Controls.Add(lblCustom);
-
-            // Right column: Group Name
-            card1.Controls.Add(UiFactory.MakeLabel("Group Name (blank for standalone venue)", rx, 44, rw));
-            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, rx, 64, rw));
-
-            // Right column: Venue Name
-            card1.Controls.Add(UiFactory.MakeLabel("Venue Name", rx, 108, rw));
-            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, rx, 128, rw));
-
-            // Preview label - full width at bottom
-            _previewLabel.Location  = new Point(20, 178);
-            _previewLabel.Size      = new Size(cardInner - 20, 18);
-            _previewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Italic);
-            _previewLabel.ForeColor = UiFactory.Purple700;
-            _previewLabel.BackColor = Color.Transparent;
-            card1.Controls.Add(_previewLabel);
-
+            int col1x=20, colW=175, col2x=210, col3x=400;
+            card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, colW));
+            card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, colW));
+            card1.Controls.Add(UiFactory.MakeLabel("Venue Name",  col3x, 44, colW));
+            card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, colW));
+            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox,    col2x, 64, colW));
+            card1.Controls.Add(UiFactory.StyledTextBox(_venueBox,    col3x, 64, colW));
+            _tglCustom = new ToggleSwitch { Location = new Point(col1x, 108), Size = new Size(44, 22) };
+            var lblCustom = new Label { Text="Custom name", Location=new Point(col1x+50,111), AutoSize=true,
+                Font=new Font("Segoe UI",9f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
+            int previewX=col2x, previewW=col3x+colW-col2x;
+            _customBox.Location    = new Point(previewX, 104);
+            _customBox.Size        = new Size(previewW, 28);
+            _customBox.ReadOnly    = true;
+            _customBox.BackColor   = Color.FromArgb(240, 240, 240);
+            _customBox.ForeColor   = Color.FromArgb(40, 40, 40);
+            _customBox.Font        = new Font("Segoe UI", 9f);
+            _customBox.BorderStyle = BorderStyle.FixedSingle;
+            _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
+            card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
             _scrollContainer.Controls.Add(card1, 0, 0);
+
+            // ── Card 2: Published Routes ──────────────────────────────────
             var card2 = MakeCard("2 - Published Routes");
-
-            int hx = 20;
-            foreach (var (col, w) in new[] { ("Service", 130), ("Port", 80), ("Prefix", 100), ("Domain", 260) })
+            int hx=20;
+            foreach (var (col,w) in new[]{("Service",130),("Port",80),("Prefix",100),("Domain",260)})
             {
-                card2.Controls.Add(new Label
-                {
-                    Text      = col,
-                    Location  = new Point(hx, 42),
-                    Size      = new Size(w, 16),
-                    Font      = new Font("Segoe UI Semibold", 8f, FontStyle.Bold),
-                    ForeColor = UiFactory.SlateKey,
-                    BackColor = Color.Transparent
-                });
-                hx += w + 8;
+                card2.Controls.Add(new Label { Text=col, Location=new Point(hx,42), Size=new Size(w,16),
+                    Font=new Font("Segoe UI Semibold",8f,FontStyle.Bold),
+                    ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent });
+                hx += w;
             }
-
-            _routesPanel.Location  = new Point(14, 62);
-            _routesPanel.Width     = card2.Width - 28;
-            _routesPanel.BackColor = Color.Transparent;
             card2.Controls.Add(_routesPanel);
-
-            var addBtn = new Label
-            {
-                Text      = "+ Add Route",
-                AutoSize  = true,
-                Location  = new Point(20, 0),
-                Font      = new Font("Segoe UI Semibold", 9f, FontStyle.Bold),
-                ForeColor = UiFactory.Purple700,
-                BackColor = Color.Transparent,
-                Cursor    = Cursors.Hand
+            var addBtn = new Label { Text="+ Add Route", AutoSize=true,
+                Font=new Font("Segoe UI Semibold",9f,FontStyle.Bold),
+                ForeColor=UiFactory.Purple700, BackColor=Color.Transparent, Cursor=Cursors.Hand };
+            card2.SizeChanged += (_,__) => {
+                addBtn.Location = new Point(card2.Width - addBtn.Width - 20, card2.Height - addBtn.Height - 14);
             };
-            addBtn.Click += (_, _) => AddRoute(card2, addBtn);
+            addBtn.MouseClick += (_,__) => AddRoute(card2, addBtn);
             card2.Controls.Add(addBtn);
             AddRoute(card2, addBtn);
-
-
-            var card3 = MakeCard("3 - Review & Install");
-            _reviewLabel.Location  = new Point(20, 42);
-            _reviewLabel.Size      = new Size(card3.Width - 40, 60);
-            _reviewLabel.Font      = new Font("Segoe UI", 8.5f, FontStyle.Regular);
-            _reviewLabel.ForeColor = UiFactory.Slate900;
-            _reviewLabel.BackColor = Color.Transparent;
-            card3.Controls.Add(_reviewLabel);
-
-
-            var btnPanel = new Panel
-            {
-                Dock     = DockStyle.Fill,
-                Size      = new Size(_scrollContainer.Width - 56, 44),
-                BackColor = Color.FromArgb(226, 232, 240),
-                Anchor    = AnchorStyles.Top | AnchorStyles.Right
-            };
-
-            _installBtn.Size = new Size(160, 38);
-            _cancelBtn.Size  = new Size(100, 38);
-
-            _cancelBtn.Location  = new Point(btnPanel.Width - _cancelBtn.Width, 3);
-            _installBtn.Location = new Point(_cancelBtn.Left - _installBtn.Width - 10, 3);
-
-            _installBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            _cancelBtn.Anchor  = AnchorStyles.Top | AnchorStyles.Right;
-
-            _installBtn.Click += OnInstall;
-            _cancelBtn.Click  += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
-
-            btnPanel.Controls.AddRange(new Control[] { _installBtn, _cancelBtn });
-
-            _scrollContainer.Controls.Add(card1);
             _scrollContainer.Controls.Add(card2, 0, 1);
+
+            // ── Card 3: Review & Install (buttons inside) ────────────────
+            var card3 = MakeCard("3 - Review & Install");
+            _reviewLabel.Location=new Point(20,44); _reviewLabel.Size=new Size(500,100);
+            _reviewLabel.Font=new Font("Segoe UI",8.5f); _reviewLabel.ForeColor=UiFactory.SlateKey;
+            _reviewLabel.BackColor=Color.Transparent;
+            card3.Controls.Add(_reviewLabel);
+            _installBtn.Size=new Size(150,38); _cancelBtn.Size=new Size(110,38);
+            _installBtn.Anchor=AnchorStyles.Bottom|AnchorStyles.Right;
+            _cancelBtn.Anchor=AnchorStyles.Bottom|AnchorStyles.Right;
+            card3.SizeChanged += (_,__) => {
+                _installBtn.Location = new Point(card3.Width-_installBtn.Width-20, card3.Height-_installBtn.Height-14);
+                _cancelBtn.Location  = new Point(card3.Width-_installBtn.Width-_cancelBtn.Width-28, card3.Height-_cancelBtn.Height-14);
+            };
+            card3.Controls.Add(_installBtn); card3.Controls.Add(_cancelBtn);
             _scrollContainer.Controls.Add(card3, 0, 2);
-            _scrollContainer.Controls.Add(btnPanel, 0, 3);
         }
 
         private RoundedCardPanel MakeCard(string title)
@@ -252,7 +202,19 @@ namespace OolioTunnelMonitor
             card.Height         = addBtn.Bottom + 20;
         }
 
-        private void RefreshPreview()
+        pr
+
+        private void ApplyCustomToggle()
+        {
+            bool on = _tglCustom.Checked;
+            _customBox.ReadOnly  = !on;
+            _customBox.BackColor = on ? Color.FromArgb(237,233,254) : Color.FromArgb(240,240,240);
+            _customBox.ForeColor = on ? Color.FromArgb(109,40,217)  : Color.FromArgb(40,40,40);
+            var dis = Color.FromArgb(235,235,235); var disfg = Color.FromArgb(130,130,130);
+            _netSuiteBox.ReadOnly=on; _netSuiteBox.BackColor=on?dis:Color.White; _netSuiteBox.ForeColor=on?disfg:Color.FromArgb(40,40,40);
+            _groupBox.ReadOnly   =on; _groupBox.BackColor   =on?dis:Color.White; _groupBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
+            _venueBox.ReadOnly   =on; _venueBox.BackColor   =on?dis:Color.White; _venueBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
+        }ivate void RefreshPreview()
         {
             var spec = BuildSpec();
             _previewLabel.Text = "Preview: " + BuildTunnelName(spec);
