@@ -34,7 +34,7 @@ namespace OolioTunnelMonitor
         private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
         private readonly TextBox _groupBox     = new() { PlaceholderText = "Leave blank for standalone venue" };
         private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Moon Bar" };
-        private readonly TextBox _customBox    = new() { PlaceholderText = tunnelname };
+        private readonly TextBox _customBox    = new() { PlaceholderText = "Your tunnel name will preview here" };
         private readonly Label   _previewLabel = new();
 
 
