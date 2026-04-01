@@ -208,8 +208,8 @@ namespace OolioTunnelMonitor
         {
             var card = new RoundedCardPanel
             {
-                Dock = DockStyle.Fill,
-                Anchor   = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                Dock   = DockStyle.Fill,
+                Margin = new Padding(0, 0, 0, 8)
             };
             card.Controls.Add(new Label
             {
