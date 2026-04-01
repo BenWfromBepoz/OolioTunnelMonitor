@@ -214,7 +214,9 @@ namespace OolioTunnelMonitor
             _netSuiteBox.ReadOnly=on; _netSuiteBox.BackColor=on?dis:Color.White; _netSuiteBox.ForeColor=on?disfg:Color.FromArgb(40,40,40);
             _groupBox.ReadOnly   =on; _groupBox.BackColor   =on?dis:Color.White; _groupBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
             _venueBox.ReadOnly   =on; _venueBox.BackColor   =on?dis:Color.White; _venueBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
-        }ivate void RefreshPreview()
+        }
+
+        private void RefreshPreview()
         {
             var spec = BuildSpec();
             _previewLabel.Text = "Preview: " + BuildTunnelName(spec);
