@@ -95,7 +95,7 @@ namespace OolioTunnelMonitor
             var card1 = MakeCard("1 | Tunnel Name");
             var lblVenue = new Label { Text="Venue Name", Location=new Point(400,44), Size=new Size(175,16), Font=new Font("Segoe UI",8.5f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
             card1.Controls.Add(lblVenue);
-            int col1x=20, colW=175, col2x=210, col3x=400;
+            int col1x=20, colW1=175, col2x=210, colW2=250, col3x=500, colW1=250,;
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, colW));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, colW));
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, 200));
