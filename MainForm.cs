@@ -14,7 +14,6 @@ using OolioTunnelMonitor.Services;
 
 namespace OolioTunnelMonitor
 {
-    public enum PillButtonStyle   { Normal, Active }
     public enum ModernButtonStyle { Primary, Muted }
     public enum AppMode           { Main, Install, Tools, Help }
 
