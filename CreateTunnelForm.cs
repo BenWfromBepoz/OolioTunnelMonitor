@@ -34,7 +34,7 @@ namespace OolioTunnelMonitor
         private readonly TextBox _netSuiteBox  = new() { PlaceholderText = "e.g. 12345" };
         private readonly TextBox _groupBox     = new() { PlaceholderText = "Leave blank for standalone venue" };
         private readonly TextBox _venueBox     = new() { PlaceholderText = "e.g. Moon Bar" };
-        private readonly TextBox _customBox    = new() { PlaceholderText = BuildTunnelName };
+        private readonly TextBox _customBox    = new() { PlaceholderText = tunnelname };
         private readonly Label   _previewLabel = new();
 
 
@@ -235,7 +235,8 @@ namespace OolioTunnelMonitor
         private void RefreshPreview()
         {
             var spec = BuildSpec();
-            _previewLabel.Text = "Preview: " + BuildTunnelName(spec);
+            var tunnelname = BuildTunnelName(spec);
+            _previewLabel.Text = "Preview: " + tunnelname;
 
             var lines = new List<string>();
             foreach (var r in spec.Routes)
