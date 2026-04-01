@@ -215,6 +215,8 @@ namespace OolioTunnelMonitor
     }
 
 
+    internal enum PillButtonStyle { Normal, Active, Muted }
+
     internal sealed class PillButton : Button
     {
         private const int Radius = 13; private bool _hovered;
