@@ -136,7 +136,7 @@ internal sealed class ContentPanel : Panel
         private void ResizeContentPanel()
         {
             if (contentPanel == null) return;
-            const int sW = 224, m = 12;
+            const int sW = 224, m = 10;
             contentPanel.Location = new Point(sW + m, m);
             contentPanel.Size = new Size(ClientSize.Width - sW - m * 2, ClientSize.Height - m * 2);
             int bY = pnlSidebar.Height;
