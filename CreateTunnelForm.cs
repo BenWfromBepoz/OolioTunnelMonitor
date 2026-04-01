@@ -166,7 +166,6 @@ namespace OolioTunnelMonitor
             card2.Controls.Add(addBtn);
             AddRoute(card2, addBtn);
 
-            y += card2.Height + 14;
 
             var card3 = MakeCard("3 - Review & Install");
             _reviewLabel.Location  = new Point(20, 42);
@@ -176,11 +175,10 @@ namespace OolioTunnelMonitor
             _reviewLabel.BackColor = Color.Transparent;
             card3.Controls.Add(_reviewLabel);
 
-            y += card3.Height + 14;
 
             var btnPanel = new Panel
             {
-                Location  = new Point(28, y),
+                Dock     = DockStyle.Fill,
                 Size      = new Size(_scrollContainer.Width - 56, 44),
                 BackColor = Color.FromArgb(226, 232, 240),
                 Anchor    = AnchorStyles.Top | AnchorStyles.Right
