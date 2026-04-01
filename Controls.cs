@@ -361,6 +361,7 @@ namespace OolioTunnelMonitor
     {
         public RoundedCardPanel()
         {
+            ResizeRedraw = true;
             BackColor      = Color.White;
             DoubleBuffered = true;
         }
