@@ -237,13 +237,7 @@ namespace OolioTunnelMonitor
             using var path = ShapeHelper.RoundedPath(new Rectangle(0, 0, Width - 1, Height - 1), Radius);
             Color topCol, botCol, fgCol;
             if (_style == PillButtonStyle.Active) { topCol = _hovered ? Color.FromArgb(196, 181, 253) : Color.FromArgb(167, 139, 250); botCol = _hovered ? Color.FromArgb(167, 139, 250) : Color.FromArgb(124, 58, 237); fgCol = Color.FromArgb(30, 10, 80); }
-            else
-                {
-                    using var brush = new LinearGradientBrush(r,
-                        Color.FromArgb(200, 200, 200),
-                        Color.FromArgb(170, 170, 170), 90f);
-                    g.FillPath(brush, path);
-                }
+            else { topCol = Color.FromArgb(200, 200, 200); botCol = Color.FromArgb(170, 170, 170); fgCol = Color.FromArgb(80, 80, 80); }
             using var grad = new LinearGradientBrush(new Point(0, 0), new Point(Width, Height), topCol, botCol);
             g.FillPath(grad, path);
             if (Height > 4 && _style == PillButtonStyle.Normal)
