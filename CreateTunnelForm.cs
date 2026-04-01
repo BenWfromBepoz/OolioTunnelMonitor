@@ -202,7 +202,6 @@ namespace OolioTunnelMonitor
             card.Height         = addBtn.Bottom + 20;
         }
 
-        pr
 
         private void ApplyCustomToggle()
         {
