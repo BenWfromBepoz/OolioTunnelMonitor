@@ -95,7 +95,8 @@ namespace OolioTunnelMonitor
             var card1 = MakeCard("1 | Tunnel Name");
             var lblVenue = new Label { Text="Venue Name", Location=new Point(400,44), Size=new Size(175,16), Font=new Font("Segoe UI",8.5f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
             card1.Controls.Add(lblVenue);
-            int col1x=20, col1w=175, col2x=210, col2w=200, col3x=500, col3w=250;
+            int avail = card1.Width - 20;
+            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (availa - col3x);
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, col1w));
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, col2w));
@@ -116,19 +117,6 @@ namespace OolioTunnelMonitor
             _customBox.BorderStyle = BorderStyle.FixedSingle;
             _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
             card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
-            // Resize col2/col3 to fill available width evenly
-            card1.SizeChanged += (_,__) => {
-                int avail = card1.Width - col2x - 20;
-                int half  = avail / 2 - 5;
-                int c3x   = col2x + half + 10;
-                _groupBox.Location = new Point(col2x, 64); _groupBox.Size = new Size(half, 28);
-                _venueBox.Location = new Point(c3x,   64); _venueBox.Size = new Size(half, 28);
-                // Reposition venue label
-                foreach(Control c in card1.Controls)
-                    if(c is Label lbl && lbl.Text == "Venue Name") { lbl.Location = new Point(c3x, 44); break; }
-                // Reposition preview box
-                _customBox.Location = new Point(col2x, 106); _customBox.Size = new Size(card1.Width - col2x - 20, 28);
-            };
             _cardContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
