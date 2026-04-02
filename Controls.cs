@@ -53,7 +53,7 @@ namespace OolioTunnelMonitor
             txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             txt.Dock        = DockStyle.Fill;
             txt.Margin      = new Padding(6, 0, 6, 0);
-            var wrap = new BorderPanel;
+            var wrap = new BorderPanel {Location = bounds.Location, Size = bounds.Size};
             wrap.Controls.Add(txt);
             return wrap;
         }
@@ -66,7 +66,7 @@ namespace OolioTunnelMonitor
             txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             txt.Dock        = DockStyle.Fill;
             txt.Margin      = new Padding(6, 0, 6, 0);
-            var wrap = new BorderPanel;
+            var wrap = new BorderPanel {Location = bounds.Location, Size = bounds.Size};
             wrap.Controls.Add(txt);
             return wrap;
         }
