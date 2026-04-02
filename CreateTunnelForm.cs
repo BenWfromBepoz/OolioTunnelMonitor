@@ -99,7 +99,7 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, col1w));
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, col2w));
-            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, col2x, 64, col2W));  
+            card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, col2x, 64, col2w));  
             _groupBox.Location = new Point(col2x, 64); _groupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_groupBox);
             card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, col3x, 64, col3w));  
             _venueBox.Location = new Point(col3x, 64); _venueBox.Size = new Size(col3w, 28); card1.Controls.Add(_venueBox);
