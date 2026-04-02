@@ -93,8 +93,6 @@ namespace OolioTunnelMonitor
         {
             // ── Card 1: Tunnel Identity ──────────────────────────────────
             var card1 = MakeCard("1 | Tunnel Name");
-            var lblVenue = new Label { Text="Venue Name", Location=new Point(400,44), Size=new Size(175,16), Font=new Font("Segoe UI",8.5f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
-            card1.Controls.Add(lblVenue);
             int avail = card1.Width - 20;
             int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col3x);
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
@@ -102,8 +100,9 @@ namespace OolioTunnelMonitor
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, col2w));
             card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, col2x, 64, col2w));  
             _groupBox.Location = new Point(col2x, 64); _groupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_groupBox);
+            card1.Controls.Add(UiFactory.MakeLabel("Venue Name",  col3x, 44, col2w));
             card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, col3x, 64, col3w));  
-            _venueBox.Location = new Point(col3x, 64); _venueBox.Size = new Size(col3w, 28); card1.Controls.Add(_venueBox);
+            _venueBox.Location = new Point(col3x, 64); _venueBox.Size = new Size(col3w, 28);
             _tglCustom = new ToggleSwitch { Location = new Point(col1x, 108), Size = new Size(44, 22) };
             var lblCustom = new Label { Text="Custom Name", Location=new Point(col1x+50,111), AutoSize=true,
                 Font=new Font("Segoe UI",9f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
@@ -117,7 +116,7 @@ namespace OolioTunnelMonitor
             _customBox.BorderStyle = BorderStyle.FixedSingle;
             _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
             card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
-            card1.Controls.Add(UiFactory.StyledTextBox(_customBox, col2x, 124, col1w));
+            card1.Controls.Add(UiFactory.StyledReadOnlyBox(_customBox, col2x, 124, col2w + col3w + 15));
             _cardContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
