@@ -228,26 +228,34 @@ namespace OolioTunnelMonitor
 
         private void ApplyCustomToggle()
         {
-            bool on = _tglCustom.Checked;
-            _customBox.ReadOnly  = !off;
-            // _customBox.BackColor = on ? Color.FromArgb(237,233,254) : Color.FromArgb(240,240,240);
-            // _customBox.ForeColor = on ? Color.FromArgb(109,40,217)  : Color.FromArgb(40,40,40);
-            _netSuiteBox.ReadOnly=on; UiFactory.StyledTextBox(_customBox);
-            // var dis = Color.FromArgb(235,235,235); var disfg = Color.FromArgb(130,130,130);
-            _netSuiteBox.ReadOnly=on; UiFactory.StyledReadOnlyBox(_customBox); // _netSuiteBox.BackColor=on?dis:Color.FromArgb(40,40,40); _netSuiteBox.ForeColor=on?disfg:Color.FromArgb(40,40,40);
-            _groupBox.ReadOnly   =on; UiFactory.StyledReadOnlyBox(_groupBox); // _groupBox.BackColor   =on?dis:Color.FromArgb(40,40,40); _groupBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
-            _venueBox.ReadOnly   =on; UiFactory.StyledReadOnlyBox(_venueBox); // _venueBox.BackColor   =on?dis:Color.FromArgb(40,40,40); _venueBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
-        },
-        {
-            bool off = _tglCustom.Unchecked;
-            // _customBox.ReadOnly  = !on;
-            // _customBox.BackColor = on ? Color.FromArgb(237,233,254) : Color.FromArgb(240,240,240);
-            // _customBox.ForeColor = on ? Color.FromArgb(109,40,217)  : Color.FromArgb(40,40,40);
-            _netSuiteBox.ReadOnly=on; UiFactory.StyledReadOnlyBox(_customBox);
-            // var dis = Color.FromArgb(235,235,235); var disfg = Color.FromArgb(130,130,130);
-            _netSuiteBox.ReadOnly=off; UiFactory.StyledTextBox(_customBox); // _netSuiteBox.BackColor=on?dis:Color.FromArgb(40,40,40); _netSuiteBox.ForeColor=on?disfg:Color.FromArgb(40,40,40);
-            _groupBox.ReadOnly   =off; UiFactory.StyledTextBox(_groupBox); // _groupBox.BackColor   =on?dis:Color.FromArgb(40,40,40); _groupBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
-            _venueBox.ReadOnly   =off; UiFactory.StyledTextBox(_venueBox); // _venueBox.BackColor   =on?dis:Color.FromArgb(40,40,40); _venueBox.ForeColor   =on?disfg:Color.FromArgb(40,40,40);
+            bool customOn = _tglCustom.Checked; // ON = custom box editable
+        
+            // Custom tunnel name box
+            _customBox.ReadOnly = !customOn;
+            if (customOn) UiFactory.StyledTextBox(_customBox);
+            else          UiFactory.StyledReadOnlyBox(_customBox);
+        
+            // Source boxes (NetSuite/Group/Venue) are opposite of custom
+            bool sourceEditable = !customOn;
+        
+            _netSuiteBox.ReadOnly = !sourceEditable;
+            _groupBox.ReadOnly    = !sourceEditable;
+            _venueBox.ReadOnly    = !sourceEditable;
+        
+            if (sourceEditable)
+            {
+                UiFactory.StyledTextBox(_netSuiteBox);
+                UiFactory.StyledTextBox(_groupBox);
+                UiFactory.StyledTextBox(_venueBox);
+            }
+            else
+            {
+                UiFactory.StyledReadOnlyBox(_netSuiteBox);
+                UiFactory.StyledReadOnlyBox(_groupBox);
+                UiFactory.StyledReadOnlyBox(_venueBox);
+            }
+        
+            RefreshPreview();
         }
 
         private void RefreshPreview()
