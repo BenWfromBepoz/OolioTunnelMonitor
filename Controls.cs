@@ -30,6 +30,19 @@ namespace OolioTunnelMonitor
             return wrap;
         }
 
+                public static Panel StyledReadOnlyBox(TextBox txt, int x, int y, int w, int h = 28)
+        {
+            txt.BorderStyle = BorderStyle.None;
+            txt.BackColor   = Lavender;
+            txt.ForeColor   = Slate900;
+            txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+            txt.Dock        = DockStyle.Fill;
+            txt.Margin      = new Padding(6, 0, 6, 0);
+            var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
+            wrap.Controls.Add(txt);
+            return wrap;
+        }
+
         public static Label MakeLabel(string text, int x, int y, int w = 300)
         {
             return new Label
