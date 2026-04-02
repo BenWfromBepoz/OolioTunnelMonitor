@@ -15,6 +15,8 @@ namespace OolioTunnelMonitor
         public static readonly Color SlateKey   = Color.FromArgb(100, 116, 139);
         public static readonly Color Slate900   = Color.FromArgb( 15,  23,  42);
         public static readonly Color PageBg     = Color.FromArgb(226, 232, 240);
+        public static readonly Color Grey       = Color.FromArgb(235, 235, 235);
+        public static readonly Color Charcoal   = Color.FromArgb( 40,  40,  40);
         public static readonly Color White      = Color.White;
 
         public static Panel StyledTextBox(TextBox txt, int x, int y, int w, int h = 28)
@@ -33,8 +35,8 @@ namespace OolioTunnelMonitor
                 public static Panel StyledReadOnlyBox(TextBox txt, int x, int y, int w, int h = 28)
         {
             txt.BorderStyle = BorderStyle.None;
-            txt.BackColor   = Lavender;
-            txt.ForeColor   = Slate900;
+            txt.BackColor   = Grey;
+            txt.ForeColor   = Charcoal;
             txt.Font        = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             txt.Dock        = DockStyle.Fill;
             txt.Margin      = new Padding(6, 0, 6, 0);
