@@ -60,7 +60,7 @@ namespace OolioTunnelMonitor
             return wrap;
         }
 
-                public static Panel ApplytyledReadOnlyBox(TextBox txt)
+                public static Panel ApplyStyledReadOnlyBox(TextBox txt)
         {
             txt.BorderStyle = BorderStyle.None;
             txt.BackColor   = Grey;
