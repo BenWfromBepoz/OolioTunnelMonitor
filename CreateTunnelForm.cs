@@ -94,15 +94,16 @@ namespace OolioTunnelMonitor
             // ── Card 1: Tunnel Identity ──────────────────────────────────
             var card1 = MakeCard("1 | Tunnel Name");
             int avail = card1.Width - 20;
-            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col3x);
+            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col1w - col2w - 30);
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, col1w));
+            _netSuiteBox.Location = new Point(col1x, 66); _netSuiteBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_netSuiteBox);
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, col2w));
             card1.Controls.Add(UiFactory.StyledTextBox(_groupBox, col2x, 64, col2w));  
-            _groupBox.Location = new Point(col2x, 64); _groupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_groupBox);
-            card1.Controls.Add(UiFactory.MakeLabel("Venue Name",  col3x, 44, col2w));
+            _groupBox.Location = new Point(col2x, 66); _groupBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_groupBox);
+            card1.Controls.Add(UiFactory.MakeLabel("Venue Name",  col3x, 44, col3w));
             card1.Controls.Add(UiFactory.StyledTextBox(_venueBox, col3x, 64, col3w));  
-            _venueBox.Location = new Point(col3x, 64); _venueBox.Size = new Size(col3w, 28);
+            _venueBox.Location = new Point(col3x, 66); _venueBox.Size = new Size(col3w, 28); card1.Controls.Add(_venueBox);
             _tglCustom = new ToggleSwitch { Location = new Point(col1x, 108), Size = new Size(44, 22) };
             var lblCustom = new Label { Text="Custom Name", Location=new Point(col1x+50,111), AutoSize=true,
                 Font=new Font("Segoe UI",9f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
