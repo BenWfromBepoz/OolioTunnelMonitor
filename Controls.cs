@@ -403,6 +403,40 @@ namespace OolioTunnelMonitor
         }
     }
 
+    internal class ReadOnlyBorderPanel : Panel
+    {
+        public ReadOnlyBorderPanel() { Padding = new Padding(4, 2, 4, 2); }
+
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            e.Control.BackColor = UiFactory.Grey;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            var g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var rect = new Rectangle(0, 0, Width - 1, Height - 1);
+            using var pen  = new Pen(UiFactory.Charcoal, 1.5f);
+            using var path = RoundedRect(rect, 6);
+            using var fill = new SolidBrush(UiFactory.Grey);
+            g.FillPath(fill, path);
+            g.DrawPath(pen, path);
+        }
+
+        private static GraphicsPath RoundedRect(Rectangle r, int radius)
+        {
+            var path = new GraphicsPath();
+            path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(r.Right - radius * 2, r.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(r.Right - radius * 2, r.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(r.X, r.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+    }
 
     internal class RoundedCardPanel : Panel
     {
