@@ -94,7 +94,7 @@ namespace OolioTunnelMonitor
             // ── Card 1: Tunnel Identity ──────────────────────────────────
             var card1 = MakeCard("1 | Tunnel Name");
             int avail = card1.Width - 20;
-            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col1w - col2w - 30);
+            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col1w - col2w - 50);
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, col1w));
             _netSuiteBox.Location = new Point(col1x, 66); _netSuiteBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_netSuiteBox);
