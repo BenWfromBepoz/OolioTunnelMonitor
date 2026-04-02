@@ -96,7 +96,7 @@ namespace OolioTunnelMonitor
             var lblVenue = new Label { Text="Venue Name", Location=new Point(400,44), Size=new Size(175,16), Font=new Font("Segoe UI",8.5f), ForeColor=UiFactory.SlateKey, BackColor=Color.Transparent };
             card1.Controls.Add(lblVenue);
             int avail = card1.Width - 20;
-            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (availa - col3x);
+            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col3x);
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, col1w));
             card1.Controls.Add(UiFactory.MakeLabel("Group Name",  col2x, 44, col2w));
@@ -117,7 +117,7 @@ namespace OolioTunnelMonitor
             _customBox.BorderStyle = BorderStyle.FixedSingle;
             _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
             card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
-            card1.Controls.Add(UiFactory.StyledTextBox(_custombox, col2x, 124, col1w));
+            card1.Controls.Add(UiFactory.StyledTextBox(_customBox, col2x, 124, col1w));
             _cardContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
