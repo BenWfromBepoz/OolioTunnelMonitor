@@ -117,6 +117,7 @@ namespace OolioTunnelMonitor
             _customBox.BorderStyle = BorderStyle.FixedSingle;
             _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
             card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
+            card1.Controls.Add(UiFactory.StyledTextBox(_custombox, col2x, 124, col1w));
             _cardContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
