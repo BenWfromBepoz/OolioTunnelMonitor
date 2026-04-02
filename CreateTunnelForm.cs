@@ -232,8 +232,8 @@ namespace OolioTunnelMonitor
         
             // Custom tunnel name box
             _customBox.ReadOnly = !customOn;
-            if (customOn) UiFactory.StyledTextBox(_customBox);
-            else          UiFactory.StyledReadOnlyBox(_customBox);
+            if (customOn) UiFactory.ApplyStyledTextBox(_customBox);
+            else          UiFactory.ApplyStyledReadOnlyBox(_customBox);
         
             // Source boxes (NetSuite/Group/Venue) are opposite of custom
             bool sourceEditable = !customOn;
@@ -244,15 +244,15 @@ namespace OolioTunnelMonitor
         
             if (sourceEditable)
             {
-                UiFactory.StyledTextBox(_netSuiteBox);
-                UiFactory.StyledTextBox(_groupBox);
-                UiFactory.StyledTextBox(_venueBox);
+                UiFactory.ApplyStyledTextBox(_netSuiteBox);
+                UiFactory.ApplyStyledTextBox(_groupBox);
+                UiFactory.ApplyStyledTextBox(_venueBox);
             }
             else
             {
-                UiFactory.StyledReadOnlyBox(_netSuiteBox);
-                UiFactory.StyledReadOnlyBox(_groupBox);
-                UiFactory.StyledReadOnlyBox(_venueBox);
+                UiFactory.ApplyStyledReadOnlyBox(_netSuiteBox);
+                UiFactory.ApplyStyledReadOnlyBox(_groupBox);
+                UiFactory.ApplyStyledReadOnlyBox(_venueBox);
             }
         
             RefreshPreview();
