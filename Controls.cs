@@ -19,7 +19,7 @@ namespace OolioTunnelMonitor
         public static readonly Color Charcoal   = Color.FromArgb( 40,  40,  40);
         public static readonly Color White      = Color.White;
 
-        public static Panel StyledTextBox(TextBox txt, int x, int y, int w, int h = 28)
+        public static Panel StyledTextBox(TextBox txt, int x, int y, int w, int h = 24)
         {
             txt.BorderStyle = BorderStyle.None;
             txt.BackColor   = Lavender;
@@ -32,7 +32,7 @@ namespace OolioTunnelMonitor
             return wrap;
         }
 
-                public static Panel StyledReadOnlyBox(TextBox txt, int x, int y, int w, int h = 28)
+                public static Panel StyledReadOnlyBox(TextBox txt, int x, int y, int w, int h = 24)
         {
             txt.BorderStyle = BorderStyle.None;
             txt.BackColor   = Grey;
