@@ -41,7 +41,7 @@ namespace OolioTunnelMonitor
             txt.Dock        = DockStyle.Fill;
             txt.Margin      = new Padding(6, 0, 6, 0);
             txt.ReadOnly  = true;
-            var wrap = new BorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
+            var wrap = new ReadOnlyBorderPanel { Location = new Point(x, y), Size = new Size(w, h) };
             wrap.Controls.Add(txt);
             return wrap;
         }
@@ -70,7 +70,7 @@ namespace OolioTunnelMonitor
             txt.Margin      = new Padding(6, 0, 6, 0);
             txt.ReadOnly  = true;
             var bounds = txt.Bounds;
-            var wrap = new BorderPanel {Location = bounds.Location, Size = bounds.Size};
+            var wrap = new ReadOnlyBorderPanel {Location = bounds.Location, Size = bounds.Size};
             wrap.Controls.Add(txt);
             return wrap;
         }
