@@ -236,23 +236,23 @@ namespace OolioTunnelMonitor
             else          UiFactory.ApplyStyledReadOnlyBox(_customBox);
         
             // Source boxes (NetSuite/Group/Venue) are opposite of custom
-            bool sourceEditable = !customOn;
+            bool sourceInactive = customOn;
         
-            _netSuiteBox.ReadOnly = !sourceEditable;
-            _groupBox.ReadOnly    = !sourceEditable;
-            _venueBox.ReadOnly    = !sourceEditable;
+            _netSuiteBox.ReadOnly = sourceInactive;
+            _groupBox.ReadOnly    = sourceInactive;
+            _venueBox.ReadOnly    = sourceInactive;
         
-            if (sourceEditable)
-            {
-                UiFactory.ApplyStyledTextBox(_netSuiteBox);
-                UiFactory.ApplyStyledTextBox(_groupBox);
-                UiFactory.ApplyStyledTextBox(_venueBox);
-            }
-            else
+            if (sourceInactive)
             {
                 UiFactory.ApplyStyledReadOnlyBox(_netSuiteBox);
                 UiFactory.ApplyStyledReadOnlyBox(_groupBox);
                 UiFactory.ApplyStyledReadOnlyBox(_venueBox);
+            }
+            else
+            {
+                UiFactory.ApplyStyledTextBox(_netSuiteBox);
+                UiFactory.ApplyStyledTextBox(_groupBox);
+                UiFactory.ApplyStyledTextBox(_venueBox);
             }
         
             RefreshPreview();
