@@ -94,7 +94,7 @@ namespace OolioTunnelMonitor
             // ── Card 1: Tunnel Identity ──────────────────────────────────
             var card1 = MakeCard("1 | Tunnel Name");
             int avail = card1.Width - 20;
-            int col1x=20, col1w=175, col2x= (col1x + col1w + 15), col2w=250, col3x= (col2x + col2w + 15), col3w= (avail - col1w - col2w - 50);
+            int col1x=20, col1w=160, col2x=200, col2w=200, col3x=415, col3w=200;
             card1.Controls.Add(UiFactory.MakeLabel("NetSuite ID", col1x, 44, col1w));
             card1.Controls.Add(UiFactory.StyledTextBox(_netSuiteBox, col1x, 64, col1w));
             _netSuiteBox.Location = new Point(col1x, 66); _netSuiteBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right; card1.Controls.Add(_netSuiteBox);
@@ -116,8 +116,25 @@ namespace OolioTunnelMonitor
             _customBox.Font        = new Font("Segoe UI", 9f);
             _customBox.BorderStyle = BorderStyle.FixedSingle;
             _tglCustom.CheckedChanged += (_,__) => { ApplyCustomToggle(); RefreshPreview(); };
-            card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom); card1.Controls.Add(_customBox);
-            card1.Controls.Add(UiFactory.StyledReadOnlyBox(_customBox, col2x, 124, col2w + col3w + 15));
+            card1.Controls.Add(_tglCustom); card1.Controls.Add(lblCustom);
+            card1.Controls.Add(UiFactory.StyledReadOnlyBox(_customBox, col2x, 108, col2w + col3w + 15));
+            // Resize col2/col3 once card has real width
+            card1.SizeChanged += (_,__) => {
+                if (card1.Width < 100) return;
+                int c2x  = col1x + col1w + 15;
+                int rest = card1.Width - c2x - 20;
+                int half = (rest - 10) / 2;
+                int c3x  = c2x + half + 10;
+                foreach (Control c in card1.Controls) {
+                    if (c is Panel p && p.Controls.Count > 0) {
+                        if (p.Controls[0] == _groupBox)  { p.Location = new Point(c2x, 64); p.Size = new Size(half, 28); }
+                        if (p.Controls[0] == _venueBox)  { p.Location = new Point(c3x, 64); p.Size = new Size(half, 28); }
+                        if (p.Controls[0] == _customBox) { p.Location = new Point(c2x, 108); p.Size = new Size(rest, 28); }
+                    }
+                    if (c is Label lbl2 && lbl2.Text == "Group Name") lbl2.Location = new Point(c2x, 44);
+                    if (c is Label lbl3 && lbl3.Text == "Venue Name")  lbl3.Location = new Point(c3x, 44);
+                }
+            };
             _cardContainer.Controls.Add(card1, 0, 0);
 
             // ── Card 2: Published Routes ──────────────────────────────────
